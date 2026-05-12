@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-on-background font-sans;
+  }
+}
+
+@layer components {
+  .primary-gradient {
+    background: linear-gradient(135deg, #24512c 0%, #315c37 100%);
+  }
+
+  .ambient-shadow {
+    box-shadow: 0 12px 32px rgba(45, 52, 50, 0.06);
+  }
+
+  .glass-card {
+    @apply bg-surface/80 backdrop-blur-xl;
+  }
+
+  .tonal-input {
+    @apply bg-surface-container-highest border-none rounded-xl px-md py-md font-sans text-base focus:ring-2 focus:ring-primary-fixed-dim transition-all outline-none;
+  }
+
+  .ghost-border {
+    border: 1px solid rgba(193, 201, 190, 0.2);
+  }
+}
+
+@layer utilities {
+  .bg-background {
+    background-color: #f8faf8;
+  }
+  .text-on-background {
+    color: #1a1c19;
+  }
+  .bg-surface {
+    background-color: #f9faf4;
+  }
+  .bg-primary {
+    background-color: #24512c;
+  }
+  .text-primary {
+    color: #24512c;
+  }
+  .bg-primary\/10 {
+    background-color: rgba(36, 81, 44, 0.1);
+  }
+  .bg-gray-100 {
+    background-color: #f3f4f6;
+  }
+  .bg-gray-200 {
+    background-color: #e5e7eb;
+  }
+  .text-gray-500 {
+    color: #6b7280;
+  }
+  .text-gray-600 {
+    color: #4b5563;
+  }
+  .text-red-500 {
+    color: #ef4444;
+  }
+  .text-red-600 {
+    color: #dc2626;
+  }
+  .text-green-500 {
+    color: #22c55e;
+  }
+  .text-green-600 {
+    color: #16a34a;
+  }
+  .border-red-500 {
+    border-color: #ef4444;
+  }
+  .border-gray-300 {
+    border-color: #d1d5db;
+  }
+}
