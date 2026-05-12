@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>massEPA — Icons only (no colors)</title>
+  <script src="https://unpkg.com/lucide@0.469.0"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #f4f5f0;
+      color: #1a1c18;
+    }
+    h1 { font-size: 1.35rem; margin: 0 0 6px; }
+    .sub { color: #5c5f57; margin: 0 0 20px; max-width: 640px; line-height: 1.5; font-size: 0.9rem; }
+    .hint {
+      background: #fff;
+      border: 1px solid #e2e3dd;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 28px;
+      font-size: 0.85rem;
+      color: #5c5f57;
+    }
+    table {
+      width: 100%;
+      max-width: 880px;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+      margin-bottom: 32px;
+    }
+    th, td { padding: 12px 14px; border-bottom: 1px solid #ebece7; text-align: left; }
+    th {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #5c5f57;
+      background: #fafaf8;
+    }
+    tr:last-child td { border-bottom: none; }
+    .cat { font-weight: 700; font-size: 0.9rem; }
+    .nl { font-size: 0.75rem; color: #6b6e66; }
+    .ico-row { display: flex; align-items: center; gap: 10px; }
+    .ico-only {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #3d4039;
+    }
+    .ico-only.active-style { color: #fff; background: #2d5a3d; border-radius: 8px; }
+    .ico-only.inactive-style { color: #6b6e66; }
+    .name { font-family: ui-monospace, monospace; font-size: 0.72rem; color: #6b6e66; }
+    .badge {
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 5px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .keep { background: #e8f5e9; color: #2d5a3d; }
+    .change { background: #fff8e1; color: #b45309; }
+    h2 {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #5c5f57;
+      margin: 0 0 12px;
+    }
+    .compare { display: flex; gap: 24px; flex-wrap: wrap; }
+    .panel {
+      background: #fff;
+      border: 1px solid #e2e3dd;
+      border-radius: 14px;
+      padding: 14px;
+      width: 248px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 3px;
+      border: none;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+      cursor: default;
+    }
+    .nav-item.on { background: #2d5a3d; color: #fff; }
+    .nav-item.off { background: transparent; color: #4a4d47; }
+    .nav-item.on .i { color: #fff; }
+    .nav-item.off .i { color: #6b6e66; }
+    .i { display: flex; width: 20px; justify-content: center; flex-shrink: 0; }
+    .dash-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1px solid #e0e2dc;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      background: #fff;
+    }
+    .dash-row .i { color: #6b6e66; }
+    .install-wrap { position: relative; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+    .install-wrap [data-lucide="wrench"] { position: absolute; right: -2px; bottom: -3px; width: 11px; height: 11px; }
+    .install-wrap [data-lucide="cog"] { width: 18px; height: 18px; }
+  </style>
+</head>
+<body>
+  <h1>Iconen alleen — geen kleuren</h1>
+  <p class="sub">Alleen de <strong>vorm van het icoon</strong> wijzigt (Lucide, zelfde stijl als nu: lijn-iconen, grijs of wit op actieve rij). Geen gekleurde tegels.</p>
+  <p class="hint">Open: <code>M:\mEPA\massEPA\icon-preview-icons-only.html</code><br>
+  <strong style="color:#2d5a3d">✓ Geïmplementeerd</strong> in de app via <code>src/components/common/NavCategoryIcon.tsx</code> (sidebar + dashboard).</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Categorie</th>
+        <th>Huidig icoon</th>
+        <th>Nieuw icoon (voorstel)</th>
+      </tr>
+    </thead>
+    <tbody id="table"></tbody>
+  </table>
+
+  <div class="compare">
+    <div class="panel">
+      <h2>Sidebar — huidig</h2>
+      <div id="nav-old"></div>
+    </div>
+    <div class="panel">
+      <h2>Sidebar — nieuw (alleen iconen)</h2>
+      <div id="nav-new"></div>
+    </div>
+    <div class="panel">
+      <h2>Dashboard — nieuw (alleen iconen)</h2>
+      <div id="dash-new"></div>
+    </div>
+  </div>
+
+  <script>
+    const rows = [
+      { nl: 'Home', en: 'Home', old: 'home', neu: 'home', keep: true, dash: false },
+      { nl: 'Dashboard', en: 'Dashboard', old: 'layout-dashboard', neu: 'layout-dashboard', keep: true, dash: false },
+      { nl: 'Algemeen', en: 'General', old: 'square-pen', neu: 'layout-grid', dash: true },
+      { nl: 'Huisontwerp', en: 'House design', old: 'upload', neu: 'scroll', dash: true },
+      { nl: 'Isolatie', en: 'Insulation', old: 'shield', neu: 'layers', dash: true },
+      { nl: 'Installaties', en: 'Installations', old: 'settings', neu: 'install-combo', note: 'sidebar: building-2', dash: true },
+      { nl: 'Kozijn & glas', en: 'Windows & glass', old: 'frame', neu: 'app-window', dash: true },
+      { nl: "Foto's", en: 'Photos', old: 'camera', neu: 'camera', keep: true, dash: true },
+      { nl: 'Eindcontrole', en: 'Final check', old: 'clipboard-check', neu: 'clipboard-check', keep: true, dash: false },
+      { nl: 'Compleet', en: 'Complete', old: 'circle-check', neu: 'badge-check', dash: true },
+      { nl: 'Instellingen', en: 'Settings', old: 'settings', neu: 'settings', keep: true, dash: false },
+      { nl: 'Clients', en: 'Clients', old: 'users', neu: 'users', keep: true, dash: false },
+    ];
+
+    function lucideMarkup(name, active) {
+      if (name === 'install-combo') {
+        return `<span class="install-wrap">
+          <i data-lucide="cog"></i>
+          <i data-lucide="wrench"></i>
+        </span>`;
+      }
+      return `<i data-lucide="${name}"></i>`;
+    }
+
+    function cellIcon(name, active) {
+      const cls = active ? 'ico-only active-style' : 'ico-only inactive-style';
+      return `<div class="${cls}">${name === 'install-combo' ? lucideMarkup(name) : `<i data-lucide="${name}"></i>`}</div>`;
+    }
+
+    const tbody = document.getElementById('table');
+    rows.forEach((r) => {
+      const tr = document.createElement('tr');
+      const badge = r.keep ? '<span class="badge keep">zelfde</span>' : '<span class="badge change">nieuw</span>';
+      tr.innerHTML = `
+        <td><div class="cat">${r.nl}${badge}</div><div class="nl">${r.en}${r.note ? ' · huidig sidebar: ' + r.note : ''}</div></td>
+        <td><div class="ico-row">${cellIcon(r.old, false)}<span class="name">${r.old}</span></div></td>
+        <td><div class="ico-row">${cellIcon(r.neu, false)}<span class="name">${r.neu === 'install-combo' ? 'cog + wrench' : r.neu}</span></div></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    const navItems = rows.filter((r) => r.nl !== 'Clients' || true);
+    const sidebarRows = rows.filter((r) =>
+      ['Home','Dashboard','Algemeen','Huisontwerp','Isolatie','Installaties','Kozijn & glas',"Foto's",'Eindcontrole','Compleet','Instellingen'].includes(r.nl)
+    );
+
+    function fillNav(id, useNew) {
+      const el = document.getElementById(id);
+      sidebarRows.forEach((r) => {
+        const on = r.nl === 'Algemeen';
+        const icon = useNew ? r.neu : (r.nl === 'Installaties' && !useNew ? 'building-2' : r.old);
+        const btn = document.createElement('button');
+        btn.className = 'nav-item ' + (on ? 'on' : 'off');
+        btn.innerHTML = `<span class="i">${lucideMarkup(icon)}</span><span>${r.nl}</span>`;
+        el.appendChild(btn);
+      });
+    }
+
+    fillNav('nav-old', false);
+    fillNav('nav-new', true);
+
+    const dash = document.getElementById('dash-new');
+    rows.filter((r) => r.dash).forEach((r) => {
+      const d = document.createElement('div');
+      d.className = 'dash-row';
+      d.innerHTML = `<span class="i">${lucideMarkup(r.neu)}</span><span>${r.nl.toUpperCase()}</span>`;
+      dash.appendChild(d);
+    });
+
+    lucide.createIcons();
+    document.querySelectorAll('svg').forEach((s) => {
+      s.setAttribute('width', s.closest('.ico-only') ? '20' : '18');
+      s.setAttribute('height', s.closest('.ico-only') ? '20' : '18');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>massEPA — Installatie: Tapwater & Zonnepanelen (jouw iconen)</title>
+  <script src="https://unpkg.com/lucide@0.469.0"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #f4f5f0;
+      color: #1a1c18;
+    }
+    h1 { font-size: 1.35rem; margin: 0 0 6px; color: #2d5a3d; }
+    .sub { color: #5c5f57; margin: 0 0 20px; max-width: 780px; line-height: 1.5; font-size: 0.9rem; }
+    .hint {
+      background: #fff;
+      border: 1px solid #e2e3dd;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 28px;
+      font-size: 0.85rem;
+      color: #5c5f57;
+    }
+    .hint code { font-size: 0.8rem; background: #f4f5f0; padding: 2px 6px; border-radius: 4px; }
+    h2 {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #5c5f57;
+      margin: 32px 0 12px;
+    }
+    .badge {
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .badge-custom { background: #e8f5e9; color: #2d5a3d; }
+    .badge-current { background: #e3f2fd; color: #1565c0; }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 960px;
+      margin-bottom: 32px;
+    }
+    .hero-panel {
+      background: #fff;
+      border: 2px solid #2d5a3d;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgb(45 90 61 / 12%);
+    }
+    .hero-panel h3 {
+      margin: 0 0 4px;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #2d5a3d;
+    }
+    .hero-panel .en { font-size: 0.75rem; color: #6b6e66; margin-bottom: 14px; }
+    .ref-row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .ref-box {
+      text-align: center;
+      flex: 1;
+      min-width: 100px;
+    }
+    .ref-box span {
+      display: block;
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b6e66;
+      margin-top: 6px;
+    }
+    .ref-dark {
+      background: #111;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 80px;
+    }
+    .ref-dark img { width: 48px; height: 48px; object-fit: contain; }
+    .cards { display: flex; flex-direction: column; gap: 8px; }
+    .card {
+      border-radius: 16px;
+      border: 1px solid rgb(0 0 0 / 6%);
+      box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+    }
+    .card.on { background: #e2e3dd; }
+    .card.off { background: #fff; }
+    .card-inner {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+    }
+    .tick {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tick.on { background: #2d5a3d; color: #fff; }
+    .tick.off { border: 2px solid #d1d5db; background: #fff; }
+    .ico-box {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .ico-box.on { background: rgb(45 90 61 / 10%); }
+    .ico-box.off { background: #f0f1ed; }
+    /* White-on-black PNG → dark green / gray on light app background */
+    .ico-box.on .custom-img {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      filter: brightness(0) saturate(100%) invert(32%) sepia(28%) saturate(1200%) hue-rotate(105deg) brightness(0.85);
+    }
+    .ico-box.off .custom-img {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      filter: brightness(0) saturate(100%) invert(55%) sepia(8%) saturate(300%) hue-rotate(60deg);
+      opacity: 0.75;
+    }
+    .card-title { font-weight: 800; font-size: 0.95rem; margin: 0; color: #2d5a3d; }
+    .card-sub {
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #2d5a3d;
+      margin: 4px 0 0;
+      opacity: 0.85;
+    }
+    .compare-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #5c5f57;
+      margin: 12px 0 6px;
+    }
+    .ico-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .lucide-box {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: rgb(45 90 61 / 10%);
+      color: #2d5a3d;
+    }
+    .vs { font-size: 0.75rem; color: #9ca39a; font-weight: 700; }
+    table {
+      width: 100%;
+      max-width: 960px;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+      margin-top: 12px;
+    }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #ebece7; text-align: left; vertical-align: middle; }
+    th {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #5c5f57;
+      background: #fafaf8;
+    }
+    tr:last-child td { border-bottom: none; }
+  </style>
+</head>
+<body>
+  <h1>Installatie — Jouw voorbeeld-iconen</h1>
+  <p class="sub">
+    Preview van de <strong>custom PNG-iconen</strong> die je deelde (kraan + druppel, zon + zonnepaneel),
+    zoals ze op de Installatie-pagina kunnen verschijnen naast de checkbox.
+  </p>
+  <p class="hint">
+    <strong>Open:</strong> dubbelklik<br>
+    <code>M:\mEPA\massEPA\icon-preview-installatie-tap-solar.html</code><br>
+    Geen <code>npm run dev</code> nodig — werkt offline als je internet hebt (Lucide CDN).<br>
+    <strong style="color:#2d5a3d">✓ Geïmplementeerd</strong> in <code>InstallatieSectionIcon.tsx</code>
+  </p>
+
+  <span class="badge badge-custom">Jouw voorbeeld — custom PNG</span>
+
+  <div class="hero-grid">
+    <!-- TAPWATER -->
+    <div class="hero-panel">
+      <h3>Tapwater</h3>
+      <div class="en">Tap water · Kraan + druppel</div>
+
+      <div class="ref-row">
+        <div class="ref-box">
+          <div class="ref-dark">
+            <img src="icon-preview-assets/tapwater.png" alt="Tapwater icoon origineel" />
+          </div>
+          <span>Origineel (zwart)</span>
+        </div>
+      </div>
+
+      <p class="compare-label">Zo in de app (kaart)</p>
+      <div class="cards">
+        <div class="card on">
+          <div class="card-inner">
+            <div class="tick on"><i data-lucide="check"></i></div>
+            <div class="ico-box on">
+              <img class="custom-img" src="icon-preview-assets/tapwater.png" alt="" />
+            </div>
+            <div>
+              <p class="card-title">Tapwater</p>
+              <p class="card-sub">Geselecteerd · custom PNG</p>
+            </div>
+          </div>
+        </div>
+        <div class="card off">
+          <div class="card-inner">
+            <div class="tick off"></div>
+            <div class="ico-box off">
+              <img class="custom-img" src="icon-preview-assets/tapwater.png" alt="" />
+            </div>
+            <div>
+              <p class="card-title">Tapwater</p>
+              <p class="card-sub">Niet geselecteerd · custom PNG</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="compare-label">vs. huidig in app</p>
+      <div class="ico-row">
+        <div class="lucide-box"><i data-lucide="droplets"></i></div>
+        <span class="vs">→</span>
+        <div class="ico-box on">
+          <img class="custom-img" src="icon-preview-assets/tapwater.png" alt="" />
+        </div>
+        <span style="font-size:0.75rem;color:#6b6e66">droplets → jouw icoon</span>
+      </div>
+    </div>
+
+    <!-- SOLAR -->
+    <div class="hero-panel">
+      <h3>Zonnepanelen</h3>
+      <div class="en">Solar panels · Zon + paneel</div>
+
+      <div class="ref-row">
+        <div class="ref-box">
+          <div class="ref-dark">
+            <img src="icon-preview-assets/solar.png" alt="Zonnepanelen icoon origineel" />
+          </div>
+          <span>Origineel (zwart)</span>
+        </div>
+      </div>
+
+      <p class="compare-label">Zo in de app (kaart)</p>
+      <div class="cards">
+        <div class="card on">
+          <div class="card-inner">
+            <div class="tick on"><i data-lucide="check"></i></div>
+            <div class="ico-box on">
+              <img class="custom-img" src="icon-preview-assets/solar.png" alt="" />
+            </div>
+            <div>
+              <p class="card-title">Zonnepanelen</p>
+              <p class="card-sub">Geselecteerd · custom PNG</p>
+            </div>
+          </div>
+        </div>
+        <div class="card off">
+          <div class="card-inner">
+            <div class="tick off"></div>
+            <div class="ico-box off">
+              <img class="custom-img" src="icon-preview-assets/solar.png" alt="" />
+            </div>
+            <div>
+              <p class="card-title">Zonnepanelen</p>
+              <p class="card-sub">Niet geselecteerd · custom PNG</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="compare-label">vs. huidig in app</p>
+      <div class="ico-row">
+        <div class="lucide-box"><i data-lucide="sun"></i></div>
+        <span class="vs">→</span>
+        <div class="ico-box on">
+          <img class="custom-img" src="icon-preview-assets/solar.png" alt="" />
+        </div>
+        <span style="font-size:0.75rem;color:#6b6e66">sun → jouw icoon</span>
+      </div>
+    </div>
+  </div>
+
+  <h2>Alle 5 installatie-secties (met jouw iconen)</h2>
+  <div class="cards" style="max-width:540px" id="all-sections"></div>
+
+  <h2>Lucide alternatieven (alleen ter vergelijking)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Sectie</th>
+        <th>Jouw PNG</th>
+        <th>Lucide huidig</th>
+        <th>Lucide alternatief</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Tapwater</strong></td>
+        <td><div class="ico-box on"><img class="custom-img" src="icon-preview-assets/tapwater.png" alt="" /></div></td>
+        <td><div class="lucide-box"><i data-lucide="droplets"></i></div></td>
+        <td><div class="ico-row"><div class="lucide-box"><i data-lucide="shower-head"></i></div><div class="lucide-box"><i data-lucide="droplet"></i></div></div></td>
+      </tr>
+      <tr>
+        <td><strong>Zonnepanelen</strong></td>
+        <td><div class="ico-box on"><img class="custom-img" src="icon-preview-assets/solar.png" alt="" /></div></td>
+        <td><div class="lucide-box"><i data-lucide="sun"></i></div></td>
+        <td><div class="lucide-box"><i data-lucide="layout-panel-top"></i></div></td>
+      </tr>
+      <tr>
+        <td>Ventilatie</td>
+        <td colspan="3"><div class="lucide-box" style="display:inline-flex"><i data-lucide="wind"></i></div> <span style="font-size:0.8rem;color:#6b6e66">ongewijzigd</span></td>
+      </tr>
+      <tr>
+        <td>Verwarming</td>
+        <td colspan="3"><div class="lucide-box" style="display:inline-flex"><i data-lucide="flame"></i></div> <span style="font-size:0.8rem;color:#6b6e66">ongewijzigd</span></td>
+      </tr>
+      <tr>
+        <td>Koeling</td>
+        <td colspan="3"><div class="lucide-box" style="display:inline-flex"><i data-lucide="snowflake"></i></div> <span style="font-size:0.8rem;color:#6b6e66">ongewijzigd</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <script>
+    const sections = [
+      { nl: 'Ventilatie', icon: 'wind', custom: false },
+      { nl: 'Verwarming', icon: 'flame', custom: false },
+      { nl: 'Tapwater', icon: null, custom: 'icon-preview-assets/tapwater.png' },
+      { nl: 'Zonnepanelen', icon: null, custom: 'icon-preview-assets/solar.png' },
+      { nl: 'Koeling', icon: 'snowflake', custom: false },
+    ];
+
+    const all = document.getElementById('all-sections');
+    sections.forEach((s) => {
+      const iconHtml = s.custom
+        ? `<img class="custom-img" src="${s.custom}" alt="" />`
+        : `<i data-lucide="${s.icon}"></i>`;
+      all.innerHTML += `
+        <div class="card on">
+          <div class="card-inner">
+            <div class="tick on"><i data-lucide="check"></i></div>
+            <div class="ico-box on">${iconHtml}</div>
+            <div>
+              <p class="card-title">${s.nl}</p>
+              <p class="card-sub">${s.custom ? 'Custom PNG' : 'Lucide · ' + s.icon}</p>
+            </div>
+          </div>
+        </div>`;
+    });
+
+    lucide.createIcons();
+    document.querySelectorAll('.lucide-box svg, .tick.on svg').forEach((s) => {
+      s.setAttribute('width', '20');
+      s.setAttribute('height', '20');
+      s.setAttribute('stroke-width', '2');
+    });
+  </script>
+</body>
+</html>

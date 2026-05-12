@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>massEPA — Kozijn &amp; glas (jouw iconen)</title>
+  <script src="https://unpkg.com/lucide@0.469.0"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #f4f5f0;
+      color: #1a1c18;
+    }
+    h1 { font-size: 1.35rem; margin: 0 0 6px; color: #2d5a3d; }
+    .sub { color: #5c5f57; margin: 0 0 20px; max-width: 780px; line-height: 1.5; font-size: 0.9rem; }
+    .hint {
+      background: #fff;
+      border: 1px solid #e2e3dd;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 28px;
+      font-size: 0.85rem;
+      color: #5c5f57;
+    }
+    .hint code { font-size: 0.8rem; background: #f4f5f0; padding: 2px 6px; border-radius: 4px; }
+    h2 {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #5c5f57;
+      margin: 32px 0 12px;
+    }
+    .badge-custom {
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 12px;
+      background: #e8f5e9;
+      color: #2d5a3d;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 960px;
+      margin-bottom: 32px;
+    }
+    .hero-panel {
+      background: #fff;
+      border: 2px solid #2d5a3d;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgb(45 90 61 / 12%);
+    }
+    .hero-panel h3 { margin: 0 0 4px; font-size: 1rem; font-weight: 800; color: #2d5a3d; }
+    .hero-panel .en { font-size: 0.75rem; color: #6b6e66; margin-bottom: 14px; }
+    .ref-dark {
+      background: #111;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 88px;
+      margin-bottom: 14px;
+    }
+    .ref-dark img { max-width: 56px; max-height: 56px; object-fit: contain; }
+    .ref-light {
+      background: #fff;
+      border: 1px solid #e2e3dd;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 88px;
+      margin-bottom: 14px;
+    }
+    .ref-light img { max-width: 56px; max-height: 56px; object-fit: contain; }
+    .ref-label { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; color: #6b6e66; margin-bottom: 6px; }
+    .cards { display: flex; flex-direction: column; gap: 8px; }
+    .card {
+      border-radius: 16px;
+      border: 1px solid rgb(0 0 0 / 6%);
+      box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+    }
+    .card.on { background: #e2e3dd; }
+    .card.off { background: #fff; }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      gap: 12px;
+    }
+    .card-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
+    .ico-box {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .ico-box.on { background: rgb(45 90 61 / 10%); }
+    .ico-box.off { background: #f0f1ed; }
+    .custom-img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+    .ico-box.on .custom-img.mono {
+      filter: brightness(0) saturate(100%) invert(32%) sepia(28%) saturate(1200%) hue-rotate(105deg) brightness(0.85);
+    }
+    .ico-box.off .custom-img.mono {
+      filter: brightness(0) saturate(100%) invert(55%) sepia(8%) saturate(300%) hue-rotate(60deg);
+      opacity: 0.75;
+    }
+    .ico-box .custom-img.color {
+      width: 28px;
+      height: 28px;
+    }
+    .ico-box.off .custom-img.color { opacity: 0.55; }
+    .lucide-box {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: rgb(45 90 61 / 10%);
+      color: #2d5a3d;
+    }
+    .card-title { font-weight: 800; font-size: 0.95rem; margin: 0; color: #2d5a3d; }
+    .card-sub {
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #2d5a3d;
+      margin: 4px 0 0;
+      opacity: 0.85;
+    }
+    .chevron { color: #9ca39a; }
+    .compare-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #5c5f57;
+      margin: 12px 0 6px;
+    }
+    .ico-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .vs { font-size: 0.75rem; color: #9ca39a; font-weight: 700; }
+    table {
+      width: 100%;
+      max-width: 960px;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+      margin-top: 12px;
+    }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #ebece7; text-align: left; vertical-align: middle; }
+    th {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #5c5f57;
+      background: #fafaf8;
+    }
+    tr:last-child td { border-bottom: none; }
+    .note { font-size: 0.82rem; color: #6b6e66; max-width: 960px; line-height: 1.45; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Kozijn &amp; glas — Jouw voorbeeld-iconen</h1>
+  <p class="sub">
+    Preview van je <strong>custom PNG-iconen</strong>: kozijn (hoek profiel) en glas (dubbel glas kozijn).
+    Zoals ze op de Kozijn &amp; glas-pagina kunnen verschijnen in het accordion.
+  </p>
+  <p class="hint">
+    <strong>Open:</strong> dubbelklik<br>
+    <code>M:\mEPA\massEPA\icon-preview-kozijn-glas.html</code><br>
+    Assets: <code>icon-preview-assets/kozijn.png</code> · <code>glas.png</code>
+  </p>
+
+  <span class="badge-custom">Jouw voorbeeld — custom PNG</span>
+
+  <div class="hero-grid">
+    <!-- KOZIJN -->
+    <div class="hero-panel">
+      <h3>Kozijn details</h3>
+      <div class="en">Frame corner · Kozijn profiel</div>
+
+      <div class="ref-label">Origineel (wit op zwart)</div>
+      <div class="ref-dark">
+        <img src="icon-preview-assets/kozijn.png" alt="Kozijn icoon" />
+      </div>
+      <div class="ref-label">Origineel (zwart op wit)</div>
+      <div class="ref-light">
+        <img src="icon-preview-assets/kozijn.png" alt="Kozijn icoon licht" style="filter: invert(1);" />
+      </div>
+
+      <p class="compare-label">Zo in de app (accordion)</p>
+      <div class="cards">
+        <div class="card on">
+          <div class="card-header">
+            <div class="card-left">
+              <div class="ico-box on"><img class="custom-img mono" src="icon-preview-assets/kozijn.png" alt="" /></div>
+              <div>
+                <p class="card-title">Kozijn details</p>
+                <p class="card-sub">Uitgeklapt · custom PNG</p>
+              </div>
+            </div>
+            <span class="chevron"><i data-lucide="chevron-up"></i></span>
+          </div>
+        </div>
+        <div class="card off">
+          <div class="card-header">
+            <div class="card-left">
+              <div class="ico-box off"><img class="custom-img mono" src="icon-preview-assets/kozijn.png" alt="" /></div>
+              <div>
+                <p class="card-title">Kozijn details</p>
+                <p class="card-sub">Ingeklapt · custom PNG</p>
+              </div>
+            </div>
+            <span class="chevron"><i data-lucide="chevron-down"></i></span>
+          </div>
+        </div>
+      </div>
+
+      <p class="compare-label">vs. huidig in app</p>
+      <div class="ico-row">
+        <div class="lucide-box"><i data-lucide="frame"></i></div>
+        <span class="vs">→</span>
+        <div class="ico-box on"><img class="custom-img mono" src="icon-preview-assets/kozijn.png" alt="" /></div>
+        <span style="font-size:0.75rem;color:#6b6e66">frame → jouw icoon</span>
+      </div>
+    </div>
+
+    <!-- GLAS -->
+    <div class="hero-panel">
+      <h3>Glas details</h3>
+      <div class="en">Double glazing · Dubbel glas kozijn</div>
+
+      <div class="ref-label">Origineel</div>
+      <div class="ref-light">
+        <img src="icon-preview-assets/glas.png" alt="Glas icoon" />
+      </div>
+
+      <p class="compare-label">Zo in de app (accordion)</p>
+      <div class="cards">
+        <div class="card on">
+          <div class="card-header">
+            <div class="card-left">
+              <div class="ico-box on"><img class="custom-img color" src="icon-preview-assets/glas.png" alt="" /></div>
+              <div>
+                <p class="card-title">Glas details</p>
+                <p class="card-sub">Uitgeklapt · custom PNG</p>
+              </div>
+            </div>
+            <span class="chevron"><i data-lucide="chevron-up"></i></span>
+          </div>
+        </div>
+        <div class="card off">
+          <div class="card-header">
+            <div class="card-left">
+              <div class="ico-box off"><img class="custom-img color" src="icon-preview-assets/glas.png" alt="" /></div>
+              <div>
+                <p class="card-title">Glas details</p>
+                <p class="card-sub">Ingeklapt · custom PNG</p>
+              </div>
+            </div>
+            <span class="chevron"><i data-lucide="chevron-down"></i></span>
+          </div>
+        </div>
+      </div>
+
+      <p class="compare-label">vs. huidig in app</p>
+      <div class="ico-row">
+        <div class="lucide-box"><i data-lucide="layers"></i></div>
+        <span class="vs">→</span>
+        <div class="ico-box on"><img class="custom-img color" src="icon-preview-assets/glas.png" alt="" /></div>
+        <span style="font-size:0.75rem;color:#6b6e66">layers → jouw icoon</span>
+      </div>
+    </div>
+  </div>
+
+  <h2>Alle 3 secties (jouw iconen + documentatie)</h2>
+  <p class="note">Documentatie blijft Lucide <code>file-text</code> of <code>upload</code> — nog geen custom PNG gedeeld.</p>
+  <div class="cards" style="max-width:540px" id="all-sections"></div>
+
+  <h2>Vergelijkingstabel</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Sectie</th>
+        <th>Jouw PNG</th>
+        <th>Lucide huidig</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Kozijn details</strong></td>
+        <td><div class="ico-box on"><img class="custom-img mono" src="icon-preview-assets/kozijn.png" alt="" /></div></td>
+        <td><div class="lucide-box"><i data-lucide="frame"></i></div></td>
+      </tr>
+      <tr>
+        <td><strong>Glas details</strong></td>
+        <td><div class="ico-box on"><img class="custom-img color" src="icon-preview-assets/glas.png" alt="" /></div></td>
+        <td><div class="lucide-box"><i data-lucide="layers"></i></div></td>
+      </tr>
+      <tr>
+        <td>Documentatie</td>
+        <td colspan="2">
+          <div class="ico-row">
+            <div class="lucide-box"><i data-lucide="upload"></i></div>
+            <span style="font-size:0.8rem;color:#6b6e66">huidig · nog te kiezen</span>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <script>
+    const sections = [
+      { nl: 'Kozijn details', custom: 'icon-preview-assets/kozijn.png' },
+      { nl: 'Glas details', custom: 'icon-preview-assets/glas.png' },
+      { nl: 'Documentatie', lucide: 'upload' },
+    ];
+
+    const all = document.getElementById('all-sections');
+    sections.forEach((s, i) => {
+      const iconHtml = s.custom
+        ? `<img class="custom-img ${s.nl.includes('Glas') ? 'color' : 'mono'}" src="${s.custom}" alt="" />`
+        : `<i data-lucide="${s.lucide}"></i>`;
+      all.innerHTML += `
+        <div class="card ${i < 2 ? 'on' : 'off'}">
+          <div class="card-header">
+            <div class="card-left">
+              <div class="ico-box ${i < 2 ? 'on' : 'off'}">${iconHtml}</div>
+              <div>
+                <p class="card-title">${s.nl}</p>
+                <p class="card-sub">${s.custom ? 'Custom PNG' : 'Lucide · ' + s.lucide}</p>
+              </div>
+            </div>
+            <span class="chevron"><i data-lucide="chevron-${i === 0 ? 'up' : 'down'}"></i></span>
+          </div>
+        </div>`;
+    });
+
+    lucide.createIcons();
+    document.querySelectorAll('.lucide-box svg, .chevron svg').forEach((s) => {
+      s.setAttribute('width', '20');
+      s.setAttribute('height', '20');
+      s.setAttribute('stroke-width', '2');
+    });
+  </script>
+</body>
+</html>

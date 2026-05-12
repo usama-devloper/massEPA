@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "description": "Mock sign-in accounts for local/demo only. Password is shared for convenience.",
+  "defaultPassword": "test1234",
+  "users": [
+    {
+      "email": "beowner@test.com",
+      "password": "test1234",
+      "role": "Bewoner",
+      "displayName": "Demo Owner (alias)",
+      "hints": ["beowner", "beown", "beowo", "owner", "owne", "own", "eigenaar"]
+    },
+    {
+      "email": "bewoner@test.com",
+      "password": "test1234",
+      "role": "Bewoner",
+      "displayName": "Demo Bewoner",
+      "hints": [
+        "cli",
+        "client",
+        "bew",
+        "bewo",
+        "bewon",
+        "bewoner",
+        "beo",
+        "owner",
+        "owne",
+        "own",
+        "eige",
+        "eigen",
+        "eigenaar",
+        "woon"
+      ]
+    },
+    {
+      "email": "bidintern@test.com",
+      "password": "test1234",
+      "role": "BID Intern",
+      "displayName": "Demo BID Intern",
+      "hints": [
+        "bid",
+        "bidi",
+        "bidin",
+        "bidint",
+        "bidintern",
+        "intern",
+        "inte",
+        "int",
+        "stage",
+        "supp"
+      ]
+    },
+    {
+      "email": "backoffice@test.com",
+      "password": "test1234",
+      "role": "Back Office",
+      "displayName": "Demo Back Office",
+      "hints": [
+        "bo",
+        "back",
+        "backo",
+        "backof",
+        "backoff",
+        "backoffi",
+        "backoffic",
+        "backoffice",
+        "kanto",
+        "admin"
+      ]
+    },
+    {
+      "email": "inspector@test.com",
+      "password": "test1234",
+      "role": "Inspector",
+      "displayName": "Demo Inspector",
+      "hints": [
+        "ins",
+        "insp",
+        "inspe",
+        "inspec",
+        "inspect",
+        "inspecto",
+        "inspector",
+        "cont",
+        "controle",
+        "energie"
+      ]
+    }
+  ]
+}

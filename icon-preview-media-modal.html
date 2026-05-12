@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>massEPA — Transparent modal styles (extended)</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      background: #eceee8;
+      color: #1a1c18;
+      padding: 20px;
+    }
+    h1 { font-size: 1.25rem; color: #2d5a3d; margin: 0 0 6px; }
+    .sub { color: #5c5f57; font-size: 0.88rem; max-width: 820px; line-height: 1.5; margin-bottom: 12px; }
+    .hint {
+      background: #fff;
+      border: 1px solid #e2e3dd;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      color: #5c5f57;
+      margin-bottom: 16px;
+      max-width: 820px;
+    }
+    .hint code { background: #f4f5f0; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
+    .bg-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+      max-width: 820px;
+    }
+    .bg-picker button {
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid #d8dad4;
+      background: #fff;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #3d4039;
+    }
+    .bg-picker button.active {
+      background: #2d5a3d;
+      color: #fff;
+      border-color: #2d5a3d;
+    }
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #5c5f57;
+      margin: 28px 0 12px;
+      max-width: 1600px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
+      gap: 20px;
+      max-width: 1600px;
+    }
+    .option {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px solid #e2e3dd;
+      background: #fff;
+    }
+    .option.recommended { border-color: #2d5a3d; box-shadow: 0 4px 16px rgb(45 90 61 / 12%); }
+    .option-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid #ebece7;
+      background: #fafaf8;
+    }
+    .option-header h2 { margin: 0; font-size: 0.82rem; font-weight: 800; color: #2d5a3d; }
+    .option-header p { margin: 3px 0 0; font-size: 0.66rem; color: #6b6e66; line-height: 1.35; }
+    .badge {
+      display: inline-block;
+      font-size: 0.52rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 2px 5px;
+      border-radius: 4px;
+      margin-left: 3px;
+      vertical-align: middle;
+    }
+    .badge-skip { background: #ffebee; color: #c62828; }
+    .badge-rec { background: #e8f5e9; color: #2d5a3d; }
+    .badge-alt { background: #e3f2fd; color: #1565c0; }
+    .badge-new { background: #fff3e0; color: #e65100; }
+
+    .phone {
+      position: relative;
+      height: 380px;
+      display: flex;
+      align-items: flex-end;
+      background-size: cover;
+      background-position: center;
+    }
+    .phone.bg-interior {
+      background-image: linear-gradient(180deg, rgb(0 0 0 / 0.1), rgb(0 0 0 / 0.32)),
+        url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80');
+    }
+    .phone.bg-exterior {
+      background-image: linear-gradient(180deg, rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.38)),
+        url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80');
+    }
+    .phone.bg-busy {
+      background-image: linear-gradient(180deg, rgb(0 0 0 / 0.2), rgb(0 0 0 / 0.4)),
+        url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=600&q=80');
+    }
+    .backdrop { position: absolute; inset: 0; }
+    .sheet {
+      position: relative;
+      width: 100%;
+      max-height: 80%;
+      border-radius: 22px 22px 0 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-size: 11px;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { transform: translateX(-120%) rotate(25deg); }
+      50% { transform: translateX(120%) rotate(25deg); }
+    }
+
+    /* A — live (skip) */
+    .style-live .backdrop { background: rgb(0 0 0 / 0.2); backdrop-filter: blur(4px); }
+    .style-live .sheet {
+      background: rgb(255 255 255 / 0.2);
+      backdrop-filter: blur(25px) saturate(180%);
+      border-top: 1px solid rgb(255 255 255 / 0.4);
+    }
+    .style-live .sheet::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 0.45) 50%, transparent 70%);
+      animation: shimmer 4s ease-in-out infinite;
+      pointer-events: none;
+      opacity: 0.35;
+    }
+
+    /* B–F existing */
+    .style-static-glass .backdrop { background: rgb(0 0 0 / 0.25); }
+    .style-static-glass .sheet {
+      background: rgb(255 255 255 / 0.22);
+      backdrop-filter: blur(20px) saturate(160%);
+      border-top: 1px solid rgb(255 255 255 / 0.45);
+    }
+    .style-static-glass .title, .style-static-glass .tip { text-shadow: 0 1px 3px rgb(255 255 255 / 0.9); }
+    .style-static-glass .inner-box { background: rgb(255 255 255 / 0.35); border-color: rgb(255 255 255 / 0.5); }
+
+    .style-clean-glass .backdrop { background: rgb(0 0 0 / 0.3); }
+    .style-clean-glass .sheet {
+      background: rgb(255 255 255 / 0.72);
+      backdrop-filter: blur(14px);
+      border-top: 1px solid rgb(255 255 255 / 0.65);
+    }
+    .style-clean-glass .inner-box { background: rgb(255 255 255 / 0.45); }
+
+    .style-light-glass .backdrop { background: rgb(0 0 0 / 0.35); }
+    .style-light-glass .sheet {
+      background: rgb(255 255 255 / 0.55);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgb(255 255 255 / 0.5);
+    }
+    .style-light-glass .title { font-weight: 900; color: #111; }
+    .style-light-glass .inner-box { background: rgb(255 255 255 / 0.5); }
+
+    .style-airy .backdrop { background: rgb(0 0 0 / 0.28); }
+    .style-airy .sheet {
+      background: rgb(255 255 255 / 0.38);
+      backdrop-filter: blur(18px);
+      border-top: 1px solid rgb(255 255 255 / 0.4);
+    }
+    .style-airy .title, .style-airy .tip, .style-airy .muted {
+      text-shadow: 0 0 8px #fff, 0 1px 2px rgb(255 255 255 / 0.8);
+    }
+    .style-airy .inner-box { background: rgb(255 255 255 / 0.42); }
+
+    .style-dark-glass .backdrop { background: rgb(0 0 0 / 0.4); }
+    .style-dark-glass .sheet {
+      background: rgb(20 24 20 / 0.72);
+      backdrop-filter: blur(14px);
+      border-top: 1px solid rgb(255 255 255 / 0.1);
+      color: #f0f2ec;
+    }
+    .style-dark-glass .title { color: #fff; }
+    .style-dark-glass .muted { color: #c8ccc4; }
+    .style-dark-glass .tip { color: #e8ebe4; }
+    .style-dark-glass .inner-box { background: rgb(255 255 255 / 0.1); border-color: rgb(255 255 255 / 0.15); }
+    .style-dark-glass .btn-sec { background: rgb(255 255 255 / 0.12); border: 1px solid rgb(255 255 255 / 0.2); color: #fff; }
+
+    /* G–P new */
+    .style-crystal .backdrop { background: rgb(0 0 0 / 0.22); }
+    .style-crystal .sheet {
+      background: rgb(255 255 255 / 0.28);
+      backdrop-filter: blur(24px) saturate(140%);
+      border-top: 1px solid rgb(255 255 255 / 0.55);
+    }
+    .style-crystal .title, .style-crystal .tip { text-shadow: 0 1px 4px #fff; }
+    .style-crystal .inner-box { background: rgb(255 255 255 / 0.4); }
+
+    .style-milky .backdrop { background: rgb(0 0 0 / 0.32); }
+    .style-milky .sheet {
+      background: rgb(255 255 255 / 0.68);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgb(255 255 255 / 0.75);
+    }
+    .style-milky .inner-box { background: rgb(255 255 255 / 0.55); }
+
+    .style-balanced .backdrop { background: rgb(0 0 0 / 0.33); }
+    .style-balanced .sheet {
+      background: rgb(255 255 255 / 0.62);
+      backdrop-filter: blur(13px);
+      border-top: 1px solid rgb(255 255 255 / 0.6);
+    }
+    .style-balanced .inner-box { background: rgb(255 255 255 / 0.48); }
+
+    .style-green-mist .backdrop { background: rgb(0 0 0 / 0.3); }
+    .style-green-mist .sheet {
+      background: rgb(236 241 235 / 0.78);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgb(45 90 61 / 0.2);
+    }
+    .style-green-mist .inner-box { background: rgb(255 255 255 / 0.5); border-color: rgb(45 90 61 / 0.15); }
+
+    .style-card-layer .backdrop { background: rgb(0 0 0 / 0.35); }
+    .style-card-layer .sheet {
+      background: rgb(255 255 255 / 0.18);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgb(255 255 255 / 0.35);
+    }
+    .style-card-layer .sheet-head { background: rgb(255 255 255 / 0.5); backdrop-filter: blur(10px); }
+    .style-card-layer .sheet-foot { background: rgb(255 255 255 / 0.55); backdrop-filter: blur(10px); }
+    .style-card-layer .inner-box { background: rgb(255 255 255 / 0.62); }
+    .style-card-layer .tip-row { background: rgb(255 255 255 / 0.5); padding: 6px 8px; border-radius: 8px; margin-bottom: 5px; }
+
+    .style-gradient .backdrop { background: rgb(0 0 0 / 0.3); }
+    .style-gradient .sheet {
+      background: linear-gradient(to top, rgb(255 255 255 / 0.88) 0%, rgb(255 255 255 / 0.45) 55%, rgb(255 255 255 / 0.25) 100%);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgb(255 255 255 / 0.5);
+    }
+    .style-gradient .inner-box { background: rgb(255 255 255 / 0.55); }
+
+    .style-gray-glass .backdrop { background: rgb(0 0 0 / 0.34); }
+    .style-gray-glass .sheet {
+      background: rgb(248 249 246 / 0.7);
+      backdrop-filter: blur(14px);
+      border-top: 1px solid rgb(255 255 255 / 0.6);
+    }
+    .style-gray-glass .inner-box { background: rgb(255 255 255 / 0.45); }
+
+    .style-primary-tint .backdrop { background: rgb(0 0 0 / 0.32); }
+    .style-primary-tint .sheet {
+      background: rgb(255 255 255 / 0.64);
+      backdrop-filter: blur(12px);
+      border-top: 2px solid rgb(45 90 61 / 0.25);
+      box-shadow: inset 0 1px 0 rgb(45 90 61 / 0.08);
+    }
+    .style-primary-tint .icon-box { background: rgb(45 90 61 / 0.2); }
+    .style-primary-tint .inner-box { background: rgb(255 255 255 / 0.5); border-color: rgb(45 90 61 / 0.12); }
+
+    .style-ultra-blur .backdrop { background: rgb(0 0 0 / 0.25); }
+    .style-ultra-blur .sheet {
+      background: rgb(255 255 255 / 0.25);
+      backdrop-filter: blur(28px);
+      border-top: 1px solid rgb(255 255 255 / 0.5);
+    }
+    .style-ultra-blur .title, .style-ultra-blur .tip { text-shadow: 0 0 6px #fff, 0 1px 2px #fff; }
+    .style-ultra-blur .inner-box { background: rgb(255 255 255 / 0.45); }
+
+    .style-dark-airy .backdrop { background: rgb(0 0 0 / 0.45); }
+    .style-dark-airy .sheet {
+      background: rgb(0 0 0 / 0.5);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgb(255 255 255 / 0.12);
+      color: #eee;
+    }
+    .style-dark-airy .title { color: #fff; }
+    .style-dark-airy .muted { color: #bbb; }
+    .style-dark-airy .tip { color: #ddd; }
+    .style-dark-airy .inner-box { background: rgb(255 255 255 / 0.08); border-color: rgb(255 255 255 / 0.12); }
+    .style-dark-airy .btn-sec { background: rgb(255 255 255 / 0.1); color: #fff; border: 1px solid rgb(255 255 255 / 0.2); }
+
+    .style-satin .backdrop { background: rgb(0 0 0 / 0.36); }
+    .style-satin .sheet {
+      background: rgb(255 255 255 / 0.78);
+      backdrop-filter: blur(6px);
+      border-top: 1px solid rgb(255 255 255 / 0.85);
+    }
+    .style-satin .inner-box { background: rgb(255 255 255 / 0.6); }
+
+    .style-veil .backdrop { background: rgb(0 0 0 / 0.38); }
+    .style-veil .sheet {
+      background: rgb(255 255 255 / 0.48);
+      backdrop-filter: blur(20px) brightness(1.05);
+      border-top: 1px solid rgb(255 255 255 / 0.55);
+    }
+    .style-veil .title { font-weight: 900; }
+    .style-veil .inner-box { background: rgb(255 255 255 / 0.58); }
+
+    /* S–AD — extra designs */
+    .style-scrim .backdrop { background: rgb(0 0 0 / 0.48); backdrop-filter: blur(2px); }
+    .style-scrim .sheet {
+      background: rgb(255 255 255 / 0.9);
+      border-top: 1px solid rgb(255 255 255 / 0.9);
+      box-shadow: 0 -8px 32px rgb(0 0 0 / 0.15);
+    }
+    .style-scrim .inner-box { background: rgb(248 249 246 / 0.85); }
+
+    .style-bar-zones .backdrop { background: rgb(0 0 0 / 0.34); }
+    .style-bar-zones .sheet {
+      background: rgb(255 255 255 / 0.12);
+      backdrop-filter: blur(6px);
+      border-top: 1px solid rgb(255 255 255 / 0.3);
+    }
+    .style-bar-zones .sheet-head {
+      background: rgb(255 255 255 / 0.82);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgb(0 0 0 / 0.06);
+    }
+    .style-bar-zones .sheet-foot {
+      background: rgb(255 255 255 / 0.88);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgb(0 0 0 / 0.06);
+    }
+    .style-bar-zones .inner-box { background: rgb(255 255 255 / 0.55); }
+
+    .style-cta-dock .backdrop { background: rgb(0 0 0 / 0.36); }
+    .style-cta-dock .sheet {
+      background: rgb(255 255 255 / 0.32);
+      backdrop-filter: blur(14px);
+      border-top: 1px solid rgb(255 255 255 / 0.45);
+    }
+    .style-cta-dock .sheet-foot {
+      background: rgb(255 255 255 / 0.94);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgb(0 0 0 / 0.08);
+      box-shadow: 0 -4px 20px rgb(0 0 0 / 0.08);
+    }
+    .style-cta-dock .title { font-weight: 900; text-shadow: 0 0 6px #fff; }
+    .style-cta-dock .inner-box { background: rgb(255 255 255 / 0.58); }
+
+    .style-outline .backdrop { background: rgb(0 0 0 / 0.38); }
+    .style-outline .sheet {
+      background: rgb(255 255 255 / 0.08);
+      backdrop-filter: blur(10px);
+      border-top: 2px solid rgb(255 255 255 / 0.75);
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35);
+    }
+    .style-outline .inner-box {
+      background: rgb(255 255 255 / 0.72);
+      border: 1px solid rgb(255 255 255 / 0.8);
+      box-shadow: 0 4px 16px rgb(0 0 0 / 0.1);
+    }
+    .style-outline .tip-row-outline {
+      background: rgb(255 255 255 / 0.65);
+      padding: 6px 8px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      border: 1px solid rgb(255 255 255 / 0.7);
+    }
+
+    .style-accent-bar .backdrop { background: rgb(0 0 0 / 0.32); }
+    .style-accent-bar .sheet {
+      background: rgb(255 255 255 / 0.66);
+      backdrop-filter: blur(12px);
+      border-top: 3px solid #2d5a3d;
+      box-shadow: inset 0 3px 0 rgb(45 90 61 / 0.12);
+    }
+    .style-accent-bar .icon-box { background: rgb(45 90 61 / 0.22); }
+    .style-accent-bar .inner-box { background: rgb(255 255 255 / 0.52); border-color: rgb(45 90 61 / 0.1); }
+
+    .style-paper .backdrop { background: rgb(0 0 0 / 0.4); }
+    .style-paper .sheet {
+      background: rgb(250 251 248 / 0.92);
+      border-top: 1px solid rgb(255 255 255 / 1);
+      box-shadow: 0 -12px 40px rgb(0 0 0 / 0.12);
+    }
+    .style-paper .inner-box {
+      background: #fff;
+      border: 1px solid #e2e3dd;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.04);
+    }
+
+    .style-ios-notch .backdrop { background: rgb(0 0 0 / 0.3); }
+    .style-ios-notch .sheet {
+      background: rgb(255 255 255 / 0.7);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgb(255 255 255 / 0.65);
+    }
+    .style-ios-notch .sheet::after {
+      content: '';
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 36px;
+      height: 4px;
+      border-radius: 99px;
+      background: rgb(0 0 0 / 0.18);
+      z-index: 2;
+    }
+    .style-ios-notch .sheet-head { padding-top: 18px; }
+    .style-ios-notch .inner-box { background: rgb(255 255 255 / 0.5); }
+
+    .style-floating .backdrop { background: rgb(0 0 0 / 0.42); }
+    .style-floating .phone-inner { padding: 0 14px 18px; width: 100%; }
+    .style-floating .sheet {
+      border-radius: 18px;
+      background: rgb(255 255 255 / 0.76);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgb(255 255 255 / 0.7);
+      box-shadow: 0 12px 40px rgb(0 0 0 / 0.2);
+    }
+    .style-floating .inner-box { background: rgb(255 255 255 / 0.55); }
+
+    .style-sidebar .backdrop { background: rgb(0 0 0 / 0.33); }
+    .style-sidebar .sheet {
+      background: rgb(255 255 255 / 0.64);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgb(255 255 255 / 0.55);
+      border-left: 4px solid #2d5a3d;
+    }
+    .style-sidebar .inner-box { background: rgb(255 255 255 / 0.48); }
+
+    .style-bottom-scrim .backdrop {
+      background: linear-gradient(to top, rgb(0 0 0 / 0.55) 0%, rgb(0 0 0 / 0.2) 45%, rgb(0 0 0 / 0.15) 100%);
+    }
+    .style-bottom-scrim .sheet {
+      background: rgb(255 255 255 / 0.5);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgb(255 255 255 / 0.5);
+    }
+    .style-bottom-scrim .title { font-weight: 900; color: #111; }
+    .style-bottom-scrim .inner-box { background: rgb(255 255 255 / 0.65); }
+
+    .style-split-tips .backdrop { background: rgb(0 0 0 / 0.35); }
+    .style-split-tips .sheet {
+      background: rgb(255 255 255 / 0.2);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgb(255 255 255 / 0.35);
+    }
+    .style-split-tips .tips-block {
+      background: rgb(255 255 255 / 0.78);
+      border-radius: 12px;
+      padding: 8px 10px;
+      border: 1px solid rgb(0 0 0 / 0.05);
+    }
+    .style-split-tips .inner-box {
+      background: rgb(255 255 255 / 0.35);
+      border-style: dashed;
+      border-color: rgb(255 255 255 / 0.6);
+    }
+
+    .style-soft-glow .backdrop { background: rgb(45 90 61 / 0.15); backdrop-filter: blur(3px); }
+    .style-soft-glow .sheet {
+      background: rgb(255 255 255 / 0.58);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgb(255 255 255 / 0.6);
+      box-shadow: 0 -4px 24px rgb(45 90 61 / 0.12);
+    }
+    .style-soft-glow .inner-box { background: rgb(255 255 255 / 0.62); }
+
+    .style-minimal .backdrop { background: rgb(0 0 0 / 0.5); }
+    .style-minimal .sheet {
+      background: rgb(255 255 255 / 0.94);
+      border-top: none;
+      border-radius: 20px 20px 0 0;
+    }
+    .style-minimal .sheet-head { border-bottom: 2px solid #2d5a3d; }
+    .style-minimal .icon-box { background: #2d5a3d; color: #fff; }
+    .style-minimal .inner-box { background: #f4f5f0; border: none; }
+
+    /* center modal layout */
+    .phone.layout-center {
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .phone.layout-center .sheet {
+      border-radius: 18px;
+      max-height: 88%;
+    }
+    .phone.layout-center .phone-inner { width: 100%; max-width: 100%; }
+
+    .style-center-glass .backdrop { background: rgb(0 0 0 / 0.45); backdrop-filter: blur(4px); }
+    .style-center-glass .sheet {
+      background: rgb(255 255 255 / 0.74);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgb(255 255 255 / 0.65);
+      box-shadow: 0 16px 48px rgb(0 0 0 / 0.22);
+    }
+    .style-center-glass .inner-box { background: rgb(255 255 255 / 0.5); }
+
+    .style-center-dark .backdrop { background: rgb(0 0 0 / 0.55); }
+    .style-center-dark .sheet {
+      background: rgb(28 32 28 / 0.88);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgb(255 255 255 / 0.1);
+      color: #eee;
+    }
+    .style-center-dark .title { color: #fff; }
+    .style-center-dark .muted { color: #bbb; }
+    .style-center-dark .tip { color: #ddd; }
+    .style-center-dark .inner-box { background: rgb(255 255 255 / 0.08); border-color: rgb(255 255 255 / 0.12); }
+    .style-center-dark .btn-sec { background: rgb(255 255 255 / 0.12); color: #fff; border: 1px solid rgb(255 255 255 / 0.2); }
+
+    .style-center-outline .backdrop { background: rgb(0 0 0 / 0.4); }
+    .style-center-outline .sheet {
+      background: rgb(255 255 255 / 0.15);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgb(255 255 255 / 0.7);
+    }
+    .style-center-outline .inner-box { background: rgb(255 255 255 / 0.75); }
+
+    /* shared */
+    .sheet-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgb(0 0 0 / 0.06);
+      position: relative;
+      z-index: 1;
+    }
+    .style-dark-glass .sheet-head, .style-dark-airy .sheet-head { border-bottom-color: rgb(255 255 255 / 0.08); }
+    .icon-box {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: rgb(45 90 61 / 0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .title { font-weight: 800; font-size: 14px; color: #1a1c18; margin: 0; }
+    .muted { font-size: 10px; color: #3d4039; margin: 2px 0 0; }
+    .sheet-body { padding: 10px 14px; flex: 1; position: relative; z-index: 1; }
+    .inner-box {
+      border: 1px solid rgb(0 0 0 / 0.06);
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .inner-box .ph {
+      height: 64px;
+      background: linear-gradient(135deg, #d4ddd0, #b8c4b2);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; color: #5c5f57;
+    }
+    .tip { display: flex; gap: 5px; font-size: 10px; color: #2a2d26; margin-bottom: 5px; }
+    .tip span:first-child { color: #2d5a3d; font-weight: 700; }
+    .sheet-foot {
+      display: flex; gap: 6px; padding: 10px 14px;
+      border-top: 1px solid rgb(0 0 0 / 0.06);
+      position: relative; z-index: 1;
+    }
+    .style-dark-glass .sheet-foot, .style-dark-airy .sheet-foot { border-top-color: rgb(255 255 255 / 0.08); }
+    .btn { flex: 1; padding: 9px; border-radius: 9px; font-weight: 700; font-size: 10px; border: none; }
+    .btn-sec { background: rgb(255 255 255 / 0.45); border: 1px solid rgb(0 0 0 / 0.08); color: #3d4039; }
+    .btn-primary { background: #2d5a3d; color: #fff; }
+    .pros-cons {
+      padding: 8px 12px 12px;
+      font-size: 0.65rem;
+      color: #5c5f57;
+      line-height: 1.4;
+      border-top: 1px solid #ebece7;
+    }
+    .pros-cons strong { color: #2d5a3d; }
+    .opacity-tag { font-family: ui-monospace, monospace; font-size: 0.6rem; color: #6b6e66; }
+    .pick-row {
+      max-width: 1600px;
+      margin-top: 24px;
+      padding: 16px;
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid #e2e3dd;
+      font-size: 0.85rem;
+      line-height: 1.55;
+    }
+    .pick-row h3 { margin: 0 0 8px; color: #2d5a3d; }
+    .pick-row ul { margin: 0; padding-left: 1.2rem; }
+  </style>
+</head>
+<body>
+  <h1>Transparent modal — uitgebreide voorbeelden</h1>
+  <p class="sub">
+    <strong>30+ statische stijlen</strong> (B–AD) + 1 met live shimmer (A, niet gebruiken).
+    Bottom sheet én center modal. Geen animatie. Wissel achtergrondfoto om leesbaarheid te testen.
+  </p>
+  <p class="hint">
+    <strong>Open:</strong> <code>M:\mEPA\massEPA\icon-preview-media-modal.html</code>
+  </p>
+
+  <div class="bg-picker" id="bg-picker">
+    <button type="button" class="active" data-bg="bg-interior">Interieur foto</button>
+    <button type="button" data-bg="bg-exterior">Gevel / buiten</button>
+    <button type="button" data-bg="bg-busy">Drukke foto</button>
+  </div>
+
+  <div id="sections"></div>
+
+  <div class="pick-row">
+    <h3>Snel kiezen</h3>
+    <ul>
+      <li><strong>C / M / N</strong> — beste leesbaarheid + transparantie</li>
+      <li><strong>S / X / AE</strong> — bijna mat, zeer leesbaar (minimaal glas)</li>
+      <li><strong>T / U / AD</strong> — transparant midden, sterke header/footer of tips-blok</li>
+      <li><strong>V / AB</strong> — outline / rand, inhoud op kaarten</li>
+      <li><strong>AA / AC</strong> — zwevende kaart / iOS notch</li>
+      <li><strong>AF / AG / AH</strong> — center modal (House Design, Insolatie)</li>
+      <li><strong>F / R / AG</strong> — donker glas</li>
+    </ul>
+    <p style="margin:12px 0 0">Geef een letter (bijv. <strong>C</strong> of <strong>N</strong>) — dan passen we <code>MediaInstructionModal.tsx</code> aan.</p>
+  </div>
+
+  <script>
+    const groups = [
+      {
+        label: 'Niet gebruiken',
+        items: [{
+          id: 'A', class: 'style-live', badge: 'badge-skip', badgeText: 'live',
+          title: 'A — Huidig shimmer', desc: '20% + blur 25 + animatie', opacity: '20%',
+          pros: '—', cons: 'Shimmer live effect', tipStyle: 'plain',
+        }],
+      },
+      {
+        label: 'Aanbevolen — balans leesbaar + transparant',
+        items: [
+          { id: 'C', class: 'style-clean-glass', rec: true, badge: 'badge-rec', badgeText: 'top',
+            title: 'C — Clean frosted', desc: '72% wit blur 14', opacity: '72%',
+            pros: 'Duidelijk leesbaar', cons: 'Minder glas', tipStyle: 'plain' },
+          { id: 'M', class: 'style-gray-glass', rec: true, badge: 'badge-rec', badgeText: 'top',
+            title: 'M — Gray glass', desc: 'Neutraal grijs-wit 70%', opacity: '70%',
+            pros: 'Rustig, neutraal', cons: 'Weinig kleur', tipStyle: 'plain' },
+          { id: 'N', class: 'style-primary-tint', rec: true, badge: 'badge-rec', badgeText: 'top',
+            title: 'N — Primary tint', desc: '64% wit + groene rand', opacity: '64%',
+            pros: 'Past bij app groen', cons: 'Subtiele branding', tipStyle: 'plain' },
+          { id: 'I', class: 'style-balanced', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'I — Balanced 62%', desc: 'Tussen C en D', opacity: '62%',
+            pros: 'Sweet spot', cons: '—', tipStyle: 'plain' },
+        ],
+      },
+      {
+        label: 'Meer transparant — glas-gevoel',
+        items: [
+          { id: 'B', class: 'style-static-glass', badge: 'badge-alt', badgeText: 'glas',
+            title: 'B — Static glass', desc: '22% blur 20, text-shadow', opacity: '22%',
+            pros: 'Zelfde als nu zonder shimmer', cons: 'Tekst zwakker', tipStyle: 'plain' },
+          { id: 'G', class: 'style-crystal', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'G — Crystal iOS', desc: '28% blur 24', opacity: '28%',
+            pros: 'Sterk frosted glas', cons: 'Text-shadow nodig', tipStyle: 'plain' },
+          { id: 'O', class: 'style-ultra-blur', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'O — Ultra blur', desc: '25% blur 28', opacity: '25%',
+            pros: 'Zachte blur', cons: 'Laag contrast tekst', tipStyle: 'plain' },
+          { id: 'D', class: 'style-light-glass', badge: 'badge-alt', badgeText: 'licht',
+            title: 'D — Light 55%', desc: 'blur 12 donkere tekst', opacity: '55%',
+            pros: 'Foto goed zichtbaar', cons: '—', tipStyle: 'plain' },
+          { id: 'E', class: 'style-airy', badge: 'badge-alt', badgeText: 'luchtig',
+            title: 'E — Airy 38%', desc: 'blur 18 text-shadow', opacity: '38%',
+            pros: 'Max transparantie', cons: 'Drukke foto lastig', tipStyle: 'plain' },
+        ],
+      },
+      {
+        label: 'Speciale layouts',
+        items: [
+          { id: 'K', class: 'style-card-layer', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'K — Card layers', desc: 'Panel 18%, kaarten 50%+', opacity: '18% panel',
+            pros: 'Panel bijna vrij, tips op kaarten', cons: 'Meer UI lagen', tipStyle: 'cards' },
+          { id: 'L', class: 'style-gradient', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'L — Gradient fade', desc: 'Onder opaque, boven transparant', opacity: '25–88%',
+            pros: 'Tekst onderaan scherp', cons: 'Gradient niet overal', tipStyle: 'plain' },
+          { id: 'J', class: 'style-green-mist', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'J — Green mist', desc: 'App-groen tint 78%', opacity: '78%',
+            pros: 'Huisstijl', cons: 'Groene waas', tipStyle: 'plain' },
+        ],
+      },
+      {
+        label: 'Meer dekking — nog steeds transparant',
+        items: [
+          { id: 'H', class: 'style-milky', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'H — Milky 68%', desc: 'blur 10 zacht', opacity: '68%',
+            pros: 'Zacht, leesbaar', cons: 'Minder glas', tipStyle: 'plain' },
+          { id: 'P', class: 'style-satin', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'P — Satin 78%', desc: 'blur 6 lichte satijn', opacity: '78%',
+            pros: 'Zeer leesbaar', cons: 'Bijna mat', tipStyle: 'plain' },
+          { id: 'Q', class: 'style-veil', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'Q — Veil 48%', desc: 'blur 20 brightness', opacity: '48%',
+            pros: 'Helder midden', cons: '—', tipStyle: 'plain' },
+        ],
+      },
+      {
+        label: 'Donker transparant',
+        items: [
+          { id: 'F', class: 'style-dark-glass', badge: 'badge-alt', badgeText: 'donker',
+            title: 'F — Dark 72%', desc: 'Donker blur witte tekst', opacity: '72% dark',
+            pros: 'Witte tekst scherp', cons: 'Donker thema', tipStyle: 'plain' },
+          { id: 'R', class: 'style-dark-airy', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'R — Dark airy 50%', desc: 'Meer transparant donker', opacity: '50% dark',
+            pros: 'Donker + doorzichtig', cons: 'Past minder bij lichte UI', tipStyle: 'plain' },
+        ],
+      },
+      {
+        label: 'Nieuw — leesbaar zonder veel glas',
+        items: [
+          { id: 'S', class: 'style-scrim', rec: true, badge: 'badge-new', badgeText: 'nieuw',
+            title: 'S — Scrim + mat panel', desc: 'Donkere backdrop, panel 90% wit', opacity: '90%',
+            pros: 'Zeer leesbaar, foto nog zichtbaar', cons: 'Weinig frosted effect', tipStyle: 'plain' },
+          { id: 'X', class: 'style-paper', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'X — Paper matte', desc: 'Off-white 92%, zachte schaduw', opacity: '92%',
+            pros: 'Document-achtig, rustig', cons: 'Bijna ondoorzichtig', tipStyle: 'plain' },
+          { id: 'AE', class: 'style-minimal', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'AE — Minimal flat', desc: '94% wit, groene header-lijn', opacity: '94%',
+            pros: 'Strak, app-consistent', cons: 'Geen glas', tipStyle: 'plain' },
+        ],
+      },
+      {
+        label: 'Nieuw — zones & lagen (transparant + leesbaar)',
+        items: [
+          { id: 'T', class: 'style-bar-zones', rec: true, badge: 'badge-new', badgeText: 'nieuw',
+            title: 'T — Header/footer bars', desc: 'Body 12%, balken 82–88%', opacity: '12% body',
+            pros: 'Titel + knoppen altijd scherp', cons: 'Midden nog transparant', tipStyle: 'plain' },
+          { id: 'U', class: 'style-cta-dock', rec: true, badge: 'badge-new', badgeText: 'nieuw',
+            title: 'U — CTA dock', desc: 'Panel 32%, footer 94%', opacity: '32% / 94%',
+            pros: 'Knoppenbalk vast leesbaar', cons: 'Tips kunnen wazig zijn', tipStyle: 'plain' },
+          { id: 'AD', class: 'style-split-tips', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'AD — Tips block', desc: 'Panel 20%, tips in 78% blok', opacity: '20% panel',
+            pros: 'Tips altijd op kaart', cons: 'Twee visuele lagen', tipStyle: 'block' },
+        ],
+      },
+      {
+        label: 'Nieuw — rand, accent & zwevend',
+        items: [
+          { id: 'V', class: 'style-outline', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'V — Outline glass', desc: '8% fill, witte rand, kaarten 72%', opacity: '8%',
+            pros: 'Max doorzicht, inhoud op kaarten', cons: 'Rand moet goed zichtbaar zijn', tipStyle: 'outline' },
+          { id: 'W', class: 'style-accent-bar', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'W — Green top bar', desc: '3px groen + 66% frosted', opacity: '66%',
+            pros: 'Duidelijke branding', cons: 'Accent kan dominant zijn', tipStyle: 'plain' },
+          { id: 'AB', class: 'style-sidebar', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'AB — Sidebar accent', desc: '4px groene linkerrand', opacity: '64%',
+            pros: 'Subtiel massEPA accent', cons: 'Asymmetrisch', tipStyle: 'plain' },
+          { id: 'AA', class: 'style-floating', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'AA — Floating card', desc: 'Marge rond sheet, 76% wit', opacity: '76%',
+            pros: 'Zwevend, modern', cons: 'Minder bottom-sheet gevoel', tipStyle: 'plain', floating: true },
+          { id: 'AC', class: 'style-ios-notch', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'AC — iOS notch', desc: 'Drag pill + 70% frosted', opacity: '70%',
+            pros: 'Herkenbaar mobiel patroon', cons: 'Notch is decoratief', tipStyle: 'plain' },
+        ],
+      },
+      {
+        label: 'Nieuw — backdrop & gloed',
+        items: [
+          { id: 'AF', class: 'style-bottom-scrim', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'AF — Bottom scrim', desc: 'Gradient backdrop, panel 50%', opacity: '50%',
+            pros: 'Onderkant foto donkerder = leesbaar', cons: 'Gradient niet overal gelijk', tipStyle: 'plain' },
+          { id: 'AG', class: 'style-soft-glow', badge: 'badge-new', badgeText: 'nieuw',
+            title: 'AG — Soft green glow', desc: 'Groene backdrop-hint + 58%', opacity: '58%',
+            pros: 'Past bij massEPA sfeer', cons: 'Groene waas op foto', tipStyle: 'plain' },
+        ],
+      },
+      {
+        label: 'Center modal — House Design / Insolatie / Kozijn',
+        items: [
+          { id: 'AH', class: 'style-center-glass', rec: true, badge: 'badge-new', badgeText: 'center',
+            title: 'AH — Center frosted', desc: 'Midden op scherm, 74% wit', opacity: '74%',
+            pros: 'Goed voor center layout', cons: 'Niet bottom sheet', tipStyle: 'plain', layout: 'center' },
+          { id: 'AI', class: 'style-center-outline', badge: 'badge-new', badgeText: 'center',
+            title: 'AI — Center outline', desc: 'Transparant + witte rand', opacity: '15%',
+            pros: 'Glas midden op foto', cons: 'Leesbaarheid variabel', tipStyle: 'plain', layout: 'center' },
+          { id: 'AJ', class: 'style-center-dark', badge: 'badge-new', badgeText: 'center',
+            title: 'AJ — Center dark', desc: 'Donkere kaart 88%', opacity: '88% dark',
+            pros: 'Witte tekst, focus op inhoud', cons: 'Donker vs lichte app', tipStyle: 'plain', layout: 'center' },
+        ],
+      },
+    ];
+
+    function tipsHtml(tipStyle) {
+      const tips = [
+        'Houd de telefoon recht en stabiel',
+        'Zorg voor goed licht in de ruimte',
+        'Laat het hele kozijn in beeld',
+      ];
+      if (tipStyle === 'cards') {
+        return tips.map((t) => `<div class="tip tip-row"><span>✓</span><span>${t}</span></div>`).join('');
+      }
+      if (tipStyle === 'outline') {
+        return tips.map((t) => `<div class="tip tip-row-outline"><span>✓</span><span>${t}</span></div>`).join('');
+      }
+      if (tipStyle === 'block') {
+        return `<div class="tips-block">${tips.map((t) => `<div class="tip"><span>✓</span><span>${t}</span></div>`).join('')}</div>`;
+      }
+      return tips.map((t) => `<div class="tip"><span>✓</span><span>${t}</span></div>`).join('');
+    }
+
+    function modalHtml(opts = {}) {
+      const { tipStyle = 'plain', layout = 'bottom', floating = false } = opts;
+      const phoneClass = `phone bg-interior${layout === 'center' ? ' layout-center' : ''}`;
+      const sheetWrap = floating
+        ? `<div class="phone-inner">${sheetInner(tipStyle)}</div>`
+        : sheetInner(tipStyle);
+      return `
+        <div class="${phoneClass}">
+          <div class="backdrop"></div>
+          ${sheetWrap}
+        </div>`;
+    }
+
+    function sheetInner(tipStyle) {
+      return `
+          <div class="sheet">
+            <div class="sheet-head">
+              <div class="icon-box">📷</div>
+              <div>
+                <p class="title">Capture Assistant</p>
+                <p class="muted">Woonkamer · Ramen</p>
+              </div>
+            </div>
+            <div class="sheet-body">
+              <div class="inner-box">
+                <div class="ph">Voorbeeldfoto</div>
+                <p class="muted" style="margin:5px 0 0">Zo maak je een goede foto</p>
+              </div>
+              ${tipsHtml(tipStyle)}
+            </div>
+            <div class="sheet-foot">
+              <button class="btn btn-sec">Annuleren</button>
+              <button class="btn btn-primary">📷 Doorgaan</button>
+            </div>
+          </div>`;
+    }
+
+    const sections = document.getElementById('sections');
+    groups.forEach((group) => {
+      const label = document.createElement('div');
+      label.className = 'section-label';
+      label.textContent = group.label;
+      sections.appendChild(label);
+
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+
+      group.items.forEach((o) => {
+        const el = document.createElement('div');
+        el.className = `option ${o.rec ? 'recommended' : ''} ${o.class}`;
+        el.innerHTML = `
+          <div class="option-header">
+            <h2>${o.title}<span class="badge ${o.badge}">${o.badgeText}</span></h2>
+            <p>${o.desc} · <span class="opacity-tag">${o.opacity}</span></p>
+          </div>
+          ${modalHtml(o)}
+          <div class="pros-cons"><strong>+</strong> ${o.pros}<br><strong>−</strong> ${o.cons}</div>`;
+        grid.appendChild(el);
+      });
+      sections.appendChild(grid);
+    });
+
+    document.getElementById('bg-picker').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-bg]');
+      if (!btn) return;
+      document.querySelectorAll('.bg-picker button').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cls = btn.dataset.bg;
+      document.querySelectorAll('.phone').forEach((p) => {
+        p.classList.remove('bg-interior', 'bg-exterior', 'bg-busy');
+        p.classList.add(cls);
+      });
+    });
+  </script>
+</body>
+</html>

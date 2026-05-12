@@ -1,0 +1,919 @@
+{
+  "version": 1,
+  "sourceFile": "Action List_massEPA - UI items.csv",
+  "generatedAt": "2026-05-14T11:12:55.116Z",
+  "items": [
+    {
+      "order": 1,
+      "section": "User Registration",
+      "category": "Personal details",
+      "question": "Name",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 1,
+      "section": "User Registration",
+      "category": "Personal details",
+      "question": "Email",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 1,
+      "section": "User Registration",
+      "category": "Personal details",
+      "question": "Phone number",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 1,
+      "section": "User Registration",
+      "category": "Personal details",
+      "question": "Alternative phone number",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "Adres",
+      "question": "Address",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "Adres",
+      "question": "Plaats",
+      "roles": {
+        "client": false,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "Adres",
+      "question": "Buurt",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": false
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "Adres",
+      "question": "Wijk",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": false
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "Adres",
+      "question": "Gemeente",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": false
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "Building details",
+      "question": "Bouwjaar",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": false
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "Renovation status",
+      "question": "Have you renovated isolatie for whole wonining?",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "Renovation status",
+      "question": "Have you renovated Glas type for all kozijnen of wonining?",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "woning type",
+      "question": "Gebouw type",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "woning type",
+      "question": "Position",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "woning type",
+      "question": "Ligging",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "Building details",
+      "question": "Gebouwhoogte totale gebouw",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": false
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "Building details",
+      "question": "Number of floor",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "Building details",
+      "question": "Floor Area",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": false
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "Features",
+      "question": "Map of that area (Viewer)",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "Features",
+      "question": "Street view of that house (Viewer)",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 2,
+      "section": "Identificatie",
+      "category": "Features",
+      "question": "AHN model (Viewer)",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 3,
+      "section": "Choice",
+      "category": "Upload document",
+      "question": "Do you have tekeningen of woning? | Yes/No",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 3,
+      "section": "Drawings & Property details",
+      "category": "Upload document",
+      "question": "Upload floor plan, section, elevation",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 3,
+      "section": "Drawings & Property details",
+      "category": "Room configuration",
+      "question": "Select present room in the house",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 3,
+      "section": "Drawings & Property details",
+      "category": "Zonwering",
+      "question": "Type of zonwering",
+      "roles": {
+        "client": false,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 4,
+      "section": "Algemeen",
+      "category": "Property details",
+      "question": "Type bouwwijze vloeren",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 4,
+      "section": "Algemeen",
+      "category": "Property details",
+      "question": "Type bouwwijze wanden",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 4,
+      "section": "Algemeen",
+      "category": "GBO-T",
+      "question": "Confirm total thermische area (in m²) : Predefine value",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": false
+      }
+    },
+    {
+      "order": 4,
+      "section": "Algemeen",
+      "category": "Leidingdoorvoeren",
+      "question": "Number of shaft which contains HWA VWA pipes : Enter value",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 4,
+      "section": "Algemeen",
+      "category": "AVR",
+      "question": "Provide AVR value (adjucent to heated area) : Enter value",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 5,
+      "section": "Isolatie",
+      "category": "Gevel isolatie",
+      "question": "Upload doc / Capture photo",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 5,
+      "section": "Isolatie",
+      "category": "Gevel isolatie",
+      "question": "Enter isolatie thickness",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 5,
+      "section": "Isolatie",
+      "category": "Vloer isolatie",
+      "question": "Upload doc / Capture photo",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 5,
+      "section": "Isolatie",
+      "category": "Vloer isolatie",
+      "question": "Enter isolatie thickness",
+      "roles": {
+        "client": false,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 5,
+      "section": "Isolatie",
+      "category": "Dak isolatie",
+      "question": "Upload doc / Capture photo",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 5,
+      "section": "Isolatie",
+      "category": "Dak isolatie",
+      "question": "Enter isolatie thickness",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 5,
+      "section": "Isolatie",
+      "category": "panelen isolatie",
+      "question": "Upload doc / Capture photo",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 5,
+      "section": "Isolatie",
+      "category": "panelen isolatie",
+      "question": "Enter isolatie thickness",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Ventilatie",
+      "question": "Is Co2 sensor available?",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Ventilatie",
+      "question": "Select location of ventilatie Co2 sensor",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Verwarming",
+      "question": "Type of heating systeem",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Verwarming",
+      "question": "Select location of opwekker systeem",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Verwarming",
+      "question": "Type of afgiftesysteem",
+      "roles": {
+        "client": false,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Verwarming",
+      "question": "Type of regeling",
+      "roles": {
+        "client": false,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Tapwater",
+      "question": "Same as verwarming? | Yes/No",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Tapwater",
+      "question": "Type of opwekker",
+      "roles": {
+        "client": false,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Tapwater",
+      "question": "Type of toestel",
+      "roles": {
+        "client": false,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Tapwater",
+      "question": "Select location of opwekker systeem",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Tapwater",
+      "question": "Type of afgiftesysteem",
+      "roles": {
+        "client": false,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Zonne-panelen",
+      "question": "Are PV panelen installed? | Yes/No",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Zonne-panelen",
+      "question": "Enter number of pv-panels",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Zonne-panelen",
+      "question": "Enter hellingshoek value",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Zonne-panelen",
+      "question": "Type of bouwintegratie",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Koeling",
+      "question": "Is cooling system available? | Yes/No",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Koeling",
+      "question": "Type of opwekker",
+      "roles": {
+        "client": false,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Koeling",
+      "question": "Type of afgiftesysteem",
+      "roles": {
+        "client": false,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 6,
+      "section": "Installatie",
+      "category": "Koeling",
+      "question": "Which rooms are actively cooling?",
+      "roles": {
+        "client": false,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 7,
+      "section": "Kozijn & Glas",
+      "category": "Upload document",
+      "question": "Upload doc for updated kozijn",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 7,
+      "section": "Kozijn & Glas",
+      "category": "Kozijn",
+      "question": "Are all same? | Yes/No",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 7,
+      "section": "Kozijn & Glas",
+      "category": "Kozijn",
+      "question": "Select type",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 7,
+      "section": "Kozijn & Glas",
+      "category": "Kozijn",
+      "question": "Select location",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 7,
+      "section": "Kozijn & Glas",
+      "category": "Kozijn",
+      "question": "Select level",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 7,
+      "section": "Kozijn & Glas",
+      "category": "Glas",
+      "question": "Are all same? | Yes/No",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 7,
+      "section": "Kozijn & Glas",
+      "category": "Glas",
+      "question": "Select type",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 7,
+      "section": "Kozijn & Glas",
+      "category": "Glas",
+      "question": "Merk & type",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 7,
+      "section": "Kozijn & Glas",
+      "category": "Glas",
+      "question": "Select location",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 7,
+      "section": "Kozijn & Glas",
+      "category": "Glas",
+      "question": "Select level",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 7,
+      "section": "Kozijn & Glas",
+      "category": "Door",
+      "question": "Is door isolated? | Yes/No",
+      "roles": {
+        "client": false,
+        "bidIntern": false,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 8,
+      "section": "Photo capture",
+      "category": "Exterior",
+      "question": "All the gevel",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 8,
+      "section": "Photo capture",
+      "category": "Exterior",
+      "question": "All the windows with closeup",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 8,
+      "section": "Photo capture",
+      "category": "Exterior",
+      "question": "Measurement of all door & Window",
+      "roles": {
+        "client": false,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 8,
+      "section": "Photo capture",
+      "category": "Exterior",
+      "question": "Grenst aan",
+      "roles": {
+        "client": false,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 8,
+      "section": "Photo capture",
+      "category": "Exterior",
+      "question": "Measure length of any gevel for scale",
+      "roles": {
+        "client": false,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 8,
+      "section": "Photo capture",
+      "category": "Interior",
+      "question": "Capture photos of all spaces to identify windows, systems, and installations.",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 9,
+      "section": "Review",
+      "category": "Completed data",
+      "question": "List of items which has been completed",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    },
+    {
+      "order": 9,
+      "section": "Review",
+      "category": "Audit warning",
+      "question": "List of all missing / incomplete items",
+      "roles": {
+        "client": true,
+        "bidIntern": true,
+        "backOffice": true,
+        "inspector": true
+      }
+    }
+  ]
+}

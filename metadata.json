@@ -1,0 +1,6 @@
+{
+  "name": "BuildingID",
+  "description": "A premium digital workspace for energy certification and technical data management.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": []
+}

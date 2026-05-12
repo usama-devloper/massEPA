@@ -1,0 +1,651 @@
+{
+  "common": {
+    "yes": "Ja",
+    "no": "Nee",
+    "logout": "Uitloggen",
+    "continue": "Doorgaan",
+    "continueTo": "Doorgaan naar {page}",
+    "previous": "Vorige",
+    "done": "Klaar",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "add": "Toevoegen"
+  },
+  "themes": {
+    "forest": {
+      "label": "Bos",
+      "description": "Standaard BuildingID-groentinten en zachte off-white vlakken."
+    },
+    "ocean": {
+      "label": "Oceaan",
+      "description": "Koele blauwtinten met luchtige achtergronden."
+    },
+    "slate": {
+      "label": "Leisteen",
+      "description": "Neutraal grijs met indigo accenten."
+    },
+    "warm": {
+      "label": "Warm klei",
+      "description": "Warme stenen vlakken met terracotta primaire kleur."
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "clients": "Clients",
+    "dashboard": "Dashboard",
+    "algemeen": "Algemeen",
+    "upload": "Huisontwerp",
+    "insulation": "Isolatie details",
+    "installatie": "Installaties",
+    "kozijnGlas": "Kozijn & glas",
+    "photos": "Foto's",
+    "finalReview": "Eindcontrole",
+    "complete": "Compleet",
+    "settings": "Instellingen"
+  },
+  "back": {
+    "dashboard": "Terug naar dashboard",
+    "algemeen": "Terug naar algemeen",
+    "upload": "Terug naar huisontwerp",
+    "insulation": "Terug naar isolatie",
+    "installatie": "Terug naar installaties",
+    "kozijnGlas": "Terug naar kozijn & glas",
+    "photos": "Terug naar foto's",
+    "finalReview": "Terug naar eindcontrole"
+  },
+  "settings": {
+    "title": "Instellingen",
+    "subtitle": "Pas weergave en taal aan. Je keuzes worden op dit apparaat opgeslagen.",
+    "backToAlgemeen": "Terug naar algemeen",
+    "colorScheme": "Kleurenschema",
+    "language": {
+      "title": "Taal",
+      "description": "Kies de taal voor menu's, labels en berichten in de app.",
+      "nl": "Nederlands",
+      "en": "Engels"
+    }
+  },
+  "profile": {
+    "title": "Gebruikersprofiel",
+    "subtitle": "Beheer je profielgegevens",
+    "backToDashboard": "Terug naar dashboard",
+    "memberSince": "Lid sinds {year}",
+    "fullName": "Volledige naam",
+    "phoneNumber": "Telefoonnummer",
+    "email": "E-mailadres",
+    "address": "Adres",
+    "notProvided": "Niet ingevuld",
+    "logout": "Uitloggen",
+    "fieldUpdated": "{field} succesvol bijgewerkt!"
+  },
+  "clients": {
+    "title": "Clients",
+    "subtitle": "Beheer bewoners en controleer dossiervulling per adres.",
+    "backToDashboard": "Terug naar dashboard",
+    "denied": "Niet toegestaan voor uw rol.",
+    "back": "Terug",
+    "newClient": "Nieuwe client",
+    "searchPlaceholder": "Zoek op naam, e-mail, adres of telefoon…",
+    "loading": "Laden…",
+    "emptyTitle": "Geen clients gevonden.",
+    "emptyHint": "Voeg er één toe met “Nieuwe client”.",
+    "unnamed": "Naamloos",
+    "noAddress": "Geen adres",
+    "selectHint": "Selecteer een client om details te zien.",
+    "fillDetails": "Vul de gegevens in",
+    "edit": "Bewerken",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "delete": "Verwijderen",
+    "openDossier": "Open dossier (Algemeen)",
+    "form": {
+      "fullName": "Volledige naam",
+      "email": "E-mail",
+      "phone": "Telefoon",
+      "address": "Adres"
+    },
+    "dossier": {
+      "title": "Dossier status",
+      "label": "Dossier:",
+      "present": "aanwezig",
+      "notFound": "niet gevonden",
+      "fill": "Vulling:",
+      "updated": "Laatst bijgewerkt:",
+      "by": "Door:"
+    },
+    "validation": {
+      "nameRequired": "Volledige naam is verplicht",
+      "addressRequired": "Adres is verplicht",
+      "emailRequired": "E-mail is verplicht"
+    },
+    "toast": {
+      "added": "Client toegevoegd",
+      "updated": "Client bijgewerkt",
+      "deleted": "Client verwijderd",
+      "notFound": "Client niet gevonden",
+      "saveFailed": "Kon client niet opslaan",
+      "updateFailed": "Kon client niet bijwerken",
+      "deleteFailed": "Kon client niet verwijderen"
+    }
+  },
+  "home": {
+    "startAudit": "Start opname",
+    "streetView": "Streetview",
+    "mapLoading": "Streetview laden…",
+    "noMap": "Voeg een adres toe om het huis te zien",
+    "openStreetView": "Open in Google Maps",
+    "floorsOne": "{count} verdieping",
+    "floorsMany": "{count} verdiepingen"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Volg je voortgang en navigeer door de onderdelen",
+    "progressOverview": "Voortgangsoverzicht",
+    "progressHint": "Voltooi alle onderdelen om de opname af te ronden",
+    "overallCompletion": "Totale voortgang",
+    "overallHint": "Samenvatting van je opnamevoortgang",
+    "progressComplete": "Voltooid",
+    "categories": {
+      "algemeen": "Algemeen",
+      "upload": "Huisontwerp",
+      "insulation": "Isolatie",
+      "installatie": "Installaties",
+      "kozijnGlas": "Kozijn & glas",
+      "photos": "Foto's",
+      "complete": "Compleet"
+    },
+    "details": {
+      "fields": "{filled}/{total} velden",
+      "files": "{count}/1 bestanden",
+      "photos": "{count}/3 foto's",
+      "percent": "{value}%"
+    }
+  },
+  "insulation": {
+    "title": "Isolatie details",
+    "subtitle": "Geef details en visueel bewijs voor isolatielagen van het gebouw",
+    "backToUpload": "Terug naar huisontwerp",
+	"customMaterial": "Aangepast materiaal",
+    "customMaterialPlaceholder": "Aangepaste materiaal-placeholder...",
+    "evidenceAdded": "{{graaf}} Bewijs toegevoegd",
+    "categories": {
+      "gevel": "Gevel isolatie",
+      "vloer": "Vloer isolatie",
+      "dak": "Dak isolatie",
+      "panelen": "Panelen isolatie"
+    },
+    "evidenceAdded": "{count} bewijs toegevoegd",
+    "materialType": "Constructie materiaaltype",
+    "selectMaterial": "Selecteer materiaal…",
+    "backToMaterialSelect": "Kies uit lijst",
+    "thickness": "Geschatte dikte (mm)",
+    "thicknessPlaceholder": "Dikte",
+    "doorIsolated": "Is deur geïsoleerd?",
+    "continueInstallatie": "Doorgaan naar installaties",
+    "guide": {
+      "subtitleWithContext": "Tips voor {label}",
+      "camera": {
+        "title": "Capture Assistant",
+        "subtitle": "Korte tips voordat u isolatie fotografeert",
+        "illustration": "Kader de isolatie duidelijk",
+        "tip1": "Houd uw telefoon stabiel",
+        "tip2": "Zorg voor goede belichting",
+        "tip3": "Leg het isolatiemateriaal duidelijk vast",
+        "tip4": "Toon de dikte indien mogelijk",
+        "tip5": "U kunt meerdere foto's maken",
+        "continue": "Foto's maken"
+      },
+      "upload": {
+        "title": "Upload Assistant",
+        "subtitle": "Korte tips voordat u isolatiebestanden uploadt",
+        "illustration": "Selecteer bestanden op uw apparaat",
+        "tip1": "Selecteer duidelijke foto's van isolatie",
+        "tip2": "Kies bestanden op uw apparaat",
+        "tip3": "PDF-documenten worden ook geaccepteerd",
+        "tip4": "U kunt meerdere bestanden tegelijk selecteren",
+        "tip5": "Zorg dat isolatie zichtbaar is op foto's",
+        "continue": "Bestanden uploaden"
+      },
+      "reviewSubtitle": "Controleer uw selectie voordat u opslaat",
+      "selectedCount": "{count} geselecteerd",
+      "reviewEmpty": "Nog geen bestanden. Voeg foto's of documenten toe.",
+      "addMore": "+ Meer toevoegen",
+      "done": "Klaar"
+    }
+  },
+  "installatie": {
+    "title": "Installatie & techniek",
+    "subtitle": "Geef details over verwarming, koeling, ventilatie en zonne-energie",
+    "backToInsulation": "Terug naar isolatie",
+    "selectSection": "Selecteer dit onderdeel om vragen te beantwoorden",
+    "ventilation": "Ventilatie",
+    "ventilationCo2": "Is er een ventilatiesysteem met een CO2 sensor?",
+    "sensorLocation": "Sensorlocatie (meerdere mogelijk)",
+    "otherLocation": "Andere locatie…",
+    "andersSaved": "Opgeslagen",
+    "heating": "Verwarming",
+    "heatingType": "Type verwarmingssysteem",
+    "selectHeatingType": "Selecteer type verwarming",
+    "heatingTypes": {
+      "hrKetel": "HR ketel",
+      "cvKetel": "CV ketel",
+      "warmtepomp": "Warmtepomp",
+      "stadsverwarming": "Stadsverwarming",
+      "lucht": "Lucht"
+    },
+    "location": "Locatie",
+    "selectLocation": "Selecteer locatie",
+    "enterLocation": "Locatie invoeren…",
+    "emissionType": "Type afgiftesysteem",
+    "selectEmissionType": "Selecteer type afgiftesysteem",
+    "controlType": "Type regeling",
+    "selectControlType": "Selecteer type regeling",
+    "generatorType": "Type opwekker",
+    "selectGeneratorType": "Selecteer type opwekker",
+    "deviceType": "Type toestel",
+    "selectDeviceType": "Selecteer type toestel",
+    "buildingIntegration": "Gebouwintegratie",
+    "selectIntegrationType": "Selecteer type integratie",
+    "emissionSystem": "Afgiftesysteem",
+    "selectEmissionSystem": "Selecteer afgiftesysteem",
+    "tapwater": "Tapwater",
+    "tapwaterSame": "Is tapwater systeem gelijk aan verwarming?",
+    "solar": "Zonnepanelen",
+    "solarInstalled": "Zijn er zonnepanelen geïnstalleerd?",
+    "panelCount": "Aantal panelen",
+    "tiltAngle": "Hellingshoek",
+    "cooling": "Koeling",
+    "activeCooling": "Is er actieve koeling aanwezig?",
+    "coolingRooms": "In welke ruimtes is er actieve koeling?",
+    "continueKozijn": "Doorgaan naar kozijn & glas"
+  },
+  "kozijn": {
+    "title": "Kozijn & glas",
+    "subtitle": "Inspectie van raampartijen en isolatiewaarden",
+    "backToInstallatie": "Terug naar installaties",
+    "documentation": "Documentatie",
+    "uploadKozijnDocs": "Upload documenten voor vernieuwde kozijnen",
+    "kozijnDetails": "Kozijn details",
+    "allKozijnenSame": "Zijn alle kozijnen hetzelfde?",
+    "glasDetails": "Glas details",
+    "allGlasSame": "Is al het glas hetzelfde?",
+    "frameType": "Type kozijn",
+    "glassType": "Type glas",
+    "brandType": "Merk & type",
+    "brandPlaceholder": "Bijv. Pilkington Insulight",
+    "location": "Locatie",
+    "floor": "Verdieping",
+    "selectFrameType": "Selecteer type kozijn",
+    "selectGlassType": "Selecteer type glas",
+    "selectLocation": "Selecteer locatie",
+    "selectFloor": "Selecteer verdieping",
+    "frameLocationN": "Kozijnlocatie {n}",
+    "glassLocationN": "Glaslocatie {n}",
+    "locationsAdded": "{count} locaties toegevoegd",
+    "addFrameLocation": "Nog een kozijnlocatie toevoegen",
+    "addGlassLocation": "Nog een glaslocatie toevoegen",
+    "continueToPhotos": "Doorgaan naar {page}",
+    "downloadPdf": "PDF downloaden",
+    "addGevel": "Gevel toevoegen",
+    "continuePhotos": "Doorgaan",
+    "options": {
+      "frame": {
+        "hout": "Hout",
+        "houtKunststof": "Hout of kunststof",
+        "kunststof": "Kunststof",
+        "metaal": "Metaal"
+      },
+      "glass": {
+        "hrpp": "HR++ glas",
+        "hrppp": "HR+++ glas (triple)",
+        "dubbel": "Dubbel glas",
+        "enkel": "Enkel glas"
+      },
+      "location": {
+        "voor": "Voor",
+        "achter": "Achter",
+        "links": "Links",
+        "rechts": "Rechts"
+      }
+    },
+    "guide": {
+      "camera": {
+        "title": "Capture Assistant",
+        "subtitle": "Korte tips voordat u kozijndocumenten fotografeert",
+        "illustration": "Kader het document duidelijk",
+        "tip1": "Houd uw telefoon stabiel",
+        "tip2": "Zorg voor goede belichting",
+        "tip3": "Leg kozijnlabels en specificaties duidelijk vast",
+        "tip4": "Vermijd schittering op glas",
+        "tip5": "U kunt meerdere foto's maken",
+        "continue": "Foto's maken"
+      },
+      "upload": {
+        "title": "Upload Assistant",
+        "subtitle": "Korte tips voordat u kozijndocumenten uploadt",
+        "illustration": "Selecteer bestanden op uw apparaat",
+        "tip1": "Gebruik duidelijke PDF- of afbeeldingsbestanden",
+        "tip2": "Voeg kozijn- en glasspecificaties toe indien beschikbaar",
+        "tip3": "PDF en JPG/PNG worden geaccepteerd",
+        "tip4": "U kunt meerdere bestanden tegelijk selecteren",
+        "tip5": "Zorg dat tekst en details leesbaar zijn",
+        "continue": "Bestanden uploaden"
+      },
+      "reviewSubtitle": "Controleer uw selectie voordat u opslaat",
+      "selectedCount": "{count} geselecteerd",
+      "reviewEmpty": "Nog geen bestanden. Voeg foto's of documenten toe.",
+      "addMore": "+ Meer toevoegen",
+      "done": "Klaar"
+    }
+  },
+  "photos": {
+    "title": "Foto's",
+    "subtitle": "Leg bewijs vast voor buiten- en binnenruimtes",
+    "backToKozijn": "Terug naar kozijn & glas",
+    "exterior": "Exterieur",
+    "interior": "Interieur",
+    "photoCount": "{count}/{total} foto's",
+    "capturePhoto": "Foto maken",
+    "deletePhoto": "Foto verwijderen",
+    "photoCaptured": "Foto vastgelegd",
+    "photoDeleted": "Foto verwijderd",
+    "continueReview": "Doorgaan naar eindcontrole",
+    "guide": {
+      "subtitleWithContext": "Tips voor {label}",
+      "camera": {
+        "title": "Capture Assistant",
+        "subtitle": "Korte tips voordat u foto's maakt",
+        "subtitleWithContext": "Tips voor {label}",
+        "illustration": "Kader uw opname",
+        "tip1": "Houd uw telefoon stabiel",
+        "tip2": "Zorg voor goede belichting",
+        "tip3": "Leg de ruimte duidelijk vast",
+        "tip4": "Toon belangrijke details",
+        "tip5": "U kunt meerdere foto's maken",
+        "continue": "Foto's maken"
+      },
+      "reviewTitle": "Vastleggen {label}",
+      "reviewSubtitle": "Maak meerdere foto's voordat u opslaat",
+      "selectedCount": "{count} geselecteerd",
+      "reviewEmpty": "Nog geen foto's vastgelegd",
+      "addMore": "+ Meer toevoegen",
+      "done": "Klaar",
+      "categoryTips": "{label} tips",
+      "reviewTip1": "Houd de camera stabiel",
+      "reviewTip2": "Leg het volledige gebied duidelijk vast",
+      "reviewTip3": "Vermijd wazige of donkere foto's",
+      "reviewTip4": "Maak foto's vanuit meerdere hoeken",
+      "savedToast": "{count} foto('s) opgeslagen"
+    },
+	 "exterior": {
+    "voor": "Voorgevel",
+    "achter": "Achtergevel",
+    "links": "Linkergevel",
+    "rechts": "Rechtergevel"
+  },
+    "category": {
+      "doorIsolated": "Is de deur geïsoleerd?",
+      "glassType": "Type glas?",
+      "frameType": "Type kozijn?"
+    }
+  },
+  "photoInterior": {
+    "title": "Ruimteselectie – fase 2",
+    "subtitle": "Selecteer het specifieke gebied of de ruimte voor gedetailleerde mapping.",
+    "backToPhotos": "Terug naar foto's"
+  },
+  "finalReview": {
+    "title": "Audit review",
+    "ready": "Klaar om in te dienen",
+    "initial": "Startstatus",
+    "backToPhotos": "Terug naar foto's",
+    "percentCompleted": "{percent}% voltooid",
+    "itemsPending": "{count} openstaand",
+    "pendingTitle": "Openstaande / onvolledige items",
+    "footerHint": "Los de {count} openstaande items op om definitieve indiening te ontgrendelen.",
+    "footerSub": "Voortgang wordt automatisch opgeslagen in de beveiligde audit-cloud.",
+    "submitAudit": "Definitieve audit indienen",
+    "items": {
+      "verification": {
+        "title": "Verificatie",
+        "description": "Eigenaar- en locatieverificatie vereist een ondertekend bevestigingsdocument.",
+        "action": "Actie vereist"
+      },
+      "algemeen": {
+        "title": "Algemeen",
+        "description": "Algemene gebouwkenmerken en bouwjaar zijn nog niet afgerond.",
+        "action": "Info bijwerken"
+      },
+      "drawing": {
+        "title": "Tekening",
+        "description": "Architectonische plattegronden moeten voor alle verdiepingen worden geüpload.",
+        "action": "Nu uploaden"
+      },
+      "constructie": {
+        "title": "Constructie",
+        "descriptionVerified": "Constructiedetails van het gebouw zijn geverifieerd.",
+        "descriptionNotSelected": "Isolatiestatus niet geselecteerd.",
+        "descriptionMissing": "Ontbreekt: {items}.",
+        "missingSpecs": "isolatiemateriaal en dikte",
+        "missingDoor": "deurstatus",
+        "action": "Waarden verifiëren"
+      },
+      "installatie": {
+        "title": "Installatie",
+        "description": "Specificaties voor ventilatie, verwarming en PV vereisen fabrieksgegevens.",
+        "action": "Specificaties toevoegen"
+      },
+      "photo": {
+        "title": "Foto",
+        "description": "Verplicht fotobewijs voor de woning ontbreekt.",
+        "action": "Foto's maken"
+      }
+    }
+  },
+  "algemeen": {
+    "title": "Algemeen",
+    "continueHouseDesign": "Doorgaan naar huisontwerp",
+    "backToDashboard": "Terug naar dashboard",
+    "notProvided": "Niet opgegeven",
+    "labels": {
+      "address": "Adres",
+      "city": "Plaats",
+      "neighborhood": "Buurt",
+      "district": "Wijk",
+      "municipality": "Gemeente",
+      "buildingHeight": "Totale gebouwhoogte (m)",
+      "floorArea": "Vloeroppervlakte (m²)",
+      "buildingType": "Woningtype",
+      "position": "Positie / subtype",
+      "roofType": "Daktype",
+      "location": "Ligging",
+      "whichFloor": "Welke verdieping?",
+      "startFloor": "Startverdieping?",
+      "numberOfFloors": "Aantal verdiepingen",
+      "hasBasement": "Is er een kelder aanwezig?",
+      "hasCrawlSpace": "Is er een kruipruimte aanwezig?",
+      "yearBuilt": "Bouwjaar",
+      "renovationStatus": "Renovatiestatus",
+      "yearRenovation": "Renovatiejaar",
+      "hasFloorPlans": "Heeft u plattegronden?"
+    },
+    "placeholders": {
+      "city": "Plaats…",
+      "neighborhood": "Buurt…",
+      "district": "Wijk…",
+      "municipality": "Gemeente…",
+      "height": "0,0 m",
+      "floorArea": "0,0 m²",
+      "yearBuilt": "bijv. 1970",
+      "yearRenovation": "bijv. 2020"
+    },
+    "confirm": {
+      "title": "Aanvraag indienen",
+      "message": "Weet u zeker dat alle gegevens correct zijn?"
+    },
+    "toast": {
+      "floorPlansRequired": "Selecteer Ja of Nee voor plattegronden"
+    },
+    "options": {
+      "buildingType": {
+        "detachedHouse": "Eengezinswoning",
+        "apartment": "Woning in een appartementencomplex",
+        "detachedNonSelfContained": "Eengezinswoning met niet zelfstandig wooneenheden met eigen adressen",
+        "apartmentNonSelfContained": "Woning in een appartementencomplex met niet zelfstandige wooneenheden met eigen adressen"
+      },
+      "position": {
+        "detached": "Vrijstaand",
+        "endTerrace": "Kop-eind-of hoekligging",
+        "midTerrace": "Tussenligging",
+        "semiDetached": "Twee onder een kap"
+      },
+      "location": {
+        "pitchedRoof": "Hellend dak",
+        "partlyFlat": "Deels plat dak",
+        "flatRoof": "Plat dak / zonder kap",
+        "groundFloorUnit": "Onderste verdieping",
+        "middleFloor": "Tussenverdieping",
+        "topFloor": "Bovenste verdieping",
+        "groundWithRoof": "Onderste verdieping met dak"
+      },
+      "whichFloor": {
+        "ground": "Begane grond",
+        "first": "1e verdieping",
+        "second": "2e verdieping",
+        "third": "3e verdieping",
+        "fourth": "4e verdieping",
+        "fifth": "5e verdieping",
+        "sixth": "6e verdieping",
+        "seventh": "7e verdieping",
+        "eighth": "8e verdieping",
+        "ninth": "9e verdieping"
+      }
+    }
+  },
+  "upload": {
+    "title": "Huisontwerp",
+    "continueInsulation": "Doorgaan naar isolatie details",
+    "backToAlgemeen": "Terug naar algemeen",
+    "uploadLabelRequired": "PDF of afbeelding (max. 25 MB)",
+    "uploadLabelSkip": "Plattegronden niet verplicht",
+    "floorPlansTitle": "Plattegronden",
+    "noPlansHintPrefix": "Bij Algemeen gaf u aan dat u ",
+    "noPlansBold": "geen plattegronden heeft",
+    "noPlansHintSuffix": ". U kunt doorgaan zonder tekeningen te uploaden. Gebruik de volgende onderdelen om ruimtes en overige gegevens in te vullen.",
+    "technicalTitle": "Technische beoordelingsgegevens",
+    "technicalSubtitle": "Aanvullende parameters voor verificatie.",
+    "roomsTitle": "Welke ruimtes zijn aanwezig in de woning?",
+    "roomsCount": "{count} ruimtes",
+    "insulationQuestion": "Is er na de bouw nieuwe isolatie toegepast?",
+    "addRoom": "Ruimte toevoegen",
+    "addBedrooms": "Meer slaapkamers toevoegen",
+    "removeBedroom": "Extra slaapkamer verwijderen",
+    "roomNamePlaceholder": "Ruimtenaam",
+    "existingRoom": "Bestaand",
+    "floorPlanAlt": "Plattegrond {n}",
+    "modalAlt": "Plattegrond volledig",
+    "guide": {
+      "camera": {
+        "title": "Capture Assistant",
+        "subtitle": "Korte tips voordat u plattegronden fotografeert",
+        "illustration": "Kader de volledige tekening",
+        "tip1": "Houd uw telefoon stabiel",
+        "tip2": "Zorg voor goede belichting",
+        "tip3": "Leg de volledige plattegrond duidelijk vast",
+        "tip4": "Vermijd schittering en schaduwen",
+        "tip5": "U kunt meerdere foto's maken",
+        "continue": "Foto's maken"
+      },
+      "upload": {
+        "title": "Upload Assistant",
+        "subtitle": "Korte tips voordat u plattegronden uploadt",
+        "illustration": "Selecteer bestanden op uw apparaat",
+        "tip1": "Gebruik duidelijke PDF- of afbeeldingsbestanden",
+        "tip2": "Maximale bestandsgrootte is 25 MB",
+        "tip3": "PDF en JPG/PNG worden geaccepteerd",
+        "tip4": "U kunt meerdere bestanden tegelijk selecteren",
+        "tip5": "Zorg dat de indeling van ruimtes leesbaar is",
+        "continue": "Bestanden uploaden"
+      },
+      "reviewSubtitle": "Controleer uw selectie voordat u opslaat",
+      "selectedCount": "{count} geselecteerd",
+      "reviewEmpty": "Nog geen bestanden. Voeg foto's of documenten toe.",
+      "addMore": "+ Meer toevoegen",
+      "done": "Klaar"
+    },
+    "labels": {
+      "floorConstruction": "Type bouwwijze vloeren",
+      "wallConstruction": "Type bouwwijze wanden",
+      "gboT": "GBO-T (m²)",
+      "pipePenetrations": "Leidingdoorvoeren",
+      "avr": "AVR"
+    },
+    "placeholders": {
+      "gboT": "0,00",
+      "input": "Invoer…"
+    },
+    "construction": {
+      "light": "Licht",
+      "heavy": "Zwaar",
+      "veryHeavy": "Zeer zwaar"
+    },
+    "floors": {
+		"kelder": "Kelder",
+      "ground": "Begane grond",
+      "first": "1e verdieping",
+      "second": "2e verdieping",
+      "third": "3e verdieping",
+      "fourth": "4e verdieping",
+      "fifth": "5e verdieping",
+      "sixth": "6e verdieping",
+      "seventh": "7e verdieping",
+      "eighth": "8e verdieping",
+      "ninth": "9e verdieping"
+    },
+    "rooms": {
+      "hal": "Hal",
+      "mk": "Meterkast",
+      "wc": "WC",
+      "livingRoom": "Woonkamer",
+      "kitchen": "Keuken",
+      "bathroom": "Badkamer",
+      "bedroom": "Slaapkamer",
+      "bedroomN": "Slaapkamer {n}",
+      "technicalRoom": "Technische ruimte",
+      "storage": "Berging",
+      "extension": "Aanbouw",
+      "conservatory": "Serre",
+      "attic": "Zolder",
+      "dormer": "Dakkapel",
+	  "wasruimte": "Wasruimte",
+	  "eetkamer":"Eetkamer",
+      "overluip": "Overloop"
+    },
+	"addMorePhotos": "Voeg meer foto's toe",
+    "toast": {
+      "roomRemoved": "{label} verwijderd",
+      "filesUploaded": "{count} bestand(en) succesvol geüpload",
+      "photoCaptured": "Foto succesvol vastgelegd",
+      "fileDeleted": "Bestand verwijderd",
+      "pdfNoPreview": "PDF kan niet worden bekeken",
+      "filesUploadFailed": "Bestand kon niet worden opgeslagen — probeer een kleinere afbeelding",
+      "storageQuotaFailed": "Foto's konden niet worden opgeslagen — opslag is vol. Verwijder foto's of gebruik kleinere afbeeldingen.",
+      "roomNameRequired": "Voer een ruimtenaam in",
+      "roomExists": "Ruimtenaam bestaat al op deze verdieping",
+      "roomAdded": "Ruimte \"{name}\" toegevoegd",
+      "roomDeleted": "Ruimte \"{name}\" verwijderd",
+      "insulationRequired": "Selecteer Ja of Nee voor de isolatievraag",
+      "floorPlanRequired": "Upload minimaal één plattegrond",
+	  "filesUploaded": "{{count}} Bestanden geüpload",
+      "photoCaptured": "Foto vastgelegd",
+      "fileDeleted": "Bestand verwijderd"
+    }
+  },
+  "complete": {
+    "title": "Opname voltooid!",
+    "message": "Alle gegevens voor de energieopname zijn succesvol verwerkt. We gaan nu aan de slag met het certificaat.",
+    "backToReview": "Terug naar eindcontrole",
+    "backDashboard": "Terug naar dashboard",
+    "submit": "Definitieve aanvraag indienen"
+  }
+}

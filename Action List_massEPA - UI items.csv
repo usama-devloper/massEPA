@@ -1,0 +1,77 @@
+Sr. No.,Section,Category,Questions,Client,Intern,BO,Inspector
+1,User Registration,Personal details,Name,Yes,Yes,Yes,Yes
+1,User Registration,Personal details,Email,Yes,Yes,Yes,Yes
+1,User Registration,Personal details,Phone number,Yes,Yes,Yes,Yes
+1,User Registration,Personal details,Alternative phone number,Yes,Yes,Yes,Yes
+2,Identificatie,Adres,Address,Yes,Yes,Yes,Yes
+2,Identificatie,Adres,Plaats,,Yes,Yes,Yes
+2,Identificatie,Adres,Buurt,,,Yes,
+2,Identificatie,Adres,Wijk,,,Yes,
+2,Identificatie,Adres,Gemeente,,,Yes,
+2,Identificatie,Building details,Bouwjaar,,,Yes,
+2,Identificatie,Renovation status,Have you renovated isolatie for whole wonining?,,,Yes,Yes
+2,Identificatie,Renovation status,Have you renovated Glas type for all kozijnen of wonining?,,,Yes,Yes
+2,Identificatie,woning type,Gebouw type,Yes,Yes,Yes,Yes
+2,Identificatie,woning type,Position,Yes,Yes,Yes,Yes
+2,Identificatie,woning type,Ligging,Yes,Yes,Yes,Yes
+2,Identificatie,Building details,Gebouwhoogte totale gebouw ,,,Yes,
+2,Identificatie,Building details,Number of floor,Yes,Yes,Yes,Yes
+2,Identificatie,Building details,Floor Area,,,Yes,
+2,Identificatie,Features,Map of that area (Viewer),Yes,Yes,Yes,Yes
+2,Identificatie,Features,Street view of that house (Viewer),Yes,Yes,Yes,Yes
+2,Identificatie,Features,AHN model (Viewer),Yes,Yes,Yes,Yes
+3,Choice,Upload document,Do you have tekeningen of woning? | Yes/No,Yes,Yes,Yes,Yes
+3,Drawings & Property details,Upload document,"Upload floor plan, section, elevation",Yes,Yes,Yes,Yes
+3,Drawings & Property details,Room configuration ,Select present room in the house,Yes,Yes,Yes,Yes
+3,Drawings & Property details,Zonwering,Type of zonwering,,Yes,Yes,Yes
+4,Algemeen,Property details,Type bouwwijze vloeren,,,Yes,Yes
+4,Algemeen,Property details,Type bouwwijze wanden,,,Yes,Yes
+4,Algemeen,GBO-T,Confirm total thermische area (in m²) : Predefine value,,,Yes,
+4,Algemeen,Leidingdoorvoeren,Number of shaft which contains HWA VWA pipes : Enter value,,,Yes,Yes
+4,Algemeen,AVR,Provide AVR value (adjucent to heated area) : Enter value,,,Yes,Yes
+5,Isolatie,Gevel isolatie,Upload doc / Capture photo,Yes,Yes,Yes,Yes
+5,Isolatie,Gevel isolatie,Enter isolatie thickness,,,Yes,Yes
+5,Isolatie,Vloer isolatie,Upload doc / Capture photo,Yes,Yes,Yes,Yes
+5,Isolatie,Vloer isolatie,Enter isolatie thickness,,Yes,Yes,Yes
+5,Isolatie,Dak isolatie,Upload doc / Capture photo,Yes,Yes,Yes,Yes
+5,Isolatie,Dak isolatie,Enter isolatie thickness,,,Yes,Yes
+5,Isolatie,panelen isolatie,Upload doc / Capture photo,Yes,Yes,Yes,Yes
+5,Isolatie,panelen isolatie,Enter isolatie thickness,,,Yes,Yes
+6,Installatie,Ventilatie,Is Co2 sensor available?,Yes,Yes,Yes,Yes
+6,Installatie,Ventilatie,Select location of ventilatie Co2 sensor,Yes,Yes,Yes,Yes
+6,Installatie,Verwarming,Type of heating systeem,Yes,Yes,Yes,Yes
+6,Installatie,Verwarming,Select location of opwekker systeem,Yes,Yes,Yes,Yes
+6,Installatie,Verwarming,Type of afgiftesysteem,,Yes,Yes,Yes
+6,Installatie,Verwarming,Type of regeling,,Yes,Yes,Yes
+6,Installatie,Tapwater,Same as verwarming? | Yes/No,Yes,Yes,Yes,Yes
+6,Installatie,Tapwater,Type of opwekker,,Yes,Yes,Yes
+6,Installatie,Tapwater,Type of toestel,,Yes,Yes,Yes
+6,Installatie,Tapwater,Select location of opwekker systeem,Yes,Yes,Yes,Yes
+6,Installatie,Tapwater,Type of afgiftesysteem,,Yes,Yes,Yes
+6,Installatie,Zonne-panelen,Are PV panelen installed? | Yes/No,Yes,Yes,Yes,Yes
+6,Installatie,Zonne-panelen,Enter number of pv-panels,Yes,Yes,Yes,Yes
+6,Installatie,Zonne-panelen,Enter hellingshoek value,,,Yes,Yes
+6,Installatie,Zonne-panelen,Type of bouwintegratie,,,Yes,Yes
+6,Installatie,Koeling,Is cooling system available? | Yes/No,Yes,Yes,Yes,Yes
+6,Installatie,Koeling,Type of opwekker,,Yes,Yes,Yes
+6,Installatie,Koeling,Type of afgiftesysteem,,Yes,Yes,Yes
+6,Installatie,Koeling,Which rooms are actively cooling?,,Yes,Yes,Yes
+7,Kozijn & Glas,Upload document,Upload doc for updated kozijn,Yes,Yes,Yes,Yes
+7,Kozijn & Glas,Kozijn,Are all same? | Yes/No,Yes,Yes,Yes,Yes
+7,Kozijn & Glas,Kozijn,Select type,Yes,Yes,Yes,Yes
+7,Kozijn & Glas,Kozijn,Select location,Yes,Yes,Yes,Yes
+7,Kozijn & Glas,Kozijn,Select level,Yes,Yes,Yes,Yes
+7,Kozijn & Glas,Glas,Are all same? | Yes/No,Yes,Yes,Yes,Yes
+7,Kozijn & Glas,Glas,Select type,Yes,Yes,Yes,Yes
+7,Kozijn & Glas,Glas,Merk & type,,,Yes,Yes
+7,Kozijn & Glas,Glas,Select location,Yes,Yes,Yes,Yes
+7,Kozijn & Glas,Glas,Select level,Yes,Yes,Yes,Yes
+7,Kozijn & Glas,Door,Is door isolated? | Yes/No,,,Yes,Yes
+8,Photo capture,Exterior,All the gevel,Yes,Yes,Yes,Yes
+8,Photo capture,Exterior,All the windows with closeup,Yes,Yes,Yes,Yes
+8,Photo capture,Exterior,Measurement of all door & Window,,Yes,Yes,Yes
+8,Photo capture,Exterior,Grenst aan,,Yes,Yes,Yes
+8,Photo capture,Exterior,Measure length of any gevel for scale,,Yes,Yes,Yes
+8,Photo capture,Interior,"Capture photos of all spaces to identify windows, systems, and installations. ",Yes,Yes,Yes,Yes
+9,Review,Completed data,List of items which has been completed,Yes,Yes,Yes,Yes
+9,Review,Audit warning,List of all missing / incomplete items,Yes,Yes,Yes,Yes

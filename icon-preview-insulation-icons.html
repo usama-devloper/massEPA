@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>massEPA — Isolatie sectie iconen (preview)</title>
+  <script src="https://unpkg.com/lucide@0.469.0"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #f4f5f0;
+      color: #1a1c18;
+    }
+    h1 { font-size: 1.35rem; margin: 0 0 6px; color: #2d5a3d; }
+    .sub { color: #5c5f57; margin: 0 0 20px; max-width: 720px; line-height: 1.5; font-size: 0.9rem; }
+    .hint {
+      background: #fff;
+      border: 1px solid #e2e3dd;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 28px;
+      font-size: 0.85rem;
+      color: #5c5f57;
+    }
+    .hint code { font-size: 0.8rem; background: #f4f5f0; padding: 2px 6px; border-radius: 4px; }
+    h2 {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #5c5f57;
+      margin: 32px 0 12px;
+    }
+    table {
+      width: 100%;
+      max-width: 920px;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+      margin-bottom: 24px;
+    }
+    th, td { padding: 12px 14px; border-bottom: 1px solid #ebece7; text-align: left; vertical-align: middle; }
+    th {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #5c5f57;
+      background: #fafaf8;
+    }
+    tr:last-child td { border-bottom: none; }
+    .cat { font-weight: 700; font-size: 0.9rem; }
+    .en { font-size: 0.75rem; color: #6b6e66; }
+    .ico-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .ico-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      min-width: 72px;
+    }
+    .ico-box {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+    }
+    .ico-box.on { background: rgb(45 90 61 / 10%); color: #2d5a3d; }
+    .ico-box.off { background: #f0f1ed; color: #9ca39a; }
+    .ico-name { font-family: ui-monospace, monospace; font-size: 0.62rem; color: #6b6e66; text-align: center; }
+    .badge {
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 5px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+      background: #e8f5e9;
+      color: #2d5a3d;
+    }
+    .cards { display: flex; flex-direction: column; gap: 10px; max-width: 520px; }
+    .card {
+      border-radius: 16px;
+      border: 1px solid rgb(0 0 0 / 6%);
+      box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+      overflow: hidden;
+    }
+    .card.on { background: #e2e3dd; }
+    .card.off { background: #fff; }
+    .card-inner {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+    }
+    .tick {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tick.on { background: #2d5a3d; color: #fff; }
+    .tick.off { border: 2px solid #d1d5db; background: #fff; }
+    .card-title { font-weight: 800; font-size: 1rem; margin: 0; }
+    .card-sub {
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #2d5a3d;
+      margin: 4px 0 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 12px;
+      max-width: 520px;
+    }
+    .grid-item {
+      background: #fff;
+      border: 1px solid #e2e3dd;
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+    .grid-item .ico-box { margin: 0 auto 6px; }
+  </style>
+</head>
+<body>
+  <h1>Isolatie — sectie iconen</h1>
+  <p class="sub">
+    Preview voor <strong>Gevel</strong>, <strong>Vloer</strong>, <strong>Dak</strong> en <strong>Panelen</strong> isolatie.
+    Zelfde stijl als Installatie-pagina (icoon in afgerond vak naast checkbox).
+  </p>
+  <p class="hint">
+    <strong>Open:</strong> dubbelklik op dit bestand in Verkenner<br>
+    <code>M:\mEPA\massEPA\icon-preview-insulation-icons.html</code><br>
+    Geen <code>npm run dev</code> nodig — werkt offline als je internet hebt (Lucide CDN).
+  </p>
+
+  <h2>Aanbevolen set — kaart preview (zoals in de app)</h2>
+  <div class="cards" id="cards-recommended"></div>
+
+  <h2>Alle opties per categorie</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Categorie</th>
+        <th>Aanbevolen</th>
+        <th>Alternatieven</th>
+      </tr>
+    </thead>
+    <tbody id="table"></tbody>
+  </table>
+
+  <h2>Installatie-pagina (ter vergelijking — al geïmplementeerd)</h2>
+  <div class="cards" id="cards-installatie"></div>
+
+  <script>
+    const insulation = [
+      {
+        id: 'gevel',
+        nl: 'Gevel isolatie',
+        en: 'Facade insulation',
+        recommended: 'building-2',
+        alts: ['brick-wall', 'home', 'layers'],
+      },
+      {
+        id: 'vloer',
+        nl: 'Vloer isolatie',
+        en: 'Floor insulation',
+        recommended: 'rectangle-horizontal',
+        alts: ['layers', 'panel-bottom', 'align-vertical-space-around'],
+      },
+      {
+        id: 'dak',
+        nl: 'Dak isolatie',
+        en: 'Roof insulation',
+        recommended: 'triangle',
+        alts: ['home', 'tent', 'warehouse'],
+      },
+      {
+        id: 'panelen',
+        nl: 'Panelen isolatie',
+        en: 'Panel insulation',
+        recommended: 'layout-grid',
+        alts: ['panels-top-left', 'square-stack', 'box'],
+      },
+    ];
+
+    const installatie = [
+      { nl: 'Ventilatie', en: 'Ventilation', icon: 'wind' },
+      { nl: 'Verwarming', en: 'Heating', icon: 'flame' },
+      { nl: 'Tapwater', en: 'Tap water', icon: 'droplets' },
+      { nl: 'Zonnepanelen', en: 'Solar panels', icon: 'sun' },
+      { nl: 'Koeling', en: 'Cooling', icon: 'snowflake' },
+    ];
+
+    function iconBox(name, on) {
+      return `<div class="ico-wrap">
+        <div class="ico-box ${on ? 'on' : 'off'}"><i data-lucide="${name}"></i></div>
+        <span class="ico-name">${name}</span>
+      </div>`;
+    }
+
+    function cardRow(nl, icon, selected, sub) {
+      return `<div class="card ${selected ? 'on' : 'off'}">
+        <div class="card-inner">
+          <div class="tick ${selected ? 'on' : 'off'}">${selected ? '<i data-lucide="check"></i>' : ''}</div>
+          <div class="ico-box ${selected ? 'on' : 'off'}"><i data-lucide="${icon}"></i></div>
+          <div>
+            <p class="card-title">${nl}</p>
+            ${sub ? `<p class="card-sub">${sub}</p>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }
+
+    const cardsRec = document.getElementById('cards-recommended');
+    insulation.forEach((c) => {
+      cardsRec.innerHTML += cardRow(c.nl, c.recommended, true, 'Geselecteerd · ' + c.recommended);
+      cardsRec.innerHTML += cardRow(c.nl, c.recommended, false, 'Niet geselecteerd · ' + c.recommended);
+    });
+
+    const tbody = document.getElementById('table');
+    insulation.forEach((c) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <div class="cat">${c.nl}<span class="badge">aanbevolen: ${c.recommended}</span></div>
+          <div class="en">${c.en}</div>
+        </td>
+        <td><div class="ico-row">${iconBox(c.recommended, true)}${iconBox(c.recommended, false)}</div></td>
+        <td><div class="ico-row">${c.alts.map((a) => iconBox(a, true) + iconBox(a, false)).join('')}</div></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    const cardsInst = document.getElementById('cards-installatie');
+    installatie.forEach((c) => {
+      cardsInst.innerHTML += cardRow(c.nl, c.icon, true, c.en);
+    });
+
+    lucide.createIcons();
+    document.querySelectorAll('.ico-box svg, .tick.on svg').forEach((s) => {
+      s.setAttribute('width', '20');
+      s.setAttribute('height', '20');
+      s.setAttribute('stroke-width', '2');
+    });
+  </script>
+</body>
+</html>
+

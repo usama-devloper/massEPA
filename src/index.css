@@ -1,0 +1,348 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-background: #f8faf8;
+    --color-surface: #f9faf4;
+    --color-sidebar: #f3f4ee;
+    --color-primary: #24512c;
+    --color-primary-dark: #315c37;
+    --color-on-background: #1a1c19;
+    --color-primary-muted: rgba(36, 81, 44, 0.1);
+    /* Measured at runtime by TopBar; fallback is slightly generous for py-4 + controls */
+    --app-topbar-height: calc(env(safe-area-inset-top, 0px) + 5.25rem + 1px);
+    /* Space for fixed DevNav + safe area so last controls stay scrollable above it */
+    /* Two-row DevNav + bottom-2 offset; slightly generous for wrapped tabs */
+    --app-devnav-bottom: calc(env(safe-area-inset-bottom, 0px) + 10rem);
+  }
+
+  html {
+    overflow-x: hidden;
+    scroll-padding-top: var(--app-topbar-height);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-on-background);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Shell pages: single scrollport in <main>, never under the fixed TopBar */
+  body:has(main.app-page-main),
+  body:has(main.app-main-scroll) {
+    overflow: hidden;
+    height: 100dvh;
+    height: 100vh;
+  }
+
+  /* Fine desktop: scrollbar only on main column (see .app-main-scroll) */
+  @media (pointer: fine) and (min-width: 768px) {
+    .app-main-scroll {
+      scrollbar-gutter: stable;
+    }
+
+    .app-main-scroll::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .app-main-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .app-main-scroll::-webkit-scrollbar-thumb {
+      background-color: transparent;
+      border-radius: 9999px;
+    }
+
+    .app-main-scroll:hover::-webkit-scrollbar-thumb,
+    .app-main-scroll:focus-within::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.22);
+    }
+
+    .app-main-scroll {
+      scrollbar-color: rgba(0, 0, 0, 0) transparent;
+    }
+
+    .app-main-scroll:hover,
+    .app-main-scroll:focus-within {
+      scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
+    }
+  }
+}
+
+@layer components {
+  /* Fixed chrome: always above page scroll layer */
+  .app-top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 3200;
+    isolation: isolate;
+    box-sizing: border-box;
+    min-height: var(--app-topbar-height);
+    background-color: var(--color-surface);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  }
+
+  /*
+   * Standard page column: always clears the fixed TopBar (desktop + mobile).
+   * Use on every <main> under TopBar instead of relying on body padding.
+   */
+  /*
+   * Main column: fixed below TopBar so back links / titles never scroll under it.
+   * md:ml-64 on <main> offsets for the desktop sidebar (margin on fixed box).
+   */
+  .app-page-main {
+    box-sizing: border-box;
+    position: fixed;
+    top: var(--app-topbar-height);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 0;
+    isolation: isolate;
+    width: auto;
+    min-width: 0;
+    margin-top: 0;
+    padding-top: 1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding-top: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .app-page-main {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  /* Consistent max width for all authenticated pages (desktop / tablet) */
+  .app-shell-content {
+    width: 100%;
+    max-width: 72rem;
+    margin-inline: auto;
+  }
+
+  /* Back link row on step pages (Settings, Isolatie, etc.) */
+  .app-page-back {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: color-mix(in srgb, var(--color-on-background) 55%, transparent);
+    transition: color 0.15s ease;
+  }
+
+  .app-page-back:hover {
+    color: var(--color-primary);
+  }
+
+  /* Centered page titles (Drawings, Photos, Algemeen, etc.) */
+  .app-page-title {
+    padding-top: 0.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Desktop sidebar sits below fixed TopBar (not underneath it) */
+  .app-sidebar {
+    box-sizing: border-box;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-page-main--devnav {
+    padding-bottom: var(--app-devnav-bottom);
+  }
+
+  /* Auth / profile flows: same fixed scrollport below TopBar */
+  .app-main-scroll {
+    box-sizing: border-box;
+    position: fixed;
+    top: var(--app-topbar-height);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 0;
+    isolation: isolate;
+    overflow-x: hidden;
+    width: auto;
+    min-width: 0;
+    margin-top: 0;
+    padding-top: 1rem;
+    padding-bottom: 0.5rem;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding-top: 1rem;
+  }
+
+  @media (pointer: coarse), (max-width: 767px) {
+    /*
+     * Thinner scrollbar on small viewports for main scrollport (including DevNav flows).
+     */
+    main.app-main-scroll--devnav {
+      max-height: calc(100dvh - var(--app-topbar-height));
+      max-height: calc(100vh - var(--app-topbar-height));
+      overflow-y: auto;
+      overscroll-behavior-y: contain;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-gutter: stable;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 0, 0, 0.28) transparent;
+    }
+
+    main.app-main-scroll--devnav::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    main.app-main-scroll--devnav::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.25);
+      border-radius: 9999px;
+    }
+  }
+
+  /* Legacy alias — prefer .app-page-main--devnav on shell pages */
+  .app-main-scroll--devnav {
+    scroll-padding-bottom: var(--app-devnav-bottom);
+    padding-bottom: var(--app-devnav-bottom) !important;
+  }
+
+  .primary-gradient {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  }
+
+  .ambient-shadow {
+    box-shadow: 0 12px 32px rgba(45, 52, 50, 0.06);
+  }
+
+  .glass-card {
+    background-color: color-mix(in srgb, var(--color-surface) 82%, transparent);
+    backdrop-filter: blur(12px);
+  }
+
+  /* Horizontal strips: hide track on desktop until hover; phones keep default */
+  @media (pointer: fine) and (min-width: 768px) {
+    .horizontal-scroll-minimal::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .horizontal-scroll-minimal::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .horizontal-scroll-minimal::-webkit-scrollbar-thumb {
+      background-color: transparent;
+      border-radius: 9999px;
+    }
+
+    .horizontal-scroll-minimal:hover::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.22);
+    }
+
+    .horizontal-scroll-minimal {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+    }
+  }
+}
+
+@layer utilities {
+  .bg-background {
+    background-color: var(--color-background);
+  }
+  .text-on-background {
+    color: var(--color-on-background);
+  }
+  .bg-surface {
+    background-color: var(--color-surface);
+  }
+  .bg-sidebar {
+    background-color: var(--color-sidebar);
+  }
+  .bg-primary {
+    background-color: var(--color-primary);
+  }
+  .text-primary {
+    color: var(--color-primary);
+  }
+  .bg-primary\/10 {
+    background-color: var(--color-primary-muted);
+  }
+  .bg-gray-100 {
+    background-color: #f3f4f6;
+  }
+  .bg-gray-200 {
+    background-color: #e5e7eb;
+  }
+  .text-gray-500 {
+    color: #6b7280;
+  }
+  .text-gray-600 {
+    color: #4b5563;
+  }
+  .text-red-500 {
+    color: #ef4444;
+  }
+  .text-red-600 {
+    color: #dc2626;
+  }
+  .text-green-500 {
+    color: #22c55e;
+  }
+  .text-green-600 {
+    color: #16a34a;
+  }
+  .border-red-500 {
+    border-color: #ef4444;
+  }
+  .border-gray-300 {
+    border-color: #d1d5db;
+  }
+}
+
+/* Add to your index.css or App.css */
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) rotate(25deg);
+  }
+  100% {
+    transform: translateX(100%) rotate(25deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Smooth glass transition effects */
+.glass-button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.5) !important;
+}

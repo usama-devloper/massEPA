@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>massEPA — Sidebar icon preview</title>
+  <script src="https://unpkg.com/lucide@0.469.0"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #f4f5f0;
+      color: #1a1c18;
+    }
+    h1 { font-size: 1.5rem; margin: 0 0 8px; }
+    p.sub { color: #5c5f57; margin: 0 0 24px; max-width: 640px; line-height: 1.5; }
+    .hint {
+      background: #fff;
+      border: 1px solid #e2e3dd;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      font-size: 0.875rem;
+      color: #5c5f57;
+    }
+    table {
+      width: 100%;
+      max-width: 900px;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+    }
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid #e8e9e4;
+    }
+    th {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #5c5f57;
+      background: #fafaf8;
+    }
+    tr:last-child td { border-bottom: none; }
+    .cat { font-weight: 700; }
+    .nl { font-size: 0.8rem; color: #5c5f57; margin-top: 2px; }
+    .icon-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .icon-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .icon-box.current { background: #f0f1ec; color: #6b6e66; }
+    .icon-box.proposed { background: #2d5a3d; color: #fff; }
+    .icon-name { font-size: 0.75rem; color: #5c5f57; font-family: ui-monospace, monospace; }
+    .badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .badge.keep { background: #e8f5e9; color: #2d5a3d; }
+    .badge.new { background: #fff3e0; color: #b45309; }
+    .badge.fix { background: #ffebee; color: #c62828; }
+    .sidebar-demo {
+      margin-top: 32px;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .panel {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      width: 220px;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+    }
+    .panel h2 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #5c5f57;
+      margin: 0 0 12px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #3d4039;
+    }
+    .nav-item.active {
+      background: #e8f0eb;
+      color: #2d5a3d;
+    }
+    .nav-item.active .ico { color: #2d5a3d; }
+    .ico { color: #6b6e66; display: flex; }
+  </style>
+</head>
+<body>
+  <h1>massEPA — Icon preview</h1>
+  <p class="sub">Compare <strong>current</strong> sidebar/dashboard icons with the <strong>recommended</strong> set (real Lucide icons, same library as the app).</p>
+  <p class="hint">Open this file in your browser: <code>M:\mEPA\massEPA\icon-preview.html</code> — double-click or drag into Chrome/Edge.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th>Current</th>
+        <th>Recommended</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <div class="sidebar-demo">
+    <div class="panel">
+      <h2>Current sidebar (sample)</h2>
+      <div id="sidebar-current"></div>
+    </div>
+    <div class="panel">
+      <h2>Proposed sidebar (sample)</h2>
+      <div id="sidebar-proposed"></div>
+    </div>
+  </div>
+
+  <script>
+    const items = [
+      { en: 'Home', nl: 'Home', current: 'home', proposed: 'home', keep: true },
+      { en: 'Dashboard', nl: 'Dashboard', current: 'layout-dashboard', proposed: 'layout-dashboard', keep: true },
+      { en: 'Algemeen', nl: 'Algemeen', current: 'square-pen', proposed: 'building-2', note: 'was Edit3' },
+      { en: 'House design', nl: 'Huisontwerp', current: 'upload', proposed: 'blueprint' },
+      { en: 'Insulation', nl: 'Isolatie', current: 'shield', proposed: 'layers' },
+      { en: 'Installations', nl: 'Installaties', current: 'settings', proposed: 'cog', note: 'dashboard uses Settings today' },
+      { en: 'Frames & glass', nl: 'Kozijn & glas', current: 'frame', proposed: 'app-window' },
+      { en: 'Photos', nl: "Foto's", current: 'camera', proposed: 'camera', keep: true },
+      { en: 'Final review', nl: 'Eindcontrole', current: 'clipboard-check', proposed: 'clipboard-check', keep: true },
+      { en: 'Complete', nl: 'Compleet', current: 'circle-check', proposed: 'badge-check' },
+      { en: 'Settings', nl: 'Instellingen', current: 'settings', proposed: 'settings', keep: true },
+      { en: 'Clients', nl: 'Clients', current: 'users', proposed: 'users', keep: true },
+    ];
+
+    const tbody = document.getElementById('rows');
+    items.forEach((item) => {
+      const tr = document.createElement('tr');
+      const badge = item.keep
+        ? '<span class="badge keep">keep</span>'
+        : item.note && item.note.includes('Settings')
+          ? '<span class="badge fix">fix mismatch</span>'
+          : '<span class="badge new">change</span>';
+      tr.innerHTML = `
+        <td>
+          <div class="cat">${item.en}${badge}</div>
+          <div class="nl">${item.nl}</div>
+        </td>
+        <td>
+          <div class="icon-cell">
+            <div class="icon-box current"><i data-lucide="${item.current}"></i></div>
+            <span class="icon-name">${item.current}</span>
+          </div>
+        </td>
+        <td>
+          <div class="icon-cell">
+            <div class="icon-box proposed"><i data-lucide="${item.proposed}"></i></div>
+            <span class="icon-name">${item.proposed}</span>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    const navCurrent = [
+      ['home', 'Home'],
+      ['layout-dashboard', 'Dashboard'],
+      ['square-pen', 'Algemeen'],
+      ['upload', 'Huisontwerp'],
+      ['shield', 'Isolatie'],
+      ['building-2', 'Installaties'],
+      ['frame', 'Kozijn & glas'],
+      ['camera', "Foto's"],
+    ];
+    const navProposed = [
+      ['home', 'Home'],
+      ['layout-dashboard', 'Dashboard'],
+      ['building-2', 'Algemeen'],
+      ['blueprint', 'Huisontwerp'],
+      ['layers', 'Isolatie'],
+      ['cog', 'Installaties'],
+      ['app-window', 'Kozijn & glas'],
+      ['camera', "Foto's"],
+    ];
+
+    function renderNav(containerId, rows, activeIndex) {
+      const el = document.getElementById(containerId);
+      rows.forEach(([icon, label], i) => {
+        const div = document.createElement('div');
+        div.className = 'nav-item' + (i === activeIndex ? ' active' : '');
+        div.innerHTML = `<span class="ico"><i data-lucide="${icon}"></i></span><span>${label}</span>`;
+        el.appendChild(div);
+      });
+    }
+
+    renderNav('sidebar-current', navCurrent, 2);
+    renderNav('sidebar-proposed', navProposed, 2);
+
+    lucide.createIcons({ attrs: { 'stroke-width': 2 } });
+    document.querySelectorAll('.icon-box i, .nav-item i').forEach((icon) => {
+      const svg = icon.closest('svg') || icon;
+      if (svg.tagName === 'svg') {
+        svg.setAttribute('width', '20');
+        svg.setAttribute('height', '20');
+      }
+    });
+  </script>
+</body>
+</html>

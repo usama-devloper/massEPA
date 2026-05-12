@@ -1,0 +1,2495 @@
+{
+  "v": 1,
+  "importKind": "massEpaClientsAndDossiers",
+  "description": "Dummy clients for massEPA. Edit profile fields and answer \"value\" entries, then import into the app. Keys alist_N match item order in actionListMassEpaUiItems.json.",
+  "actionListVersion": 1,
+  "actionListSourceFile": "Action List_massEPA - UI items.csv",
+  "generatedAt": "2026-05-15T07:59:51.066Z",
+  "clients": [
+    {
+      "id": "cli_dummy_001",
+      "fullName": "Jan de Vries",
+      "email": "jan.devries@example.nl",
+      "phoneNumber": "+31 6 12345601",
+      "address": "Jaagmeent 1, 1213 AB Hilversum",
+      "createdAt": 1778831991066,
+      "updatedAt": 1778831991066,
+      "dossier": {
+        "v": 1,
+        "addressKey": "jaagmeent_1,_1213_ab_hilversum",
+        "addressDisplay": "Jaagmeent 1, 1213 AB Hilversum",
+        "actionListVersion": 1,
+        "updatedAt": 1778831991066,
+        "lastEditedByEmail": "import@buildingid.local",
+        "lastEditedByName": "Import seed",
+        "profileHint": {
+          "fullName": "Jan de Vries",
+          "email": "jan.devries@example.nl",
+          "phoneNumber": "+31 6 12345601"
+        },
+        "building": {
+          "renovationStatus": "Nee",
+          "renovationYear": "",
+          "bouwjaar": "",
+          "floorArea": "",
+          "vloerenType": "Licht",
+          "wandenType": "Licht",
+          "gboT": "",
+          "leidingdoorvoeren": "",
+          "avr": "",
+          "buurt": "",
+          "wijk": "",
+          "gemeente": "",
+          "gebouwhoogte": "",
+          "hasFloorPlans": null
+        },
+        "answers": {
+          "alist_0": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Name"
+          },
+          "alist_1": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Email"
+          },
+          "alist_2": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Phone number"
+          },
+          "alist_3": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Alternative phone number"
+          },
+          "alist_4": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Address"
+          },
+          "alist_5": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Plaats"
+          },
+          "alist_6": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Buurt"
+          },
+          "alist_7": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Wijk"
+          },
+          "alist_8": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Gemeente"
+          },
+          "alist_9": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Bouwjaar"
+          },
+          "alist_10": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Renovation status",
+            "question": "Have you renovated isolatie for whole wonining?"
+          },
+          "alist_11": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Renovation status",
+            "question": "Have you renovated Glas type for all kozijnen of wonining?"
+          },
+          "alist_12": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Gebouw type"
+          },
+          "alist_13": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Position"
+          },
+          "alist_14": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Ligging"
+          },
+          "alist_15": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Gebouwhoogte totale gebouw"
+          },
+          "alist_16": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Number of floor"
+          },
+          "alist_17": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Floor Area"
+          },
+          "alist_18": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "Map of that area (Viewer)"
+          },
+          "alist_19": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "Street view of that house (Viewer)"
+          },
+          "alist_20": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "AHN model (Viewer)"
+          },
+          "alist_21": {
+            "value": null,
+            "section": "Choice",
+            "category": "Upload document",
+            "question": "Do you have tekeningen of woning? | Yes/No"
+          },
+          "alist_22": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Upload document",
+            "question": "Upload floor plan, section, elevation"
+          },
+          "alist_23": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Room configuration",
+            "question": "Select present room in the house"
+          },
+          "alist_24": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Zonwering",
+            "question": "Type of zonwering"
+          },
+          "alist_25": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Property details",
+            "question": "Type bouwwijze vloeren"
+          },
+          "alist_26": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Property details",
+            "question": "Type bouwwijze wanden"
+          },
+          "alist_27": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "GBO-T",
+            "question": "Confirm total thermische area (in m²) : Predefine value"
+          },
+          "alist_28": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Leidingdoorvoeren",
+            "question": "Number of shaft which contains HWA VWA pipes : Enter value"
+          },
+          "alist_29": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "AVR",
+            "question": "Provide AVR value (adjucent to heated area) : Enter value"
+          },
+          "alist_30": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Gevel isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_31": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Gevel isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_32": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Vloer isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_33": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Vloer isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_34": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Dak isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_35": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Dak isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_36": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "panelen isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_37": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "panelen isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_38": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Ventilatie",
+            "question": "Is Co2 sensor available?"
+          },
+          "alist_39": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Ventilatie",
+            "question": "Select location of ventilatie Co2 sensor"
+          },
+          "alist_40": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of heating systeem"
+          },
+          "alist_41": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Select location of opwekker systeem"
+          },
+          "alist_42": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_43": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of regeling"
+          },
+          "alist_44": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Same as verwarming? | Yes/No"
+          },
+          "alist_45": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of opwekker"
+          },
+          "alist_46": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of toestel"
+          },
+          "alist_47": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Select location of opwekker systeem"
+          },
+          "alist_48": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_49": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Are PV panelen installed? | Yes/No"
+          },
+          "alist_50": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Enter number of pv-panels"
+          },
+          "alist_51": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Enter hellingshoek value"
+          },
+          "alist_52": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Type of bouwintegratie"
+          },
+          "alist_53": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Is cooling system available? | Yes/No"
+          },
+          "alist_54": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Type of opwekker"
+          },
+          "alist_55": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_56": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Which rooms are actively cooling?"
+          },
+          "alist_57": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Upload document",
+            "question": "Upload doc for updated kozijn"
+          },
+          "alist_58": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Are all same? | Yes/No"
+          },
+          "alist_59": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select type"
+          },
+          "alist_60": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select location"
+          },
+          "alist_61": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select level"
+          },
+          "alist_62": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Are all same? | Yes/No"
+          },
+          "alist_63": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select type"
+          },
+          "alist_64": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Merk & type"
+          },
+          "alist_65": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select location"
+          },
+          "alist_66": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select level"
+          },
+          "alist_67": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Door",
+            "question": "Is door isolated? | Yes/No"
+          },
+          "alist_68": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "All the gevel"
+          },
+          "alist_69": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "All the windows with closeup"
+          },
+          "alist_70": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Measurement of all door & Window"
+          },
+          "alist_71": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Grenst aan"
+          },
+          "alist_72": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Measure length of any gevel for scale"
+          },
+          "alist_73": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Interior",
+            "question": "Capture photos of all spaces to identify windows, systems, and installations."
+          },
+          "alist_74": {
+            "value": null,
+            "section": "Review",
+            "category": "Completed data",
+            "question": "List of items which has been completed"
+          },
+          "alist_75": {
+            "value": null,
+            "section": "Review",
+            "category": "Audit warning",
+            "question": "List of all missing / incomplete items"
+          }
+        }
+      }
+    },
+    {
+      "id": "cli_dummy_002",
+      "fullName": "Maria Jansen",
+      "email": "maria.jansen@example.nl",
+      "phoneNumber": "+31 6 12345602",
+      "address": "Keizersgracht 10, 1015 CC Amsterdam",
+      "createdAt": 1778831991067,
+      "updatedAt": 1778831991067,
+      "dossier": {
+        "v": 1,
+        "addressKey": "keizersgracht_10,_1015_cc_amsterdam",
+        "addressDisplay": "Keizersgracht 10, 1015 CC Amsterdam",
+        "actionListVersion": 1,
+        "updatedAt": 1778831991067,
+        "lastEditedByEmail": "import@buildingid.local",
+        "lastEditedByName": "Import seed",
+        "profileHint": {
+          "fullName": "Maria Jansen",
+          "email": "maria.jansen@example.nl",
+          "phoneNumber": "+31 6 12345602"
+        },
+        "building": {
+          "renovationStatus": "Nee",
+          "renovationYear": "",
+          "bouwjaar": "",
+          "floorArea": "",
+          "vloerenType": "Licht",
+          "wandenType": "Licht",
+          "gboT": "",
+          "leidingdoorvoeren": "",
+          "avr": "",
+          "buurt": "",
+          "wijk": "",
+          "gemeente": "",
+          "gebouwhoogte": "",
+          "hasFloorPlans": null
+        },
+        "answers": {
+          "alist_0": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Name"
+          },
+          "alist_1": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Email"
+          },
+          "alist_2": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Phone number"
+          },
+          "alist_3": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Alternative phone number"
+          },
+          "alist_4": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Address"
+          },
+          "alist_5": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Plaats"
+          },
+          "alist_6": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Buurt"
+          },
+          "alist_7": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Wijk"
+          },
+          "alist_8": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Gemeente"
+          },
+          "alist_9": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Bouwjaar"
+          },
+          "alist_10": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Renovation status",
+            "question": "Have you renovated isolatie for whole wonining?"
+          },
+          "alist_11": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Renovation status",
+            "question": "Have you renovated Glas type for all kozijnen of wonining?"
+          },
+          "alist_12": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Gebouw type"
+          },
+          "alist_13": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Position"
+          },
+          "alist_14": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Ligging"
+          },
+          "alist_15": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Gebouwhoogte totale gebouw"
+          },
+          "alist_16": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Number of floor"
+          },
+          "alist_17": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Floor Area"
+          },
+          "alist_18": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "Map of that area (Viewer)"
+          },
+          "alist_19": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "Street view of that house (Viewer)"
+          },
+          "alist_20": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "AHN model (Viewer)"
+          },
+          "alist_21": {
+            "value": null,
+            "section": "Choice",
+            "category": "Upload document",
+            "question": "Do you have tekeningen of woning? | Yes/No"
+          },
+          "alist_22": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Upload document",
+            "question": "Upload floor plan, section, elevation"
+          },
+          "alist_23": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Room configuration",
+            "question": "Select present room in the house"
+          },
+          "alist_24": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Zonwering",
+            "question": "Type of zonwering"
+          },
+          "alist_25": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Property details",
+            "question": "Type bouwwijze vloeren"
+          },
+          "alist_26": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Property details",
+            "question": "Type bouwwijze wanden"
+          },
+          "alist_27": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "GBO-T",
+            "question": "Confirm total thermische area (in m²) : Predefine value"
+          },
+          "alist_28": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Leidingdoorvoeren",
+            "question": "Number of shaft which contains HWA VWA pipes : Enter value"
+          },
+          "alist_29": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "AVR",
+            "question": "Provide AVR value (adjucent to heated area) : Enter value"
+          },
+          "alist_30": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Gevel isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_31": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Gevel isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_32": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Vloer isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_33": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Vloer isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_34": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Dak isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_35": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Dak isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_36": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "panelen isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_37": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "panelen isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_38": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Ventilatie",
+            "question": "Is Co2 sensor available?"
+          },
+          "alist_39": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Ventilatie",
+            "question": "Select location of ventilatie Co2 sensor"
+          },
+          "alist_40": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of heating systeem"
+          },
+          "alist_41": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Select location of opwekker systeem"
+          },
+          "alist_42": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_43": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of regeling"
+          },
+          "alist_44": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Same as verwarming? | Yes/No"
+          },
+          "alist_45": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of opwekker"
+          },
+          "alist_46": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of toestel"
+          },
+          "alist_47": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Select location of opwekker systeem"
+          },
+          "alist_48": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_49": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Are PV panelen installed? | Yes/No"
+          },
+          "alist_50": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Enter number of pv-panels"
+          },
+          "alist_51": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Enter hellingshoek value"
+          },
+          "alist_52": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Type of bouwintegratie"
+          },
+          "alist_53": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Is cooling system available? | Yes/No"
+          },
+          "alist_54": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Type of opwekker"
+          },
+          "alist_55": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_56": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Which rooms are actively cooling?"
+          },
+          "alist_57": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Upload document",
+            "question": "Upload doc for updated kozijn"
+          },
+          "alist_58": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Are all same? | Yes/No"
+          },
+          "alist_59": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select type"
+          },
+          "alist_60": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select location"
+          },
+          "alist_61": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select level"
+          },
+          "alist_62": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Are all same? | Yes/No"
+          },
+          "alist_63": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select type"
+          },
+          "alist_64": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Merk & type"
+          },
+          "alist_65": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select location"
+          },
+          "alist_66": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select level"
+          },
+          "alist_67": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Door",
+            "question": "Is door isolated? | Yes/No"
+          },
+          "alist_68": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "All the gevel"
+          },
+          "alist_69": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "All the windows with closeup"
+          },
+          "alist_70": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Measurement of all door & Window"
+          },
+          "alist_71": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Grenst aan"
+          },
+          "alist_72": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Measure length of any gevel for scale"
+          },
+          "alist_73": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Interior",
+            "question": "Capture photos of all spaces to identify windows, systems, and installations."
+          },
+          "alist_74": {
+            "value": null,
+            "section": "Review",
+            "category": "Completed data",
+            "question": "List of items which has been completed"
+          },
+          "alist_75": {
+            "value": null,
+            "section": "Review",
+            "category": "Audit warning",
+            "question": "List of all missing / incomplete items"
+          }
+        }
+      }
+    },
+    {
+      "id": "cli_dummy_003",
+      "fullName": "Pieter Bakker",
+      "email": "pieter.bakker@example.nl",
+      "phoneNumber": "+31 6 12345603",
+      "address": "Coolsingel 42, 3011 AD Rotterdam",
+      "createdAt": 1778831991068,
+      "updatedAt": 1778831991068,
+      "dossier": {
+        "v": 1,
+        "addressKey": "coolsingel_42,_3011_ad_rotterdam",
+        "addressDisplay": "Coolsingel 42, 3011 AD Rotterdam",
+        "actionListVersion": 1,
+        "updatedAt": 1778831991068,
+        "lastEditedByEmail": "import@buildingid.local",
+        "lastEditedByName": "Import seed",
+        "profileHint": {
+          "fullName": "Pieter Bakker",
+          "email": "pieter.bakker@example.nl",
+          "phoneNumber": "+31 6 12345603"
+        },
+        "building": {
+          "renovationStatus": "Nee",
+          "renovationYear": "",
+          "bouwjaar": "",
+          "floorArea": "",
+          "vloerenType": "Licht",
+          "wandenType": "Licht",
+          "gboT": "",
+          "leidingdoorvoeren": "",
+          "avr": "",
+          "buurt": "",
+          "wijk": "",
+          "gemeente": "",
+          "gebouwhoogte": "",
+          "hasFloorPlans": null
+        },
+        "answers": {
+          "alist_0": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Name"
+          },
+          "alist_1": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Email"
+          },
+          "alist_2": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Phone number"
+          },
+          "alist_3": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Alternative phone number"
+          },
+          "alist_4": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Address"
+          },
+          "alist_5": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Plaats"
+          },
+          "alist_6": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Buurt"
+          },
+          "alist_7": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Wijk"
+          },
+          "alist_8": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Gemeente"
+          },
+          "alist_9": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Bouwjaar"
+          },
+          "alist_10": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Renovation status",
+            "question": "Have you renovated isolatie for whole wonining?"
+          },
+          "alist_11": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Renovation status",
+            "question": "Have you renovated Glas type for all kozijnen of wonining?"
+          },
+          "alist_12": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Gebouw type"
+          },
+          "alist_13": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Position"
+          },
+          "alist_14": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Ligging"
+          },
+          "alist_15": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Gebouwhoogte totale gebouw"
+          },
+          "alist_16": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Number of floor"
+          },
+          "alist_17": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Floor Area"
+          },
+          "alist_18": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "Map of that area (Viewer)"
+          },
+          "alist_19": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "Street view of that house (Viewer)"
+          },
+          "alist_20": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "AHN model (Viewer)"
+          },
+          "alist_21": {
+            "value": null,
+            "section": "Choice",
+            "category": "Upload document",
+            "question": "Do you have tekeningen of woning? | Yes/No"
+          },
+          "alist_22": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Upload document",
+            "question": "Upload floor plan, section, elevation"
+          },
+          "alist_23": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Room configuration",
+            "question": "Select present room in the house"
+          },
+          "alist_24": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Zonwering",
+            "question": "Type of zonwering"
+          },
+          "alist_25": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Property details",
+            "question": "Type bouwwijze vloeren"
+          },
+          "alist_26": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Property details",
+            "question": "Type bouwwijze wanden"
+          },
+          "alist_27": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "GBO-T",
+            "question": "Confirm total thermische area (in m²) : Predefine value"
+          },
+          "alist_28": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Leidingdoorvoeren",
+            "question": "Number of shaft which contains HWA VWA pipes : Enter value"
+          },
+          "alist_29": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "AVR",
+            "question": "Provide AVR value (adjucent to heated area) : Enter value"
+          },
+          "alist_30": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Gevel isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_31": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Gevel isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_32": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Vloer isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_33": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Vloer isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_34": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Dak isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_35": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Dak isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_36": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "panelen isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_37": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "panelen isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_38": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Ventilatie",
+            "question": "Is Co2 sensor available?"
+          },
+          "alist_39": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Ventilatie",
+            "question": "Select location of ventilatie Co2 sensor"
+          },
+          "alist_40": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of heating systeem"
+          },
+          "alist_41": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Select location of opwekker systeem"
+          },
+          "alist_42": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_43": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of regeling"
+          },
+          "alist_44": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Same as verwarming? | Yes/No"
+          },
+          "alist_45": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of opwekker"
+          },
+          "alist_46": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of toestel"
+          },
+          "alist_47": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Select location of opwekker systeem"
+          },
+          "alist_48": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_49": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Are PV panelen installed? | Yes/No"
+          },
+          "alist_50": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Enter number of pv-panels"
+          },
+          "alist_51": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Enter hellingshoek value"
+          },
+          "alist_52": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Type of bouwintegratie"
+          },
+          "alist_53": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Is cooling system available? | Yes/No"
+          },
+          "alist_54": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Type of opwekker"
+          },
+          "alist_55": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_56": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Which rooms are actively cooling?"
+          },
+          "alist_57": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Upload document",
+            "question": "Upload doc for updated kozijn"
+          },
+          "alist_58": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Are all same? | Yes/No"
+          },
+          "alist_59": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select type"
+          },
+          "alist_60": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select location"
+          },
+          "alist_61": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select level"
+          },
+          "alist_62": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Are all same? | Yes/No"
+          },
+          "alist_63": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select type"
+          },
+          "alist_64": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Merk & type"
+          },
+          "alist_65": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select location"
+          },
+          "alist_66": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select level"
+          },
+          "alist_67": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Door",
+            "question": "Is door isolated? | Yes/No"
+          },
+          "alist_68": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "All the gevel"
+          },
+          "alist_69": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "All the windows with closeup"
+          },
+          "alist_70": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Measurement of all door & Window"
+          },
+          "alist_71": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Grenst aan"
+          },
+          "alist_72": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Measure length of any gevel for scale"
+          },
+          "alist_73": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Interior",
+            "question": "Capture photos of all spaces to identify windows, systems, and installations."
+          },
+          "alist_74": {
+            "value": null,
+            "section": "Review",
+            "category": "Completed data",
+            "question": "List of items which has been completed"
+          },
+          "alist_75": {
+            "value": null,
+            "section": "Review",
+            "category": "Audit warning",
+            "question": "List of all missing / incomplete items"
+          }
+        }
+      }
+    },
+    {
+      "id": "cli_dummy_004",
+      "fullName": "Sophie van Dijk",
+      "email": "sophie.vandijk@example.nl",
+      "phoneNumber": "+31 6 12345604",
+      "address": "Oudegracht 88, 3511 AR Utrecht",
+      "createdAt": 1778831991069,
+      "updatedAt": 1778831991069,
+      "dossier": {
+        "v": 1,
+        "addressKey": "oudegracht_88,_3511_ar_utrecht",
+        "addressDisplay": "Oudegracht 88, 3511 AR Utrecht",
+        "actionListVersion": 1,
+        "updatedAt": 1778831991069,
+        "lastEditedByEmail": "import@buildingid.local",
+        "lastEditedByName": "Import seed",
+        "profileHint": {
+          "fullName": "Sophie van Dijk",
+          "email": "sophie.vandijk@example.nl",
+          "phoneNumber": "+31 6 12345604"
+        },
+        "building": {
+          "renovationStatus": "Nee",
+          "renovationYear": "",
+          "bouwjaar": "",
+          "floorArea": "",
+          "vloerenType": "Licht",
+          "wandenType": "Licht",
+          "gboT": "",
+          "leidingdoorvoeren": "",
+          "avr": "",
+          "buurt": "",
+          "wijk": "",
+          "gemeente": "",
+          "gebouwhoogte": "",
+          "hasFloorPlans": null
+        },
+        "answers": {
+          "alist_0": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Name"
+          },
+          "alist_1": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Email"
+          },
+          "alist_2": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Phone number"
+          },
+          "alist_3": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Alternative phone number"
+          },
+          "alist_4": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Address"
+          },
+          "alist_5": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Plaats"
+          },
+          "alist_6": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Buurt"
+          },
+          "alist_7": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Wijk"
+          },
+          "alist_8": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Gemeente"
+          },
+          "alist_9": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Bouwjaar"
+          },
+          "alist_10": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Renovation status",
+            "question": "Have you renovated isolatie for whole wonining?"
+          },
+          "alist_11": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Renovation status",
+            "question": "Have you renovated Glas type for all kozijnen of wonining?"
+          },
+          "alist_12": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Gebouw type"
+          },
+          "alist_13": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Position"
+          },
+          "alist_14": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Ligging"
+          },
+          "alist_15": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Gebouwhoogte totale gebouw"
+          },
+          "alist_16": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Number of floor"
+          },
+          "alist_17": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Floor Area"
+          },
+          "alist_18": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "Map of that area (Viewer)"
+          },
+          "alist_19": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "Street view of that house (Viewer)"
+          },
+          "alist_20": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "AHN model (Viewer)"
+          },
+          "alist_21": {
+            "value": null,
+            "section": "Choice",
+            "category": "Upload document",
+            "question": "Do you have tekeningen of woning? | Yes/No"
+          },
+          "alist_22": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Upload document",
+            "question": "Upload floor plan, section, elevation"
+          },
+          "alist_23": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Room configuration",
+            "question": "Select present room in the house"
+          },
+          "alist_24": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Zonwering",
+            "question": "Type of zonwering"
+          },
+          "alist_25": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Property details",
+            "question": "Type bouwwijze vloeren"
+          },
+          "alist_26": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Property details",
+            "question": "Type bouwwijze wanden"
+          },
+          "alist_27": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "GBO-T",
+            "question": "Confirm total thermische area (in m²) : Predefine value"
+          },
+          "alist_28": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Leidingdoorvoeren",
+            "question": "Number of shaft which contains HWA VWA pipes : Enter value"
+          },
+          "alist_29": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "AVR",
+            "question": "Provide AVR value (adjucent to heated area) : Enter value"
+          },
+          "alist_30": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Gevel isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_31": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Gevel isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_32": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Vloer isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_33": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Vloer isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_34": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Dak isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_35": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Dak isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_36": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "panelen isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_37": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "panelen isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_38": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Ventilatie",
+            "question": "Is Co2 sensor available?"
+          },
+          "alist_39": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Ventilatie",
+            "question": "Select location of ventilatie Co2 sensor"
+          },
+          "alist_40": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of heating systeem"
+          },
+          "alist_41": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Select location of opwekker systeem"
+          },
+          "alist_42": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_43": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of regeling"
+          },
+          "alist_44": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Same as verwarming? | Yes/No"
+          },
+          "alist_45": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of opwekker"
+          },
+          "alist_46": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of toestel"
+          },
+          "alist_47": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Select location of opwekker systeem"
+          },
+          "alist_48": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_49": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Are PV panelen installed? | Yes/No"
+          },
+          "alist_50": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Enter number of pv-panels"
+          },
+          "alist_51": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Enter hellingshoek value"
+          },
+          "alist_52": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Type of bouwintegratie"
+          },
+          "alist_53": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Is cooling system available? | Yes/No"
+          },
+          "alist_54": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Type of opwekker"
+          },
+          "alist_55": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_56": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Which rooms are actively cooling?"
+          },
+          "alist_57": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Upload document",
+            "question": "Upload doc for updated kozijn"
+          },
+          "alist_58": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Are all same? | Yes/No"
+          },
+          "alist_59": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select type"
+          },
+          "alist_60": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select location"
+          },
+          "alist_61": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select level"
+          },
+          "alist_62": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Are all same? | Yes/No"
+          },
+          "alist_63": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select type"
+          },
+          "alist_64": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Merk & type"
+          },
+          "alist_65": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select location"
+          },
+          "alist_66": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select level"
+          },
+          "alist_67": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Door",
+            "question": "Is door isolated? | Yes/No"
+          },
+          "alist_68": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "All the gevel"
+          },
+          "alist_69": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "All the windows with closeup"
+          },
+          "alist_70": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Measurement of all door & Window"
+          },
+          "alist_71": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Grenst aan"
+          },
+          "alist_72": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Measure length of any gevel for scale"
+          },
+          "alist_73": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Interior",
+            "question": "Capture photos of all spaces to identify windows, systems, and installations."
+          },
+          "alist_74": {
+            "value": null,
+            "section": "Review",
+            "category": "Completed data",
+            "question": "List of items which has been completed"
+          },
+          "alist_75": {
+            "value": null,
+            "section": "Review",
+            "category": "Audit warning",
+            "question": "List of all missing / incomplete items"
+          }
+        }
+      }
+    },
+    {
+      "id": "cli_dummy_005",
+      "fullName": "Ahmed El Amrani",
+      "email": "ahmed.elamrani@example.nl",
+      "phoneNumber": "+31 6 12345605",
+      "address": "Grote Markt 5, 9712 HN Groningen",
+      "createdAt": 1778831991070,
+      "updatedAt": 1778831991070,
+      "dossier": {
+        "v": 1,
+        "addressKey": "grote_markt_5,_9712_hn_groningen",
+        "addressDisplay": "Grote Markt 5, 9712 HN Groningen",
+        "actionListVersion": 1,
+        "updatedAt": 1778831991070,
+        "lastEditedByEmail": "import@buildingid.local",
+        "lastEditedByName": "Import seed",
+        "profileHint": {
+          "fullName": "Ahmed El Amrani",
+          "email": "ahmed.elamrani@example.nl",
+          "phoneNumber": "+31 6 12345605"
+        },
+        "building": {
+          "renovationStatus": "Nee",
+          "renovationYear": "",
+          "bouwjaar": "",
+          "floorArea": "",
+          "vloerenType": "Licht",
+          "wandenType": "Licht",
+          "gboT": "",
+          "leidingdoorvoeren": "",
+          "avr": "",
+          "buurt": "",
+          "wijk": "",
+          "gemeente": "",
+          "gebouwhoogte": "",
+          "hasFloorPlans": null
+        },
+        "answers": {
+          "alist_0": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Name"
+          },
+          "alist_1": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Email"
+          },
+          "alist_2": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Phone number"
+          },
+          "alist_3": {
+            "value": null,
+            "section": "User Registration",
+            "category": "Personal details",
+            "question": "Alternative phone number"
+          },
+          "alist_4": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Address"
+          },
+          "alist_5": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Plaats"
+          },
+          "alist_6": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Buurt"
+          },
+          "alist_7": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Wijk"
+          },
+          "alist_8": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Adres",
+            "question": "Gemeente"
+          },
+          "alist_9": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Bouwjaar"
+          },
+          "alist_10": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Renovation status",
+            "question": "Have you renovated isolatie for whole wonining?"
+          },
+          "alist_11": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Renovation status",
+            "question": "Have you renovated Glas type for all kozijnen of wonining?"
+          },
+          "alist_12": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Gebouw type"
+          },
+          "alist_13": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Position"
+          },
+          "alist_14": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "woning type",
+            "question": "Ligging"
+          },
+          "alist_15": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Gebouwhoogte totale gebouw"
+          },
+          "alist_16": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Number of floor"
+          },
+          "alist_17": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Building details",
+            "question": "Floor Area"
+          },
+          "alist_18": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "Map of that area (Viewer)"
+          },
+          "alist_19": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "Street view of that house (Viewer)"
+          },
+          "alist_20": {
+            "value": null,
+            "section": "Identificatie",
+            "category": "Features",
+            "question": "AHN model (Viewer)"
+          },
+          "alist_21": {
+            "value": null,
+            "section": "Choice",
+            "category": "Upload document",
+            "question": "Do you have tekeningen of woning? | Yes/No"
+          },
+          "alist_22": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Upload document",
+            "question": "Upload floor plan, section, elevation"
+          },
+          "alist_23": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Room configuration",
+            "question": "Select present room in the house"
+          },
+          "alist_24": {
+            "value": null,
+            "section": "Drawings & Property details",
+            "category": "Zonwering",
+            "question": "Type of zonwering"
+          },
+          "alist_25": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Property details",
+            "question": "Type bouwwijze vloeren"
+          },
+          "alist_26": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Property details",
+            "question": "Type bouwwijze wanden"
+          },
+          "alist_27": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "GBO-T",
+            "question": "Confirm total thermische area (in m²) : Predefine value"
+          },
+          "alist_28": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "Leidingdoorvoeren",
+            "question": "Number of shaft which contains HWA VWA pipes : Enter value"
+          },
+          "alist_29": {
+            "value": null,
+            "section": "Algemeen",
+            "category": "AVR",
+            "question": "Provide AVR value (adjucent to heated area) : Enter value"
+          },
+          "alist_30": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Gevel isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_31": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Gevel isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_32": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Vloer isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_33": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Vloer isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_34": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Dak isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_35": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "Dak isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_36": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "panelen isolatie",
+            "question": "Upload doc / Capture photo"
+          },
+          "alist_37": {
+            "value": null,
+            "section": "Isolatie",
+            "category": "panelen isolatie",
+            "question": "Enter isolatie thickness"
+          },
+          "alist_38": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Ventilatie",
+            "question": "Is Co2 sensor available?"
+          },
+          "alist_39": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Ventilatie",
+            "question": "Select location of ventilatie Co2 sensor"
+          },
+          "alist_40": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of heating systeem"
+          },
+          "alist_41": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Select location of opwekker systeem"
+          },
+          "alist_42": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_43": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Verwarming",
+            "question": "Type of regeling"
+          },
+          "alist_44": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Same as verwarming? | Yes/No"
+          },
+          "alist_45": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of opwekker"
+          },
+          "alist_46": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of toestel"
+          },
+          "alist_47": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Select location of opwekker systeem"
+          },
+          "alist_48": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Tapwater",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_49": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Are PV panelen installed? | Yes/No"
+          },
+          "alist_50": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Enter number of pv-panels"
+          },
+          "alist_51": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Enter hellingshoek value"
+          },
+          "alist_52": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Zonne-panelen",
+            "question": "Type of bouwintegratie"
+          },
+          "alist_53": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Is cooling system available? | Yes/No"
+          },
+          "alist_54": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Type of opwekker"
+          },
+          "alist_55": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Type of afgiftesysteem"
+          },
+          "alist_56": {
+            "value": null,
+            "section": "Installatie",
+            "category": "Koeling",
+            "question": "Which rooms are actively cooling?"
+          },
+          "alist_57": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Upload document",
+            "question": "Upload doc for updated kozijn"
+          },
+          "alist_58": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Are all same? | Yes/No"
+          },
+          "alist_59": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select type"
+          },
+          "alist_60": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select location"
+          },
+          "alist_61": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Kozijn",
+            "question": "Select level"
+          },
+          "alist_62": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Are all same? | Yes/No"
+          },
+          "alist_63": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select type"
+          },
+          "alist_64": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Merk & type"
+          },
+          "alist_65": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select location"
+          },
+          "alist_66": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Glas",
+            "question": "Select level"
+          },
+          "alist_67": {
+            "value": null,
+            "section": "Kozijn & Glas",
+            "category": "Door",
+            "question": "Is door isolated? | Yes/No"
+          },
+          "alist_68": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "All the gevel"
+          },
+          "alist_69": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "All the windows with closeup"
+          },
+          "alist_70": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Measurement of all door & Window"
+          },
+          "alist_71": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Grenst aan"
+          },
+          "alist_72": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Exterior",
+            "question": "Measure length of any gevel for scale"
+          },
+          "alist_73": {
+            "value": null,
+            "section": "Photo capture",
+            "category": "Interior",
+            "question": "Capture photos of all spaces to identify windows, systems, and installations."
+          },
+          "alist_74": {
+            "value": null,
+            "section": "Review",
+            "category": "Completed data",
+            "question": "List of items which has been completed"
+          },
+          "alist_75": {
+            "value": null,
+            "section": "Review",
+            "category": "Audit warning",
+            "question": "List of all missing / incomplete items"
+          }
+        }
+      }
+    }
+  ]
+}

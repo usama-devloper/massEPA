@@ -1,0 +1,651 @@
+{
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "logout": "Log out",
+    "continue": "Continue",
+    "continueTo": "Continue to {page}",
+    "previous": "Previous",
+    "done": "Done",
+    "save": "Save",
+    "cancel": "Cancel",
+    "add": "Add"
+  },
+  "themes": {
+    "forest": {
+      "label": "Forest",
+      "description": "Default BuildingID greens and soft off-white surfaces."
+    },
+    "ocean": {
+      "label": "Ocean",
+      "description": "Cool blues with airy backgrounds."
+    },
+    "slate": {
+      "label": "Slate",
+      "description": "Neutral slate with indigo accents."
+    },
+    "warm": {
+      "label": "Warm clay",
+      "description": "Warm stone surfaces with terracotta primary."
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "clients": "Clients",
+    "dashboard": "Dashboard",
+    "algemeen": "General",
+    "upload": "House design",
+    "insulation": "Insulation details",
+    "installatie": "Installations",
+    "kozijnGlas": "Frames & glass",
+    "photos": "Photos",
+    "finalReview": "Final review",
+    "complete": "Complete",
+    "settings": "Settings"
+  },
+  "back": {
+    "dashboard": "Back to dashboard",
+    "algemeen": "Back to general",
+    "upload": "Back to house design",
+    "insulation": "Back to insulation",
+    "installatie": "Back to installations",
+    "kozijnGlas": "Back to frames & glass",
+    "photos": "Back to photos",
+    "finalReview": "Back to audit review"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Customize appearance and language. Your choices are saved on this device.",
+    "backToAlgemeen": "Back to general",
+    "colorScheme": "Color scheme",
+    "language": {
+      "title": "Language",
+      "description": "Choose the language for menus, labels, and messages across the app.",
+      "nl": "Nederlands",
+      "en": "English"
+    }
+  },
+  "profile": {
+    "title": "User profile",
+    "subtitle": "Manage your profile information",
+    "backToDashboard": "Back to dashboard",
+    "memberSince": "Member since {year}",
+    "fullName": "Full name",
+    "phoneNumber": "Phone number",
+    "email": "Email address",
+    "address": "Address",
+    "notProvided": "Not provided",
+    "logout": "Log out",
+    "fieldUpdated": "{field} updated successfully!"
+  },
+  "clients": {
+    "title": "Clients",
+    "subtitle": "Manage residents and check dossier completion per address.",
+    "backToDashboard": "Back to dashboard",
+    "denied": "Not allowed for your role.",
+    "back": "Back",
+    "newClient": "New client",
+    "searchPlaceholder": "Search by name, email, address or phone…",
+    "loading": "Loading…",
+    "emptyTitle": "No clients found.",
+    "emptyHint": "Add one with “New client”.",
+    "unnamed": "Unnamed",
+    "noAddress": "No address",
+    "selectHint": "Select a client to view details.",
+    "fillDetails": "Fill in the details",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "openDossier": "Open dossier (General)",
+    "form": {
+      "fullName": "Full name",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address"
+    },
+    "dossier": {
+      "title": "Dossier status",
+      "label": "Dossier:",
+      "present": "present",
+      "notFound": "not found",
+      "fill": "Completion:",
+      "updated": "Last updated:",
+      "by": "By:"
+    },
+    "validation": {
+      "nameRequired": "Full name is required",
+      "addressRequired": "Address is required",
+      "emailRequired": "A valid email is required"
+    },
+    "toast": {
+      "added": "Client added",
+      "updated": "Client updated",
+      "deleted": "Client deleted",
+      "notFound": "Client not found",
+      "saveFailed": "Could not save client",
+      "updateFailed": "Could not update client",
+      "deleteFailed": "Could not delete client"
+    }
+  },
+  "home": {
+    "startAudit": "Start audit",
+    "streetView": "Street view",
+    "mapLoading": "Loading street view…",
+    "noMap": "Add an address to see the house",
+    "openStreetView": "Open in Google Maps",
+    "floorsOne": "{count} floor",
+    "floorsMany": "{count} floors"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Track your progress and navigate through sections",
+    "progressOverview": "Progress overview",
+    "progressHint": "Complete all sections to finish the assessment",
+    "overallCompletion": "Overall completion",
+    "overallHint": "Your assessment progress summary",
+    "progressComplete": "Complete",
+    "categories": {
+      "algemeen": "General",
+      "upload": "House design",
+      "insulation": "Insulation",
+      "installatie": "Installations",
+      "kozijnGlas": "Frames & glass",
+      "photos": "Photos",
+      "complete": "Complete"
+    },
+    "details": {
+      "fields": "{filled}/{total} fields",
+      "files": "{count}/1 files",
+      "photos": "{count}/3 photos",
+      "percent": "{value}%"
+    }
+  },
+  "insulation": {
+    "title": "Insulation details",
+    "subtitle": "Provide details and visual evidence for building insulation layers",
+    "backToUpload": "Back to house design",
+	"customMaterial": "Custom material type",
+    "customMaterialPlaceholder": "Enter custom material name...",
+    "evidenceAdded": "{{count}} evidence added",
+    "categories": {
+      "gevel": "Facade insulation",
+      "vloer": "Floor insulation",
+      "dak": "Roof insulation",
+      "panelen": "Panel insulation"
+    },
+    "evidenceAdded": "{count} evidence added",
+    "materialType": "Construction material type",
+    "selectMaterial": "Select material…",
+    "backToMaterialSelect": "Choose from list",
+    "thickness": "Estimated thickness (mm)",
+    "thicknessPlaceholder": "Thickness",
+    "doorIsolated": "Is the door insulated?",
+    "continueInstallatie": "Continue to installations",
+    "guide": {
+      "subtitleWithContext": "Tips for {label}",
+      "camera": {
+        "title": "Capture Assistant",
+        "subtitle": "Quick tips before photographing insulation",
+        "illustration": "Frame the insulation clearly",
+        "tip1": "Hold your phone steady",
+        "tip2": "Ensure good lighting",
+        "tip3": "Capture insulation material clearly",
+        "tip4": "Show thickness if possible",
+        "tip5": "You can take multiple photos",
+        "continue": "Capture photos"
+      },
+      "upload": {
+        "title": "Upload Assistant",
+        "subtitle": "Quick tips before uploading insulation files",
+        "illustration": "Select files from your device",
+        "tip1": "Select clear photos of insulation",
+        "tip2": "Choose files from your device",
+        "tip3": "PDF documents are also accepted",
+        "tip4": "Multiple files can be selected at once",
+        "tip5": "Make sure insulation is visible in photos",
+        "continue": "Upload files"
+      },
+      "reviewSubtitle": "Review your selection before saving",
+      "selectedCount": "{count} selected",
+      "reviewEmpty": "No files yet. Add photos or documents.",
+      "addMore": "+ Add more",
+      "done": "Done"
+    }
+  },
+  "installatie": {
+    "title": "Installations & technical",
+    "subtitle": "Provide details about heating, cooling, ventilation and solar systems",
+    "backToInsulation": "Back to insulation",
+    "selectSection": "Select this section to answer questions",
+    "ventilation": "Ventilation",
+    "ventilationCo2": "Is there a ventilation system with a CO2 sensor?",
+    "sensorLocation": "Sensor location (multiple possible)",
+    "otherLocation": "Other location…",
+    "andersSaved": "Saved",
+    "heating": "Heating",
+    "heatingType": "Heating system type",
+    "selectHeatingType": "Select heating type",
+    "heatingTypes": {
+      "hrKetel": "HR boiler",
+      "cvKetel": "CV boiler",
+      "warmtepomp": "Heat pump",
+      "stadsverwarming": "District heating",
+      "lucht": "Air"
+    },
+    "location": "Location",
+    "selectLocation": "Select location",
+    "enterLocation": "Enter location…",
+    "emissionType": "Emission system type",
+    "selectEmissionType": "Select emission type",
+    "controlType": "Control type",
+    "selectControlType": "Select control type",
+    "generatorType": "Generator type",
+    "selectGeneratorType": "Select generator type",
+    "deviceType": "Device type",
+    "selectDeviceType": "Select device type",
+    "buildingIntegration": "Building integration",
+    "selectIntegrationType": "Select integration type",
+    "emissionSystem": "Emission system",
+    "selectEmissionSystem": "Select emission system",
+    "tapwater": "Tap water",
+    "tapwaterSame": "Is tap water system the same as heating?",
+    "solar": "Solar panels",
+    "solarInstalled": "Are solar panels installed?",
+    "panelCount": "Number of panels",
+    "tiltAngle": "Tilt angle",
+    "cooling": "Cooling",
+    "activeCooling": "Is active cooling present?",
+    "coolingRooms": "Which rooms have active cooling?",
+    "continueKozijn": "Continue to frames & glass"
+  },
+  "kozijn": {
+    "title": "Frames & glass",
+    "subtitle": "Inspection of window frames and insulation values",
+    "backToInstallatie": "Back to installations",
+    "documentation": "Documentation",
+    "uploadKozijnDocs": "Upload documents for updated frames",
+    "kozijnDetails": "Frame details",
+    "allKozijnenSame": "Are all frames the same?",
+    "glasDetails": "Glass details",
+    "allGlasSame": "Is all glass the same?",
+    "frameType": "Frame type",
+    "glassType": "Glass type",
+    "brandType": "Brand & type",
+    "brandPlaceholder": "e.g. Pilkington Insulight",
+    "location": "Location",
+    "floor": "Floor",
+    "selectFrameType": "Select frame type",
+    "selectGlassType": "Select glass type",
+    "selectLocation": "Select location",
+    "selectFloor": "Select floor",
+    "frameLocationN": "Frame location {n}",
+    "glassLocationN": "Glass location {n}",
+    "locationsAdded": "{count} locations added",
+    "addFrameLocation": "Add another frame location",
+    "addGlassLocation": "Add another glass location",
+    "continueToPhotos": "Continue to {page}",
+    "downloadPdf": "Download PDF",
+    "addGevel": "Add facade",
+    "continuePhotos": "Continue",
+    "options": {
+      "frame": {
+        "hout": "Wood",
+        "houtKunststof": "Wood or plastic",
+        "kunststof": "Plastic",
+        "metaal": "Metal"
+      },
+      "glass": {
+        "hrpp": "HR++ glass",
+        "hrppp": "HR+++ glass (triple)",
+        "dubbel": "Double glazing",
+        "enkel": "Single glazing"
+      },
+      "location": {
+        "voor": "Front",
+        "achter": "Rear",
+        "links": "Left",
+        "rechts": "Right"
+      }
+    },
+    "guide": {
+      "camera": {
+        "title": "Capture Assistant",
+        "subtitle": "Quick tips before photographing frame documents",
+        "illustration": "Frame the document clearly",
+        "tip1": "Hold your phone steady",
+        "tip2": "Ensure good lighting",
+        "tip3": "Capture frame labels and specs clearly",
+        "tip4": "Avoid glare on glass surfaces",
+        "tip5": "You can take multiple photos",
+        "continue": "Capture photos"
+      },
+      "upload": {
+        "title": "Upload Assistant",
+        "subtitle": "Quick tips before uploading frame documents",
+        "illustration": "Select files from your device",
+        "tip1": "Use clear PDF or image files",
+        "tip2": "Include frame and glass specifications if available",
+        "tip3": "PDF and JPG/PNG formats are accepted",
+        "tip4": "You can select multiple files at once",
+        "tip5": "Make sure text and details are readable",
+        "continue": "Upload files"
+      },
+      "reviewSubtitle": "Review your selection before saving",
+      "selectedCount": "{count} selected",
+      "reviewEmpty": "No files yet. Add photos or documents.",
+      "addMore": "+ Add more",
+      "done": "Done"
+    }
+  },
+  "photos": {
+    "title": "Photos",
+    "subtitle": "Capture evidence for exterior and interior spaces",
+    "backToKozijn": "Back to frames & glass",
+    "exterior": "Exterior",
+    "interior": "Interior",
+    "photoCount": "{count}/{total} photos",
+    "capturePhoto": "Capture photo",
+    "deletePhoto": "Delete photo",
+    "photoCaptured": "Photo captured",
+    "photoDeleted": "Photo deleted",
+    "continueReview": "Continue to audit review",
+    "guide": {
+      "subtitleWithContext": "Tips for {label}",
+      "camera": {
+        "title": "Capture Assistant",
+        "subtitle": "Quick tips before taking photos",
+        "subtitleWithContext": "Tips for {label}",
+        "illustration": "Frame your shot",
+        "tip1": "Hold your phone steady",
+        "tip2": "Ensure good lighting",
+        "tip3": "Capture the space clearly",
+        "tip4": "Show key details",
+        "tip5": "You can take multiple photos",
+        "continue": "Capture photos"
+      },
+      "reviewTitle": "Capture {label}",
+      "reviewSubtitle": "Take multiple photos before saving",
+      "selectedCount": "{count} selected",
+      "reviewEmpty": "No photos captured yet",
+      "addMore": "+ Add more",
+      "done": "Done",
+      "categoryTips": "{label} tips",
+      "reviewTip1": "Keep the camera steady",
+      "reviewTip2": "Capture the full area clearly",
+      "reviewTip3": "Avoid blurry or dark photos",
+      "reviewTip4": "Take photos from multiple angles",
+      "savedToast": "{count} photo(s) saved"
+    },
+    "exterior": {
+    "voor": "Front Facade",
+    "achter": "Back Facade",
+    "links": "Left Facade",
+    "rechts": "Right Facade"
+  },
+    "category": {
+      "doorIsolated": "Is door isolated?",
+      "glassType": "Type of glass?",
+      "frameType": "Type of kozijn?"
+    }
+  },
+  "photoInterior": {
+    "title": "Room selection – phase 2",
+    "subtitle": "Select the specific area or room for detailed mapping.",
+    "backToPhotos": "Back to photos"
+  },
+  "finalReview": {
+    "title": "Audit review",
+    "ready": "Ready to submit",
+    "initial": "Initial state",
+    "backToPhotos": "Back to photos",
+    "percentCompleted": "{percent}% completed",
+    "itemsPending": "{count} items pending",
+    "pendingTitle": "Pending / incomplete items",
+    "footerHint": "Please resolve the {count} pending items to unlock final submission.",
+    "footerSub": "Progress is saved automatically in the secure audit cloud.",
+    "submitAudit": "Submit final audit",
+    "items": {
+      "verification": {
+        "title": "Verification",
+        "description": "Owner and location verification requires a signed confirmation document.",
+        "action": "Action required"
+      },
+      "algemeen": {
+        "title": "General",
+        "description": "General building characteristics and year of construction are not yet finalized.",
+        "action": "Update info"
+      },
+      "drawing": {
+        "title": "Drawing",
+        "description": "Architectural floor plans need to be uploaded for all levels.",
+        "action": "Upload now"
+      },
+      "constructie": {
+        "title": "Construction",
+        "descriptionVerified": "Building construction details are verified.",
+        "descriptionNotSelected": "Insulation status not selected.",
+        "descriptionMissing": "Missing: {items}.",
+        "missingSpecs": "insulation material and thickness",
+        "missingDoor": "door status",
+        "action": "Verify values"
+      },
+      "installatie": {
+        "title": "Installations",
+        "description": "Ventilation, heating and PV system specifications require manufacturer data sheets.",
+        "action": "Add specs"
+      },
+      "photo": {
+        "title": "Photo",
+        "description": "Mandatory photographic evidence for the house is missing.",
+        "action": "Capture photos"
+      }
+    }
+  },
+  "algemeen": {
+    "title": "General",
+    "continueHouseDesign": "Continue to house design",
+    "backToDashboard": "Back to dashboard",
+    "notProvided": "Not provided",
+    "labels": {
+      "address": "Address",
+      "city": "City",
+      "neighborhood": "Neighborhood",
+      "district": "District",
+      "municipality": "Municipality",
+      "buildingHeight": "Total building height (m)",
+      "floorArea": "Floor area (m²)",
+      "buildingType": "Building type",
+      "position": "Position / subtype",
+      "roofType": "Roof type",
+      "location": "Location",
+      "whichFloor": "Which floor?",
+      "startFloor": "Start floor?",
+      "numberOfFloors": "No. of floors",
+      "hasBasement": "Is basement available?",
+      "hasCrawlSpace": "Is crawl space available?",
+      "yearBuilt": "Year of construction",
+      "renovationStatus": "Renovation status",
+      "yearRenovation": "Year of renovation",
+      "hasFloorPlans": "Do you have floor plans?"
+    },
+    "placeholders": {
+      "city": "City…",
+      "neighborhood": "Neighborhood…",
+      "district": "District…",
+      "municipality": "Municipality…",
+      "height": "0.0 m",
+      "floorArea": "0.0 m²",
+      "yearBuilt": "e.g. 1970",
+      "yearRenovation": "e.g. 2020"
+    },
+    "confirm": {
+      "title": "Submit application",
+      "message": "Are you sure all information is correct?"
+    },
+    "toast": {
+      "floorPlansRequired": "Please select Yes or No for floor plans"
+    },
+    "options": {
+      "buildingType": {
+        "detachedHouse": "Detached house",
+        "apartment": "Apartment building unit",
+        "detachedNonSelfContained": "Detached house (non-self-contained units)",
+        "apartmentNonSelfContained": "Apartment (non-self-contained units)"
+      },
+      "position": {
+        "detached": "Detached",
+        "endTerrace": "End-terrace / corner",
+        "midTerrace": "Mid-terrace",
+        "semiDetached": "Semi-detached"
+      },
+      "location": {
+        "pitchedRoof": "Pitched roof",
+        "partlyFlat": "Partly flat roof",
+        "flatRoof": "Flat roof / no cap",
+        "groundFloorUnit": "Ground floor unit",
+        "middleFloor": "Middle floor",
+        "topFloor": "Top floor",
+        "groundWithRoof": "Ground floor with roof"
+      },
+      "whichFloor": {
+        "ground": "Ground floor",
+        "first": "1st floor",
+        "second": "2nd floor",
+        "third": "3rd floor",
+        "fourth": "4th floor",
+        "fifth": "5th floor",
+        "sixth": "6th floor",
+        "seventh": "7th floor",
+        "eighth": "8th floor",
+        "ninth": "9th floor"
+      }
+    }
+  },
+  "upload": {
+    "title": "House design",
+    "continueInsulation": "Continue to insulation details",
+    "backToAlgemeen": "Back to general",
+    "uploadLabelRequired": "PDF or image (max 25MB)",
+    "uploadLabelSkip": "Floor plans not required",
+    "floorPlansTitle": "Floor plans",
+    "noPlansHintPrefix": "In General you indicated you ",
+    "noPlansBold": "do not have floor plans",
+    "noPlansHintSuffix": ". You can continue without uploading drawings. Use the next sections to describe rooms and other details.",
+    "technicalTitle": "Technical assessment details",
+    "technicalSubtitle": "Additional parameters for verification.",
+    "roomsTitle": "Which rooms are present in the house?",
+    "roomsCount": "{count} rooms",
+    "insulationQuestion": "Is there any new insulation applied after construction?",
+    "addRoom": "Add room",
+    "addBedrooms": "Add more bedrooms",
+    "removeBedroom": "Remove extra bedroom",
+    "roomNamePlaceholder": "Room name",
+    "existingRoom": "Existing",
+    "floorPlanAlt": "Floor plan {n}",
+    "modalAlt": "Floor plan full view",
+    "guide": {
+      "camera": {
+        "title": "Capture Assistant",
+        "subtitle": "Quick tips before photographing floor plans",
+        "illustration": "Frame the full drawing",
+        "tip1": "Hold your phone steady",
+        "tip2": "Ensure good lighting",
+        "tip3": "Capture the full floor plan clearly",
+        "tip4": "Avoid glare and shadows",
+        "tip5": "You can take multiple photos",
+        "continue": "Capture photos"
+      },
+      "upload": {
+        "title": "Upload Assistant",
+        "subtitle": "Quick tips before uploading floor plans",
+        "illustration": "Select files from your device",
+        "tip1": "Use clear PDF or image files",
+        "tip2": "Maximum file size is 25 MB",
+        "tip3": "PDF and JPG/PNG formats are accepted",
+        "tip4": "You can select multiple files at once",
+        "tip5": "Make sure room layout is readable",
+        "continue": "Upload files"
+      },
+      "reviewSubtitle": "Review your selection before saving",
+      "selectedCount": "{count} selected",
+      "reviewEmpty": "No files yet. Add photos or documents.",
+      "addMore": "+ Add more",
+      "done": "Done"
+    },
+    "labels": {
+      "floorConstruction": "Floor construction type",
+      "wallConstruction": "Wall construction type",
+      "gboT": "GBO-T (m²)",
+      "pipePenetrations": "Pipe penetrations",
+      "avr": "AVR"
+    },
+    "placeholders": {
+      "gboT": "0.00",
+      "input": "Enter…"
+    },
+    "construction": {
+      "light": "Light",
+      "heavy": "Heavy",
+      "veryHeavy": "Very heavy"
+    },
+    "floors": {
+      "kelder": "Basement",
+      "ground": "Ground floor",
+      "first": "1st floor",
+      "second": "2nd floor",
+      "third": "3rd floor",
+      "fourth": "4th floor",
+      "fifth": "5th floor",
+      "sixth": "6th floor",
+      "seventh": "7th floor",
+      "eighth": "8th floor",
+      "ninth": "9th floor"
+    },
+    "rooms": {
+      "hal": "Hall",
+      "mk": "Meter cupboard",
+      "wc": "WC",
+      "livingRoom": "Living room",
+      "kitchen": "Kitchen",
+      "bathroom": "Bathroom",
+      "bedroom": "Bedroom",
+      "bedroomN": "Bedroom {n}",
+      "technicalRoom": "Technical room",
+      "storage": "Storage",
+      "extension": "Extension",
+      "conservatory": "Conservatory",
+      "attic": "Attic",
+      "dormer": "Dormer",
+	  "wasruimte": "Laundry room",
+	  "eetkamer":"Dining room",
+      "overluip": "Landing (overloop)"
+    },
+	  "addMorePhotos": "Add more photos",
+    "toast": {
+      "roomRemoved": "{label} removed",
+      "filesUploaded": "{count} file(s) uploaded successfully",
+      "photoCaptured": "Photo captured successfully",
+      "fileDeleted": "File deleted",
+      "pdfNoPreview": "PDF cannot be previewed",
+      "filesUploadFailed": "Could not save file for later — try a smaller image",
+      "storageQuotaFailed": "Photos could not be saved — storage is full. Remove some photos or use smaller images.",
+      "roomNameRequired": "Please enter a room name",
+      "roomExists": "Room name already exists on this floor",
+      "roomAdded": "Room \"{name}\" added",
+      "roomDeleted": "Room \"{name}\" deleted",
+      "insulationRequired": "Please select Yes or No for insulation question",
+      "floorPlanRequired": "Please upload at least one floor plan",
+	  "filesUploaded": "{{count}} files uploaded",
+      "photoCaptured": "Photo captured",
+      "fileDeleted": "File deleted"
+    }
+  },
+  "complete": {
+    "title": "Survey complete!",
+    "message": "All data for the energy survey has been processed successfully. We will now prepare your certificate.",
+    "backToReview": "Back to audit review",
+    "backDashboard": "Back to dashboard",
+    "submit": "Submit final application"
+  }
+}

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>massEPA — Styled category icons (preview)</title>
+  <script src="https://unpkg.com/lucide@0.469.0"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 28px 24px 48px;
+      background: #eceee8;
+      color: #1a1c18;
+    }
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin: 0 0 6px;
+      color: #2d5a3d;
+    }
+    .sub {
+      color: #5c5f57;
+      margin: 0 0 8px;
+      max-width: 720px;
+      line-height: 1.55;
+      font-size: 0.9rem;
+    }
+    .hint {
+      background: #fff;
+      border: 1px solid #d8dad4;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin: 20px 0 28px;
+      font-size: 0.85rem;
+      color: #5c5f57;
+    }
+    .hint code { font-size: 0.8rem; background: #f4f5f0; padding: 2px 6px; border-radius: 4px; }
+    section { margin-bottom: 40px; }
+    section h2 {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #5c5f57;
+      margin: 0 0 16px;
+    }
+
+    /* Reference-style grid (like your image) */
+    .ref-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 20px;
+      max-width: 920px;
+    }
+    .ref-card {
+      text-align: center;
+    }
+    .ref-tile {
+      width: 100%;
+      aspect-ratio: 1;
+      max-width: 120px;
+      margin: 0 auto 10px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+    }
+    .ref-tile::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgb(0 0 0 / 4%) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(0 0 0 / 4%) 1px, transparent 1px);
+      background-size: 10px 10px;
+      pointer-events: none;
+    }
+    .ref-tile .ico-wrap {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ref-tile svg { width: 40px; height: 40px; stroke-width: 1.75; }
+    .ref-label {
+      font-weight: 800;
+      font-size: 0.8rem;
+      line-height: 1.25;
+    }
+    .ref-en {
+      font-size: 0.7rem;
+      color: #6b6e66;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* Sidebar mock */
+    .compare {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+    .sidebar-mock {
+      width: 240px;
+      background: #fafaf8;
+      border: 1px solid #e2e3dd;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+    }
+    .sidebar-mock h3 {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #5c5f57;
+      margin: 0 0 12px;
+      font-weight: 800;
+    }
+    .nav-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #4a4d47;
+      cursor: default;
+      text-align: left;
+      margin-bottom: 4px;
+      font-family: inherit;
+    }
+    .nav-btn.active {
+      background: #2d5a3d;
+      color: #fff;
+    }
+    .nav-btn.active .mini-tile { box-shadow: 0 0 0 1px rgb(255 255 255 / 30%); }
+    .mini-tile {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .mini-tile::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgb(0 0 0 / 5%) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(0 0 0 / 5%) 1px, transparent 1px);
+      background-size: 6px 6px;
+    }
+    .mini-tile .ico-wrap { position: relative; z-index: 1; display: flex; }
+    .mini-tile svg { width: 16px; height: 16px; stroke-width: 2.25; }
+    .nav-btn.active .mini-tile svg { color: inherit; }
+
+    /* Dashboard row mock */
+    .dash-list { max-width: 520px; }
+    .dash-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid #e0e2dc;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+      font-weight: 800;
+    }
+    .dash-row .pct {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: #6b6e66;
+      font-weight: 700;
+    }
+
+    /* Per-category colors (from your reference image) */
+    .bg-algemeen { background: #dbeafe; color: #2563eb; }
+    .bg-huis { background: #ffedd5; color: #ea580c; }
+    .bg-isolatie { background: #fef9c3; color: #ca8a04; }
+    .bg-install { background: #ccfbf1; color: #0d9488; }
+    .bg-kozijn { background: #e0f2fe; color: #0284c7; }
+    .bg-foto { background: #ede9fe; color: #7c3aed; }
+    .bg-eind { background: #dcfce7; color: #16a34a; }
+    .bg-compleet { background: #d1fae5; color: #059669; }
+    .bg-settings { background: #f3f4f6; color: #4b5563; }
+    .bg-clients { background: #dbeafe; color: #1d4ed8; }
+    .bg-home { background: #e8f0eb; color: #2d5a3d; }
+    .bg-dash { background: #f3f4f6; color: #374151; }
+
+    .install-combo { position: relative; width: 40px; height: 40px; }
+    .install-combo svg.wrench {
+      position: absolute;
+      right: 2px;
+      bottom: 0;
+      width: 22px;
+      height: 22px;
+    }
+    .install-combo svg.cog {
+      width: 32px;
+      height: 32px;
+    }
+    .mini-tile .install-combo svg.cog { width: 18px; height: 18px; }
+    .mini-tile .install-combo svg.wrench { width: 12px; height: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Aanbevolen iconen — preview vóór implementatie</h1>
+  <p class="sub">Zo zouden de categorie-iconen eruitzien in massEPA: gekleurde tegels (zoals uw referentiebeeld) + Lucide-iconen in de sidebar en op het dashboard.</p>
+  <p class="hint">Open in de browser: <code>M:\mEPA\massEPA\icon-preview-styled.html</code></p>
+
+  <section>
+    <h2>Referentiestijl — grote tegels (zoals uw afbeelding)</h2>
+    <div class="ref-grid" id="ref-grid"></div>
+  </section>
+
+  <section>
+    <h2>In de app — sidebar (huidig vs voorgesteld)</h2>
+    <div class="compare">
+      <div class="sidebar-mock">
+        <h3>Huidig — alleen grijs icoon 16px</h3>
+        <div id="sidebar-old"></div>
+      </div>
+      <div class="sidebar-mock">
+        <h3>Voorgesteld — gekleurde tegel + label</h3>
+        <div id="sidebar-new"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>In de app — dashboard rijen</h2>
+    <div class="dash-list" id="dash-rows"></div>
+  </section>
+
+  <script>
+    const categories = [
+      { id: 'home', nl: 'Home', en: 'Home', icon: 'home', bg: 'bg-home', sidebar: true, dash: false },
+      { id: 'dashboard', nl: 'Dashboard', en: 'Dashboard', icon: 'layout-dashboard', bg: 'bg-dash', sidebar: true, dash: false },
+      { id: 'algemeen', nl: 'Algemeen', en: 'General', icon: 'layout-grid', bg: 'bg-algemeen', sidebar: true, dash: true },
+      { id: 'huis', nl: 'Huisontwerp', en: 'House design', icon: 'blueprint', bg: 'bg-huis', sidebar: true, dash: true },
+      { id: 'isolatie', nl: 'Isolatie', en: 'Insulation', icon: 'layers', bg: 'bg-isolatie', sidebar: true, dash: true },
+      { id: 'install', nl: 'Installaties', en: 'Installations', icon: 'install-combo', bg: 'bg-install', sidebar: true, dash: true },
+      { id: 'kozijn', nl: 'Kozijn & glas', en: 'Windows & glass', icon: 'app-window', bg: 'bg-kozijn', sidebar: true, dash: true },
+      { id: 'foto', nl: "Foto's", en: 'Photos', icon: 'camera', bg: 'bg-foto', sidebar: true, dash: true },
+      { id: 'eind', nl: 'Eindcontrole', en: 'Final check', icon: 'clipboard-check', bg: 'bg-eind', sidebar: true, dash: false },
+      { id: 'compleet', nl: 'Compleet', en: 'Complete', icon: 'circle-check-big', bg: 'bg-compleet', sidebar: true, dash: true },
+      { id: 'settings', nl: 'Instellingen', en: 'Settings', icon: 'settings', bg: 'bg-settings', sidebar: true, dash: false },
+      { id: 'clients', nl: 'Clients', en: 'Clients', icon: 'users', bg: 'bg-clients', sidebar: false, dash: false },
+    ];
+
+    const oldSidebarIcons = {
+      home: 'home',
+      dashboard: 'layout-dashboard',
+      algemeen: 'square-pen',
+      huis: 'upload',
+      isolatie: 'shield',
+      install: 'building-2',
+      kozijn: 'frame',
+      foto: 'camera',
+      eind: 'clipboard-check',
+      compleet: 'circle-check',
+      settings: 'settings',
+    };
+
+    function iconHtml(name, size) {
+      if (name === 'install-combo') {
+        return `<div class="install-combo">
+          <span class="ico-wrap"><i data-lucide="cog" class="cog"></i></span>
+          <i data-lucide="wrench" class="wrench"></i>
+        </div>`;
+      }
+      return `<span class="ico-wrap"><i data-lucide="${name}"></i></span>`;
+    }
+
+    const refGrid = document.getElementById('ref-grid');
+    categories.filter(c => c.id !== 'home' && c.id !== 'dashboard').forEach((c) => {
+      if (c.id === 'clients' && !c.sidebar) return;
+      const card = document.createElement('div');
+      card.className = 'ref-card';
+      card.innerHTML = `
+        <div class="ref-tile ${c.bg}">${iconHtml(c.icon)}</div>
+        <div class="ref-label">${c.nl}</div>
+        <div class="ref-en">${c.en}</div>
+      `;
+      refGrid.appendChild(card);
+    });
+
+    function buildSidebar(containerId, styled) {
+      const el = document.getElementById(containerId);
+      const items = categories.filter((c) => c.sidebar);
+      items.forEach((c, i) => {
+        const active = c.id === 'algemeen';
+        const btn = document.createElement('button');
+        btn.className = 'nav-btn' + (active ? ' active' : '');
+        const iconName = styled ? c.icon : (oldSidebarIcons[c.id] || c.icon);
+        if (styled) {
+          btn.innerHTML = `
+            <div class="mini-tile ${c.bg}">${iconHtml(c.icon)}</div>
+            <span>${c.nl}</span>
+          `;
+        } else {
+          btn.innerHTML = `<span class="ico-wrap" style="width:28px;display:flex;justify-content:center;color:#6b6e66"><i data-lucide="${iconName}"></i></span><span>${c.nl}</span>`;
+        }
+        el.appendChild(btn);
+      });
+    }
+
+    buildSidebar('sidebar-old', false);
+    buildSidebar('sidebar-new', true);
+
+    const dash = document.getElementById('dash-rows');
+    categories.filter((c) => c.dash).forEach((c, i) => {
+      const row = document.createElement('div');
+      row.className = 'dash-row';
+      row.innerHTML = `
+        <div class="mini-tile ${c.bg}">${iconHtml(c.icon)}</div>
+        <span>${c.nl.toUpperCase()}</span>
+        <span class="pct">${[0, 40, 100, 15, 60, 25, 0][i] ?? 0}%</span>
+      `;
+      dash.appendChild(row);
+    });
+
+    lucide.createIcons();
+    document.querySelectorAll('svg').forEach((svg) => {
+      if (!svg.closest('.install-combo')) {
+        const parent = svg.parentElement;
+        if (parent?.closest('.ref-tile')) return;
+      }
+    });
+  </script>
+</body>
+</html>

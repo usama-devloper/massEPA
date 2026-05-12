@@ -1,0 +1,382 @@
+// src/pages/DashboardPage.tsx
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ArrowRight } from 'lucide-react';
+import { dashboardCategoryIcon } from '../components/common/NavCategoryIcon';
+import { TopBar } from '../components/common/TopBar';
+import { AppSidebar } from '../components/common/AppSidebar';
+import { MobileSidebar } from '../components/common/MobileSidebar';
+import { BackToTop } from '../components/common/BackToTop';
+import { Toast } from '../components/common/Toast';
+import { Step, UserRole } from '../types';
+import { useToast } from '../hooks/useToast';
+import { useLanguage } from '../context/LanguageContext';
+import { HOUSE_DESIGN_PAGE_STORAGE_KEY } from '../storage/houseDesignPageData';
+import { loadPhotoCaptureFromStorage } from '../storage/photoCaptureData';
+import { computePhotoCaptureProgress } from '../utils/photoCaptureProgress';
+
+interface DashboardPageProps {
+  currentStep: Step;
+  setCurrentStep: (step: Step) => void;
+  onLogout: () => void;
+  onManageProfile: () => void;
+  userName: string;
+  selectedRole: UserRole;
+  onLogoClick?: () => void;
+}
+
+interface CategoryProgress {
+  name: string;
+  icon: React.ReactNode;
+  step: Step;
+  progress: number;
+  subtext: string;
+}
+
+/** Pastel fill by progress band (0 / 1–24 / 25–49 / 50–74 / 75–99 / 100). */
+function getProgressFillClass(progress: number): string {
+  if (progress >= 100) return 'bg-[#86efac]';
+  if (progress >= 75) return 'bg-[#a7f3d0]';
+  if (progress >= 50) return 'bg-[#bfdbfe]';
+  if (progress >= 25) return 'bg-[#fde68a]';
+  if (progress >= 1) return 'bg-[#fecaca]';
+  return '';
+}
+
+function getProgressStatusLabel(progress: number, completeLabel: string): string {
+  if (progress >= 100) return completeLabel;
+  return `${progress}%`;
+}
+
+// Progress Row Component
+const ProgressRow = ({
+  category,
+  completeLabel,
+  onClick,
+}: {
+  category: CategoryProgress;
+  completeLabel: string;
+  onClick: () => void;
+}) => {
+  const progress = category.progress;
+  const fillClass = getProgressFillClass(progress);
+  const statusLabel = getProgressStatusLabel(progress, completeLabel);
+  const isComplete = progress >= 100;
+
+  return (
+    <div
+      className="relative h-12 cursor-pointer transition-all hover:shadow-md rounded-lg overflow-hidden bg-white border border-gray-300"
+      onClick={onClick}
+    >
+      {progress > 0 && (
+        <div
+          className={`absolute left-0 top-0 h-full transition-all duration-500 rounded-l-lg ${fillClass}`}
+          style={{ width: `${Math.min(progress, 100)}%` }}
+        />
+      )}
+
+      <div className="relative z-10 flex items-center justify-between w-full px-3 h-full min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="shrink-0 text-gray-600">{category.icon}</div>
+          <span className="font-black text-xs sm:text-sm text-gray-900 whitespace-nowrap shrink-0">
+            {category.name}
+          </span>
+          {!isComplete && (
+            <span className="text-[10px] text-gray-500 truncate hidden sm:inline">
+              {category.subtext}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0 ml-2">
+          <span
+            className={`font-bold text-xs sm:text-sm ${isComplete ? 'text-emerald-800' : 'text-gray-800'}`}
+          >
+            {statusLabel}
+          </span>
+          <ArrowRight size={14} className="text-gray-600" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+function recalcCompleteProgress(categories: CategoryProgress[]): CategoryProgress[] {
+  const sectionRows = categories.filter((item) => item.step !== Step.COMPLETE);
+  const avgProgress =
+    sectionRows.length > 0
+      ? Math.round(sectionRows.reduce((sum, item) => sum + item.progress, 0) / sectionRows.length)
+      : 0;
+
+  return categories.map((item) =>
+    item.step === Step.COMPLETE
+      ? { ...item, progress: avgProgress, subtext: `${avgProgress}%` }
+      : item,
+  );
+}
+
+export function DashboardPage({
+  currentStep,
+  setCurrentStep,
+  onLogout,
+  onManageProfile,
+  userName,
+  selectedRole,
+  onLogoClick,
+}: DashboardPageProps) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { toast, setToast, showToast } = useToast();
+  const { t } = useLanguage();
+
+  const [progressData, setProgressData] = useState<CategoryProgress[]>([
+    { name: 'ALGEMEEN', icon: dashboardCategoryIcon(Step.ALGEMEEN), step: Step.ALGEMEEN, progress: 0, subtext: '0/5 fields' },
+    { name: t('dashboard.categories.upload'), icon: dashboardCategoryIcon(Step.UPLOAD), step: Step.UPLOAD, progress: 0, subtext: '0/2 sections' },
+    { name: 'ISOLATIE', icon: dashboardCategoryIcon(Step.INSULATION_DETAILS), step: Step.INSULATION_DETAILS, progress: 0, subtext: '0/4 cats' },
+    { name: 'INSTALLATIE', icon: dashboardCategoryIcon(Step.INSTALLATIE), step: Step.INSTALLATIE, progress: 0, subtext: '0/8 sec' },
+    { name: 'KOZIJN & GLAS', icon: dashboardCategoryIcon(Step.KOZIJN_GLAS), step: Step.KOZIJN_GLAS, progress: 0, subtext: '0/6 items' },
+    { name: 'PHOTOS', icon: dashboardCategoryIcon(Step.PHOTO_CAPTURE), step: Step.PHOTO_CAPTURE, progress: 0, subtext: '0/4 items' },
+    { name: 'COMPLETE', icon: dashboardCategoryIcon(Step.COMPLETE), step: Step.COMPLETE, progress: 0, subtext: '0%' },
+  ]);
+
+  // Load progress from localStorage
+  useEffect(() => {
+    let cancelled = false;
+
+    const applyProgress = (patch: Partial<Record<Step, { progress: number; subtext: string }>>) => {
+      if (cancelled) return;
+      setProgressData((prev) =>
+        recalcCompleteProgress(
+          prev.map((item) => (patch[item.step] ? { ...item, ...patch[item.step]! } : item)),
+        ),
+      );
+    };
+
+    const patch: Partial<Record<Step, { progress: number; subtext: string }>> = {};
+
+    // ALGEMEEN Progress
+    const algemeenData = localStorage.getItem('algemeenData');
+    if (algemeenData) {
+      try {
+        const parsed = JSON.parse(algemeenData);
+        let filledFields = 0;
+        if (parsed.buildingType && parsed.buildingType !== '') filledFields++;
+        if (parsed.position && parsed.position !== '') filledFields++;
+        if (parsed.location && parsed.location !== '') filledFields++;
+        if (parsed.numberOfFloors && parsed.numberOfFloors !== null) filledFields++;
+        if (parsed.hasFloorPlans !== undefined && parsed.hasFloorPlans !== null) filledFields++;
+        const progress = Math.round((filledFields / 5) * 100);
+        patch[Step.ALGEMEEN] = { progress, subtext: `${filledFields}/5 fields` };
+      } catch {
+        /* ignore */
+      }
+    }
+
+    // UPLOAD Progress
+    const uploadData = localStorage.getItem(HOUSE_DESIGN_PAGE_STORAGE_KEY);
+    if (uploadData) {
+      try {
+        const parsed = JSON.parse(uploadData);
+        let sectionsCompleted = 0;
+        const fileCount = parsed.files?.length || 0;
+        if (fileCount > 0) sectionsCompleted++;
+        const selectedRooms = parsed.selectedRooms || {};
+        const customSelectedRooms = parsed.selectedCustomRooms || {};
+        const totalRooms =
+          Object.values(selectedRooms).flat().length +
+          Object.values(customSelectedRooms).flat().length;
+        if (totalRooms > 0) sectionsCompleted++;
+        const progress = Math.round((sectionsCompleted / 2) * 100);
+        patch[Step.UPLOAD] = { progress, subtext: `${sectionsCompleted}/2 sec` };
+      } catch {
+        /* ignore */
+      }
+    }
+
+    // ISOLATIE Progress
+    const insulationData = localStorage.getItem('massEPA_insulation_v1');
+    if (insulationData) {
+      try {
+        const parsed = JSON.parse(insulationData);
+        const selectedCategories = parsed.selectedCategories || [];
+        let completedCategories = 0;
+        for (const category of selectedCategories) {
+          const spec = parsed.insulationSpecs?.[category];
+          if (
+            spec &&
+            spec.material &&
+            spec.material !== '' &&
+            spec.thickness &&
+            parseInt(spec.thickness) > 0
+          ) {
+            completedCategories++;
+          }
+        }
+        const progress =
+          selectedCategories.length > 0
+            ? Math.round((completedCategories / selectedCategories.length) * 100)
+            : 0;
+        patch[Step.INSULATION_DETAILS] = {
+          progress,
+          subtext: `${completedCategories}/${selectedCategories.length} cats`,
+        };
+      } catch {
+        /* ignore */
+      }
+    }
+
+    // INSTALLATIE Progress (only ticked sections count)
+    const installatieData = localStorage.getItem('massEPA_installatie_v1');
+    if (installatieData) {
+      try {
+        const parsed = JSON.parse(installatieData);
+        const selected: string[] = Array.isArray(parsed.selectedSections) ? parsed.selectedSections : [];
+        const isSectionDone = (id: string): boolean => {
+          switch (id) {
+            case 'ventilation':
+              return parsed.ventilationCo2 !== null && parsed.ventilationCo2 !== undefined;
+            case 'heating':
+              return !!(parsed.heatingSystemType && parsed.heatingLocation);
+            case 'tapwater':
+              return parsed.heatingSameAsWater !== null && parsed.heatingSameAsWater !== undefined;
+            case 'solar':
+              return parsed.solarPanels !== null && parsed.solarPanels !== undefined;
+            case 'cooling':
+              return parsed.activeCooling !== null && parsed.activeCooling !== undefined;
+            default:
+              return false;
+          }
+        };
+        const totalSections = selected.length;
+        const sectionsCompleted = selected.filter(isSectionDone).length;
+        const progress =
+          totalSections > 0 ? Math.round((sectionsCompleted / totalSections) * 100) : 0;
+        patch[Step.INSTALLATIE] = {
+          progress,
+          subtext: `${sectionsCompleted}/${totalSections} sec`,
+        };
+      } catch {
+        /* ignore */
+      }
+    }
+
+    // KOZIJN & GLAS Progress
+    const kozijnData = localStorage.getItem('massEPA_kozijn_glas_v1');
+    if (kozijnData) {
+      try {
+        const parsed = JSON.parse(kozijnData);
+        let itemsCompleted = 0;
+        let totalItems = 0;
+        const kozijnItems = parsed.kozijnItems || [];
+        totalItems += kozijnItems.length;
+        for (const item of kozijnItems) {
+          if (item.frameType && item.frameType !== '') itemsCompleted++;
+        }
+        const glasItems = parsed.glasItems || [];
+        totalItems += glasItems.length;
+        for (const item of glasItems) {
+          if (item.glassType && item.glassType !== '') itemsCompleted++;
+        }
+        const progress = totalItems > 0 ? Math.round((itemsCompleted / totalItems) * 100) : 0;
+        patch[Step.KOZIJN_GLAS] = {
+          progress,
+          subtext: `${itemsCompleted}/${totalItems} items`,
+        };
+      } catch {
+        /* ignore */
+      }
+    }
+
+    applyProgress(patch);
+
+    void loadPhotoCaptureFromStorage().then((photoState) => {
+      if (cancelled) return;
+      const stats = computePhotoCaptureProgress(photoState.exterior, photoState.interior);
+      applyProgress({
+        [Step.PHOTO_CAPTURE]: {
+          progress: stats.progress,
+          subtext: `${stats.completed}/${stats.total} items`,
+        },
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    setProgressData((prev) =>
+      prev.map((item) =>
+        item.step === Step.UPLOAD ? { ...item, name: t('dashboard.categories.upload') } : item,
+      ),
+    );
+  }, [t]);
+
+  const handleNavigate = (step: Step) => {
+    setCurrentStep(step);
+  };
+
+  const handleStepChange = (step: Step) => {
+    setCurrentStep(step);
+  };
+
+  return (
+    <div className="bg-[#f8faf8] min-h-screen">
+      <TopBar
+        showMenu={true}
+        showUserMenu={true}
+        userName={userName}
+        onMenuClick={() => setMobileMenuOpen(true)}
+        onManageProfile={onManageProfile}
+        onLogout={onLogout}
+        onLogoClick={onLogoClick}
+      />
+
+      <AppSidebar
+        currentStep={currentStep}
+        handleStepChange={handleStepChange}
+        onLogout={onLogout}
+        userName={userName}
+        selectedRole={selectedRole}
+      />
+
+      <MobileSidebar
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        currentStep={currentStep}
+        handleStepChange={handleStepChange}
+        onLogout={onLogout}
+        userName={userName}
+        selectedRole={selectedRole}
+      />
+
+      <main className="app-page-main md:ml-64 pb-8">
+        <BackToTop />
+
+        <div className="app-shell-content">
+          {/* Header */}
+          <header className="app-page-title text-center mb-6">
+            <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-black text-on-surface tracking-tighter">
+            DASHBOARD
+            </h1>
+          </header>
+
+          {/* Progress Cards */}
+          <div className="space-y-2">
+            {progressData.map((category, idx) => (
+              <ProgressRow 
+                key={idx}
+                category={category}
+                completeLabel={t('dashboard.progressComplete')}
+                onClick={() => handleNavigate(category.step)}
+              />
+            ))}
+          </div>
+        </div>
+      </main>
+
+      <AnimatePresence>
+        {toast && <Toast {...toast} onClose={() => setToast(null)} />}
+      </AnimatePresence>
+    </div>
+  );
+}

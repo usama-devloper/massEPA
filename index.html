@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>BuildingID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --color-background: #f8faf8;
+        --color-surface: #f9faf4;
+        --color-sidebar: #f3f4ee;
+        --color-primary: #24512c;
+        --color-primary-dark: #315c37;
+        --color-on-background: #1a1c19;
+        --color-primary-muted: rgba(36, 81, 44, 0.1);
+        --app-topbar-height: calc(env(safe-area-inset-top, 0px) + 1rem + 2.5rem + 1rem + 1px);
+        --app-devnav-bottom: calc(env(safe-area-inset-bottom, 0px) + 10rem);
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      .font-display {
+        font-family: 'Manrope', sans-serif;
+      }
+      .bg-primary {
+        background-color: var(--color-primary);
+      }
+      .text-primary {
+        color: var(--color-primary);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
