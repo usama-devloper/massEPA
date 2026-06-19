@@ -21,7 +21,7 @@ export type AuditReviewItem = {
   totalCount: number;
 };
 
-type InsulationSpecs = Record<string, { material: string; customMaterial?: string; thickness: string }>;
+type InsulationSpecs = Record<string, { material: string; customMaterial?: string; thickness: string; yearBuilt?: string }>;
 
 function readJson<T>(key: string): T | null {
   try {
@@ -285,7 +285,7 @@ export function buildAuditReviewItems(
     const catCount = (insulation?.selectedCategories || []).length;
     if (catCount > 0) insulationAnswered++;
 
-    // For each selected category, require material & thickness (role based)
+    // For each selected category, require material, thickness & year built (role based)
     (insulation?.selectedCategories || []).forEach((cat) => {
       const spec = insulationSpecs[cat];
       const hasMaterial =
@@ -294,6 +294,7 @@ export function buildAuditReviewItems(
           ? (spec.customMaterial || '').trim() !== ''
           : (spec.material || '').trim() !== '');
       const hasThickness = spec && (spec.thickness || '').trim() !== '';
+      const hasYearBuilt = spec && (spec.yearBuilt || '').trim() !== '';
 
       if (input.selectedRole !== UserRole.CLIENT) {
         insulationTotal++;
@@ -301,6 +302,9 @@ export function buildAuditReviewItems(
 
         insulationTotal++;
         if (hasThickness) insulationAnswered++;
+
+        insulationTotal++;
+        if (hasYearBuilt) insulationAnswered++;
       }
     });
   }
@@ -325,10 +329,12 @@ export function buildAuditReviewItems(
             ? (spec.customMaterial || '').trim() !== ''
             : (spec.material || '').trim() !== '');
         const hasThickness = spec && (spec.thickness || '').trim() !== '';
+        const hasYearBuilt = spec && (spec.yearBuilt || '').trim() !== '';
 
         if (input.selectedRole !== UserRole.CLIENT) {
           if (!hasMaterial) insulationMissing.push(`${cat} material`);
           if (!hasThickness) insulationMissing.push(`${cat} thickness`);
+          if (!hasYearBuilt) insulationMissing.push(`${cat} insulation year`);
         }
       });
     }

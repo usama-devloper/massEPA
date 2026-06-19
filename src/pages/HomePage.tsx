@@ -26,15 +26,6 @@ interface HomePageProps {
   selectedRole: UserRole;
 }
 
-function FloorLabel({ count, t }: { count: number; t: (key: string, vars?: Record<string, string | number>) => string }) {
-  const key = count === 1 ? 'home.floorsOne' : 'home.floorsMany';
-  return (
-    <p className="mt-2 text-center text-sm font-semibold text-on-surface-variant">
-      {t(key, { count })}
-    </p>
-  );
-}
-
 export function HomePage({
   formData,
   currentStep,
@@ -48,16 +39,8 @@ export function HomePage({
 }: HomePageProps) {
   const { t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [numberOfFloors, setNumberOfFloors] = useState<number | null>(null);
   const [propertyMap, setPropertyMap] = useState<PropertyMapPresentation | null>(null);
   const [mapLoading, setMapLoading] = useState(Boolean(formData.address?.trim()));
-
-  useEffect(() => {
-    const stored = loadAlgemeenFromStorage();
-    if (typeof stored.numberOfFloors === 'number' && stored.numberOfFloors > 0) {
-      setNumberOfFloors(stored.numberOfFloors);
-    }
-  }, []);
 
   useEffect(() => {
     const address = formData.address?.trim();
@@ -132,9 +115,6 @@ export function HomePage({
             </h1>
           )}
 
-          {selectedRole !== UserRole.CLIENT && numberOfFloors !== null && numberOfFloors > 0 && (
-            <FloorLabel count={numberOfFloors} t={t} />
-          )}
 
           {hasAddressBar && (
             <>
@@ -162,10 +142,10 @@ export function HomePage({
             </>
           )}
 
-          {/* Map — full width on mobile; taller so Google UI (address chip + controls) fits */}
-          <div className="relative mt-4 max-md:left-1/2 max-md:w-screen max-md:-translate-x-1/2 md:mx-0 md:w-full md:translate-x-0 md:overflow-hidden md:rounded-2xl md:border md:border-outline-variant/15 md:bg-white md:shadow-sm">
+          {/* Map — fits within container margins with rounded corners to prevent horizontal scrollbar */}
+          <div className="relative mt-4 overflow-hidden rounded-2xl border border-outline-variant/15 bg-white shadow-sm">
             {mapLoading ? (
-              <div className="flex h-[min(52dvh,400px)] min-h-[300px] items-center justify-center bg-surface-container-low md:h-[min(42vh,320px)] md:min-h-[220px]">
+              <div className="flex h-[240px] items-center justify-center bg-surface-container-low md:h-[280px]">
                 <p className="text-sm font-medium text-on-surface-variant">
                   {t('home.mapLoading')}
                 </p>
@@ -175,13 +155,13 @@ export function HomePage({
                 key={propertyMap.embedUrl}
                 title={street || t('home.streetView')}
                 src={propertyMap.embedUrl}
-                className="block h-[min(52dvh,400px)] min-h-[300px] w-full border-0 md:h-[min(42vh,320px)] md:min-h-[220px]"
+                className="block h-[240px] w-full border-0 md:h-[280px]"
                 loading="lazy"
                 allowFullScreen
                 referrerPolicy="no-referrer-when-downgrade"
               />
             ) : (
-              <div className="flex h-[min(52dvh,400px)] min-h-[300px] flex-col items-center justify-center gap-2 bg-surface-container-low px-6 text-center md:h-[min(42vh,320px)] md:min-h-[220px]">
+              <div className="flex h-[240px] flex-col items-center justify-center gap-2 bg-surface-container-low px-6 text-center md:h-[280px]">
                 <MapPin size={28} className="text-on-surface-variant/50" />
                 <p className="text-sm font-medium text-on-surface-variant">
                   {t('home.noMap')}

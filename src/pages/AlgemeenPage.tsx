@@ -134,6 +134,42 @@ export function Algemeen({
   const [numberOfFloors, setNumberOfFloors] = useState<number | null>(
     () => savedOnMount.numberOfFloors ?? null,
   );
+
+  const [confirmedFields, setConfirmedFields] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('algemeenConfirmedFields');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [prefilledFields] = useState<string[]>(() => {
+    const fields: string[] = [];
+    fields.push('buildingType');
+    fields.push('position');
+    fields.push('location');
+    if (savedOnMount.numberOfFloors !== undefined && savedOnMount.numberOfFloors !== null) {
+      fields.push('numberOfFloors');
+    }
+    if (savedOnMount.whichFloor) {
+      fields.push('whichFloor');
+    }
+    return fields;
+  });
+
+  const handleConfirmField = (field: string) => {
+    setConfirmedFields((prev) => {
+      if (prev.includes(field)) return prev;
+      const next = [...prev, field];
+      localStorage.setItem('algemeenConfirmedFields', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const fieldNeedsConfirmation = (field: string) => {
+    return prefilledFields.includes(field) && !confirmedFields.includes(field);
+  };
   const [city, setCity] = useState(() => savedOnMount.city ?? '');
 
   const [hasKelder, setHasKelder] = useState<boolean | null>(() => savedOnMount.hasKelder ?? null);
@@ -456,6 +492,8 @@ export function Algemeen({
                 label={t('algemeen.labels.buildingType')}
                 value={buildingType}
                 onChange={handleBuildingTypeChange}
+                needsConfirmation={fieldNeedsConfirmation('buildingType')}
+                onOpen={() => handleConfirmField('buildingType')}
                 options={BUILDING_TYPE_VALUES.map((value) => ({
                   value,
                   label: translateAlgemeenOption(value, t),
@@ -466,6 +504,8 @@ export function Algemeen({
                 label={t('algemeen.labels.position')}
                 value={position}
                 onChange={handlePositionChange}
+                needsConfirmation={fieldNeedsConfirmation('position')}
+                onOpen={() => handleConfirmField('position')}
                 options={availablePositions.map((pos) => ({
                   value: pos,
                   label: translateAlgemeenOption(pos, t),
@@ -479,6 +519,8 @@ export function Algemeen({
                 label={locationLabel}
                 value={location}
                 onChange={setLocation}
+                needsConfirmation={fieldNeedsConfirmation('location')}
+                onOpen={() => handleConfirmField('location')}
                 options={availableLocations.map((loc) => ({
                   value: loc,
                   label: translateAlgemeenOption(loc, t),
@@ -492,6 +534,8 @@ export function Algemeen({
                     label={t('algemeen.labels.startFloor')}
                     value={whichFloor ?? ''}
                     onChange={(v) => setWhichFloor(v === '' ? null : v)}
+                    needsConfirmation={fieldNeedsConfirmation('whichFloor')}
+                    onOpen={() => handleConfirmField('whichFloor')}
                     placeholder={t('Select floor')}
                     options={WHICH_FLOOR_VALUES.map((value) => ({
                       value,
@@ -502,6 +546,8 @@ export function Algemeen({
                     label={t('algemeen.labels.numberOfFloors')}
                     value={numberOfFloors === null ? '' : String(numberOfFloors)}
                     onChange={(v) => setNumberOfFloors(v === '' ? null : parseInt(v, 10))}
+                    needsConfirmation={fieldNeedsConfirmation('numberOfFloors')}
+                    onOpen={() => handleConfirmField('numberOfFloors')}
                     placeholder={t('Select number of floors')}
                     options={FLOOR_COUNT_OPTIONS}
                   />
@@ -511,6 +557,8 @@ export function Algemeen({
                   label={t('algemeen.labels.numberOfFloors')}
                   value={numberOfFloors === null ? '' : String(numberOfFloors)}
                   onChange={(v) => setNumberOfFloors(v === '' ? null : parseInt(v, 10))}
+                  needsConfirmation={fieldNeedsConfirmation('numberOfFloors')}
+                  onOpen={() => handleConfirmField('numberOfFloors')}
                   placeholder={t('Select number of floors')}
                   options={FLOOR_COUNT_OPTIONS}
                 />

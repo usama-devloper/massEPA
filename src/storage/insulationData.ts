@@ -9,6 +9,7 @@ export type InsulationSpec = {
   material: string;
   customMaterial: string;
   thickness: string;
+  yearBuilt: string;
 };
 
 export type InsulationImageFile = {
@@ -35,7 +36,7 @@ function resolveHasNewInsulation(
   }
   if (selectedCategories.length > 0) return true;
   const hasSpecs = Object.values(insulationSpecs).some(
-    (s) => s.material || s.customMaterial.trim() || s.thickness,
+    (s) => s.material || s.customMaterial.trim() || s.thickness || s.yearBuilt,
   );
   if (hasSpecs) return true;
   return null;
@@ -43,10 +44,10 @@ function resolveHasNewInsulation(
 
 export function defaultInsulationSpecs(): Record<string, InsulationSpec> {
   return {
-    'Gevel isolatie': { material: '', customMaterial: '', thickness: '' },
-    'Vloer isolatie': { material: '', customMaterial: '', thickness: '' },
-    'Dak isolatie': { material: '', customMaterial: '', thickness: '' },
-    'Panelen isolatie': { material: '', customMaterial: '', thickness: '' },
+    'Gevel isolatie': { material: '', customMaterial: '', thickness: '', yearBuilt: '' },
+    'Vloer isolatie': { material: '', customMaterial: '', thickness: '', yearBuilt: '' },
+    'Dak isolatie': { material: '', customMaterial: '', thickness: '', yearBuilt: '' },
+    'Panelen isolatie': { material: '', customMaterial: '', thickness: '', yearBuilt: '' },
   };
 }
 
@@ -63,6 +64,7 @@ function mergeInsulationSpecs(
       material: typeof spec.material === 'string' ? spec.material : '',
       customMaterial: typeof spec.customMaterial === 'string' ? spec.customMaterial : '',
       thickness: typeof spec.thickness === 'string' ? spec.thickness : '',
+      yearBuilt: typeof spec.yearBuilt === 'string' ? spec.yearBuilt : '',
     };
   }
   return merged;

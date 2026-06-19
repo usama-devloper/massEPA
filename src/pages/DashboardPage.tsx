@@ -14,6 +14,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { HOUSE_DESIGN_PAGE_STORAGE_KEY } from '../storage/houseDesignPageData';
 import { loadPhotoCaptureFromStorage } from '../storage/photoCaptureData';
 import { computePhotoCaptureProgress } from '../utils/photoCaptureProgress';
+import { idbGet } from '../storage/idbKv';
 
 interface DashboardPageProps {
   currentStep: Step;
@@ -45,7 +46,7 @@ function getProgressFillClass(progress: number): string {
 
 function getProgressStatusLabel(progress: number, completeLabel: string): string {
   if (progress >= 100) return completeLabel;
-  return `${progress}%`;
+  return '';
 }
 
 // Progress Row Component
@@ -168,26 +169,51 @@ export function DashboardPage({
       }
     }
 
-    // UPLOAD Progress
-    const uploadData = localStorage.getItem(HOUSE_DESIGN_PAGE_STORAGE_KEY);
-    if (uploadData) {
-      try {
-        const parsed = JSON.parse(uploadData);
-        let sectionsCompleted = 0;
-        const fileCount = parsed.files?.length || 0;
-        if (fileCount > 0) sectionsCompleted++;
-        const selectedRooms = parsed.selectedRooms || {};
-        const customSelectedRooms = parsed.selectedCustomRooms || {};
-        const totalRooms =
-          Object.values(selectedRooms).flat().length +
-          Object.values(customSelectedRooms).flat().length;
-        if (totalRooms > 0) sectionsCompleted++;
-        const progress = Math.round((sectionsCompleted / 2) * 100);
-        patch[Step.UPLOAD] = { progress, subtext: `${sectionsCompleted}/2 sec` };
-      } catch {
-        /* ignore */
+    // UPLOAD Progress (requires async IDB read for files)
+    void idbGet<any[]>('massEPA_upload_files_v1').then((files) => {
+      if (cancelled) return;
+      const fileCount = files ? files.length : 0;
+      const uploadData = localStorage.getItem(HOUSE_DESIGN_PAGE_STORAGE_KEY);
+      if (uploadData) {
+        try {
+          const parsed = JSON.parse(uploadData);
+          let sectionsCompleted = 0;
+
+          // Check if floor plans are required based on algemeenData
+          const algemeenData = localStorage.getItem('algemeenData');
+          let requiresDrawings = true;
+          if (algemeenData) {
+            const parsedAlgemeen = JSON.parse(algemeenData);
+            if (parsedAlgemeen.hasFloorPlans === false) {
+              requiresDrawings = false;
+            }
+          }
+
+          const totalSections = requiresDrawings ? 2 : 1;
+
+          if (requiresDrawings && fileCount > 0) {
+            sectionsCompleted++;
+          }
+
+          const selectedRooms = parsed.selectedRooms || {};
+          const customSelectedRooms = parsed.selectedCustomRooms || {};
+          const totalRooms =
+            Object.values(selectedRooms).flat().length +
+            Object.values(customSelectedRooms).flat().length;
+          if (totalRooms > 0) sectionsCompleted++;
+
+          const progress = Math.round((sectionsCompleted / totalSections) * 100);
+          applyProgress({
+            [Step.UPLOAD]: {
+              progress,
+              subtext: `${sectionsCompleted}/${totalSections} sec`,
+            },
+          });
+        } catch {
+          /* ignore */
+        }
       }
-    }
+    });
 
     // ISOLATIE Progress
     const insulationData = localStorage.getItem('massEPA_insulation_v1');
@@ -198,13 +224,16 @@ export function DashboardPage({
         let completedCategories = 0;
         for (const category of selectedCategories) {
           const spec = parsed.insulationSpecs?.[category];
-          if (
+          const isComplete = selectedRole === UserRole.CLIENT || (
             spec &&
             spec.material &&
             spec.material !== '' &&
             spec.thickness &&
-            parseInt(spec.thickness) > 0
-          ) {
+            parseInt(spec.thickness) > 0 &&
+            spec.yearBuilt &&
+            spec.yearBuilt !== ''
+          );
+          if (isComplete) {
             completedCategories++;
           }
         }

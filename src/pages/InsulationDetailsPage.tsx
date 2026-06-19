@@ -1,7 +1,7 @@
 // src/pages/InsulationDetailsPage.tsx
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Upload, Camera, Check, X, Plus, Trash2, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { Upload, Camera, Check, X, Plus, Trash2, FileText, ChevronDown, ChevronUp, CloudUpload } from 'lucide-react';
 import { AppSelect } from '../components/common/AppSelect';
 import { TopBar } from '../components/common/TopBar';
 import { AppSidebar } from '../components/common/AppSidebar';
@@ -105,6 +105,11 @@ const materialOptionsByCategory: { [key: string]: string[] } = {
 const getMaterialOptionsForCategory = (category: string): string[] => {
   return materialOptionsByCategory[category] || materialOptionsByCategory['Gevel isolatie'];
 };
+
+const yearOptions = Array.from({ length: 2026 - 1990 + 1 }, (_, i) => {
+  const year = (2026 - i).toString();
+  return { value: year, label: year };
+});
 
 interface InsulationDetailsPageProps {
   currentStep: Step;
@@ -309,6 +314,23 @@ export const InsulationDetailsPage = ({
     }
   };
 
+  const handleContinueFromInstructions = (selectedVariant?: 'camera' | 'upload') => {
+    const category = pendingCategoryForCamera;
+    if (!category) return;
+    if (selectedVariant) {
+      setMediaGuideVariant(selectedVariant);
+      setTimeout(() => {
+        if (selectedVariant === 'camera') {
+          cameraInputRefs.current[`camera-input-${category}`]?.click();
+        } else {
+          fileInputRefs.current[`file-input-${category}`]?.click();
+        }
+      }, 100);
+    } else {
+      triggerMediaGuidePicker();
+    }
+  };
+
   const removePendingGuideFile = (index: number) => {
     const file = pendingGuideFiles[index];
     if (file) revokeFileUrlIfBlob(file.url);
@@ -473,6 +495,13 @@ export const InsulationDetailsPage = ({
     }));
   };
 
+  const updateYearBuilt = (category: string, yearBuilt: string) => {
+    setInsulationSpecs(prev => ({
+      ...prev,
+      [category]: { ...prev[category], yearBuilt }
+    }));
+  };
+
   /** Mobile keyboard Done/Next — blur closes the keyboard. */
   const dismissKeyboardOnEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -577,7 +606,7 @@ export const InsulationDetailsPage = ({
                     Q_UPLOAD,
                     selectedRole,
                   );
-                  const spec = insulationSpecs[category] || { material: '', customMaterial: '', thickness: '' };
+                  const spec = insulationSpecs[category] || { material: '', customMaterial: '', thickness: '', yearBuilt: '' };
 
                   // Hidden file inputs
                   const fileInputId = `file-input-${category}`;
@@ -591,7 +620,7 @@ export const InsulationDetailsPage = ({
                       {/* Header */}
                       <div className="p-5">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
                             {/* Tick mark */}
                             <button
                               onClick={(e) => {
@@ -615,79 +644,73 @@ export const InsulationDetailsPage = ({
 
                             {/* Text + Expand/Collapse area */}
                             <div
-                              className="cursor-pointer flex-1"
+                              className="cursor-pointer flex-1 flex items-center justify-between sm:justify-start gap-3 min-w-0"
                               onClick={() => toggleExpand(category)}
                             >
-                              <h3 className="font-display font-black text-base text-on-surface">
-                                {insulationCategoryLabel(category as InsulationCategoryId, t)}
-                              </h3>
-                              {images.length > 0 && (
-                                <p className="text-[10px] font-black uppercase tracking-wider text-primary mt-0.5">
-                                  {t('photo Added', { count: images.length })}
-                                </p>
+                              <div className="flex flex-col min-w-0">
+                                <h3 className="font-display font-black text-base text-on-surface truncate">
+                                  {insulationCategoryLabel(category as InsulationCategoryId, t)}
+                                </h3>
+                                {images.length > 0 && (
+                                  <p className="text-[10px] font-black uppercase tracking-wider text-primary mt-0.5 truncate">
+                                    {t('photo Added', { count: images.length })}
+                                  </p>
+                                )}
+                              </div>
+                              {isSelected && (
+                                <div className="w-28 sm:w-40 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                  <AppSelect
+                                    value={spec.yearBuilt || ''}
+                                    onChange={(v) => updateYearBuilt(category, v)}
+                                    placeholder={t('insulation.yearBuilt')}
+                                    options={yearOptions}
+                                    variant="white"
+                                    searchable={true}
+                                  />
+                                </div>
                               )}
                             </div>
                           </div>
 
                           <div className="flex items-center gap-2">
-                            {showUpload && (
-                              <>
-                                {/* Hidden file inputs */}
-                                <input
-                                  ref={el => {
-                                    fileInputRefs.current[fileInputId] = el;
-                                  }}
-                                  type="file"
-                                  className="hidden"
-                                  accept=".pdf,.jpg,.jpeg,.png"
-                                  multiple
-                                  onChange={(e) => handleFileUpload(e, category)}
-                                />
-                                <input
-                                  ref={el => {
-                                    cameraInputRefs.current[cameraInputId] = el;
-                                  }}
-                                  type="file"
-                                  className="hidden"
-                                  accept="image/*"
-                                  capture="environment"
-                                  multiple
-                                  onChange={(e) => handleCameraCapture(e, category)}
-                                />
+                             {showUpload && category === 'Vloer isolatie' && (
+                               <>
+                                 <input
+                                   ref={el => {
+                                     fileInputRefs.current[fileInputId] = el;
+                                   }}
+                                   type="file"
+                                   className="hidden"
+                                   accept=".pdf,.jpg,.jpeg,.png"
+                                   multiple
+                                   onChange={(e) => handleFileUpload(e, category)}
+                                 />
+                                 <input
+                                   ref={el => {
+                                     cameraInputRefs.current[cameraInputId] = el;
+                                   }}
+                                   type="file"
+                                   className="hidden"
+                                   accept="image/*"
+                                   capture="environment"
+                                   multiple
+                                   onChange={(e) => handleCameraCapture(e, category)}
+                                 />
 
-                                <button
-                                  type="button"
-                                  className="p-2 rounded-lg transition-all bg-primary/10 text-primary hover:bg-primary hover:text-white"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openMediaGuide(category, 'upload');
-                                  }}
-                                  title={t('upload.uploadFiles')}
-                                >
-                                  <Upload size={20} />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="p-2 rounded-lg transition-all bg-primary/10 text-primary hover:bg-primary hover:text-white"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openMediaGuide(category, 'camera');
-                                  }}
-                                  title={t('upload.takePhoto')}
-                                >
-                                  <Camera size={20} />
-                                </button>
-                              </>
-                            )}
-
-                            {/* Expand/collapse indicator */}
-                            <button
-                              onClick={() => toggleExpand(category)}
-                              className="p-1 rounded-full text-gray-400 hover:bg-gray-100 transition-all"
-                            >
-                              {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                            </button>
-                          </div>
+                                 <button
+                                   type="button"
+                                   className="p-2 rounded-lg transition-all bg-primary/10 text-primary hover:bg-primary hover:text-white flex items-center justify-center"
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     openMediaGuide(category, 'upload');
+                                   }}
+                                   title={t('upload.floorPlansTitle')}
+                                 >
+                                   <CloudUpload size={20} />
+                                 </button>
+                               </>
+                             )}
+                           </div>
                         </div>
 
                         {/* Thumbnail strip in collapsed view */}
@@ -889,7 +912,7 @@ export const InsulationDetailsPage = ({
           variant={mediaGuideVariant}
           pendingFiles={pendingGuideFiles}
           onRemovePending={removePendingGuideFile}
-          onContinueFromInstructions={triggerMediaGuidePicker}
+          onContinueFromInstructions={handleContinueFromInstructions}
           onAddMore={triggerMediaGuidePicker}
           onDone={handleMediaGuideDone}
           reviewKeyPrefix="insulation.guide"
@@ -903,6 +926,7 @@ export const InsulationDetailsPage = ({
           }
           layout="bottomSheet"
           zIndex={6000}
+          allowBothVariants={true}
         />
       )}
 

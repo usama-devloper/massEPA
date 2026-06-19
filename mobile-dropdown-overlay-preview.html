@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>massEPA — Mobile Searchable Select Showcase</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Outfit Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            primary: '#2d5a3d',
+            background: '#f8faf8',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar styling */
+    .custom-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #e2e8f0;
+      border-radius: 9999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #cbd5e1;
+    }
+  </style>
+</head>
+<body class="bg-[#eceee8] text-gray-900 min-h-screen p-4 md:p-8 flex flex-col items-center">
+
+  <!-- Header -->
+  <header class="w-full max-w-5xl text-center mb-8">
+    <h1 class="text-3xl font-black text-primary tracking-tight">Searchable Select — Mobile Viewport Showcase</h1>
+    <p class="text-gray-600 mt-2 text-sm md:text-base max-w-2xl mx-auto">
+      Interactive comparison of the searchable select behavior on mobile screen viewports. 
+      Double-click this HTML file to open it in your browser directly.
+    </p>
+  </header>
+
+  <!-- Interactive Sandbox -->
+  <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+
+    <!-- Screen 1: The Issue (Standard Dropdown with Keyboard) -->
+    <div class="flex flex-col items-center">
+      <div class="mb-2 text-center">
+        <span class="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-black uppercase tracking-wider">Before (Current Bug)</span>
+        <h2 class="text-lg font-bold text-gray-800 mt-1">Standard Dropdown Menu</h2>
+        <p class="text-xs text-gray-500 max-w-xs">Keyboard covers/cuts off the absolute-positioned options.</p>
+      </div>
+
+      <!-- Phone Frame Simulator -->
+      <div class="relative w-[360px] h-[640px] bg-slate-950 rounded-[40px] shadow-2xl border-[12px] border-slate-900 overflow-hidden flex flex-col">
+        <!-- Phone Notch -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-6 bg-slate-900 rounded-b-2xl z-50 flex items-center justify-center">
+          <div class="w-3 h-3 rounded-full bg-slate-800 mr-2"></div>
+          <div class="w-12 h-1 bg-slate-800 rounded-full"></div>
+        </div>
+
+        <!-- Phone screen inner -->
+        <div class="flex-1 bg-background p-4 pt-8 overflow-y-auto flex flex-col relative select-none" id="screen-before">
+          <!-- Page title -->
+          <div class="text-center mb-4 mt-2">
+            <h3 class="text-lg font-black text-primary uppercase tracking-tight">Algemeen</h3>
+          </div>
+
+          <!-- Select box input container -->
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 flex-1 relative flex flex-col gap-4">
+            <div class="relative">
+              <label class="mb-1 block text-[10px] font-black uppercase tracking-wider text-gray-500">Gebouwtype</label>
+              
+              <!-- Simulated searchable select input field -->
+              <div class="relative">
+                <input 
+                  type="text" 
+                  id="before-input" 
+                  placeholder="Selecteer gebouwtype" 
+                  class="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 pr-10 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  readonly
+                />
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="before-arrow"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
+
+              <!-- Standard Dropdown list (floating relative/absolute) -->
+              <div id="before-dropdown" class="hidden absolute left-0 right-0 top-[68px] z-30 max-h-36 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg py-1 text-sm">
+                <button class="w-full px-3 py-2 text-left hover:bg-gray-100 text-gray-900" onclick="selectBeforeOption('Eengezinswoning')">Eengezinswoning</button>
+                <button class="w-full px-3 py-2 text-left hover:bg-gray-100 text-gray-900" onclick="selectBeforeOption('Woning in appartement')">Woning in appartement</button>
+                <button class="w-full px-3 py-2 text-left hover:bg-gray-100 text-gray-900" onclick="selectBeforeOption('Twee onder een kap')">Twee onder een kap</button>
+                <button class="w-full px-3 py-2 text-left hover:bg-gray-100 text-gray-900" onclick="selectBeforeOption('Vrijstaand')">Vrijstaand</button>
+              </div>
+            </div>
+
+            <!-- Other elements below -->
+            <div>
+              <label class="mb-1 block text-[10px] font-black uppercase tracking-wider text-gray-500">Positie</label>
+              <div class="rounded-xl border border-gray-100 bg-gray-50 p-3 text-sm text-gray-400">Selecteer positie</div>
+            </div>
+            <div>
+              <label class="mb-1 block text-[10px] font-black uppercase tracking-wider text-gray-500">Aantal verdiepingen</label>
+              <div class="rounded-xl border border-gray-100 bg-gray-50 p-3 text-sm text-gray-400">Kies aantal</div>
+            </div>
+          </div>
+
+          <!-- Simulated keyboard (occupies bottom of screen) -->
+          <div id="before-keyboard" class="hidden absolute bottom-0 left-0 right-0 bg-gray-300 border-t border-gray-400 p-2 z-40 animate-slide-up">
+            <div class="text-center text-[10px] text-gray-500 font-bold mb-1">SIMULATED KEYBOARD ACTIVE</div>
+            <div class="grid grid-cols-10 gap-1 mb-1">
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">Q</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">W</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">E</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">R</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">T</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">Y</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">U</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">I</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">O</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">P</div>
+            </div>
+            <div class="grid grid-cols-9 gap-1 mb-1 px-2">
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">A</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">S</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">D</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">F</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">G</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">H</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">J</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">K</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">L</div>
+            </div>
+            <div class="grid grid-cols-7 gap-1 px-4">
+              <div class="bg-gray-400 rounded py-2 text-center text-[10px] font-bold shadow text-white">SHIFT</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow col-span-4">SPACE</div>
+              <div class="bg-gray-400 rounded py-2 text-center text-[10px] font-bold shadow text-white" onclick="toggleBeforeKeyboard(false)">DONE</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: The Solution (Centered Search Modal Overlay) -->
+    <div class="flex flex-col items-center">
+      <div class="mb-2 text-center flex flex-col items-center w-full">
+        <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-black uppercase tracking-wider">After (Proposed Design)</span>
+        <h2 class="text-lg font-bold text-gray-800 mt-1" id="after-title">Mobile Search Modal (Centered)</h2>
+        <p class="text-xs text-gray-500 max-w-xs mb-3" id="after-desc">Centered overlay modal. Option list scrolls above keyboard.</p>
+        
+        <!-- Layout switcher buttons -->
+        <div class="flex gap-1.5 justify-center" id="layout-picker">
+          <button onclick="changeActiveLayout('centered')" id="btn-centered" class="px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-700 text-white shadow">Centered (Drag)</button>
+          <button onclick="changeActiveLayout('bottom-sheet')" id="btn-bottom" class="px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white border border-gray-200 text-gray-700 hover:bg-gray-50">Bottom Sheet</button>
+          <button onclick="changeActiveLayout('fullscreen')" id="btn-fullscreen" class="px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white border border-gray-200 text-gray-700 hover:bg-gray-50">Full Screen</button>
+        </div>
+      </div>
+
+      <!-- Phone Frame Simulator -->
+      <div class="relative w-[360px] h-[640px] bg-slate-950 rounded-[40px] shadow-2xl border-[12px] border-slate-900 overflow-hidden flex flex-col">
+        <!-- Phone Notch -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-6 bg-slate-900 rounded-b-2xl z-50 flex items-center justify-center">
+          <div class="w-3 h-3 rounded-full bg-slate-800 mr-2"></div>
+          <div class="w-12 h-1 bg-slate-800 rounded-full"></div>
+        </div>
+
+        <!-- Phone screen inner -->
+        <div class="flex-1 bg-background p-4 pt-8 overflow-y-auto flex flex-col relative select-none" id="screen-after">
+          <!-- Page title -->
+          <div class="text-center mb-4 mt-2">
+            <h3 class="text-lg font-black text-primary uppercase tracking-tight">Algemeen</h3>
+          </div>
+
+          <!-- Select box trigger container -->
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 flex-1 flex flex-col gap-4">
+            <div>
+              <label class="mb-1 block text-[10px] font-black uppercase tracking-wider text-gray-500">Gebouwtype</label>
+              
+              <!-- Simulated select button trigger -->
+              <button 
+                type="button" 
+                onclick="toggleAfterModal(true)" 
+                class="flex w-full items-center justify-between gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3 pr-10 text-left text-sm transition-all focus:outline-none hover:border-gray-300"
+              >
+                <span id="after-trigger-text" class="text-gray-400">Selecteer gebouwtype</span>
+                <div class="absolute right-7 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </button>
+            </div>
+
+            <!-- Other elements below -->
+            <div>
+              <label class="mb-1 block text-[10px] font-black uppercase tracking-wider text-gray-500">Positie</label>
+              <div class="rounded-xl border border-gray-100 bg-gray-50 p-3 text-sm text-gray-400">Selecteer positie</div>
+            </div>
+            <div>
+              <label class="mb-1 block text-[10px] font-black uppercase tracking-wider text-gray-500">Aantal verdiepingen</label>
+              <div class="rounded-xl border border-gray-100 bg-gray-50 p-3 text-sm text-gray-400">Kies aantal</div>
+            </div>
+          </div>
+
+          <!-- Proposed Center-Modal Search Overlay -->
+          <div id="after-modal" class="hidden absolute inset-0 bg-black/50 backdrop-blur-[2px] z-[100] flex items-center justify-center p-4">
+            <div id="modal-card" class="bg-white w-full max-w-[320px] rounded-2xl shadow-xl overflow-hidden flex flex-col border border-gray-100 max-h-[85%] animate-[zoomIn_0.15s_ease-out]">
+              
+              <!-- Modal Header -->
+              <div id="modal-header" class="flex items-center justify-between p-3 border-b border-gray-100 shrink-0 select-none cursor-grab active:cursor-grabbing">
+                <span class="text-[9px] font-black uppercase tracking-widest text-gray-500">Kies Gebouwtype</span>
+                <button type="button" onclick="toggleAfterModal(false)" class="h-6 w-6 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+
+              <!-- Search input inside modal -->
+              <div class="p-2 border-b border-gray-100 bg-gray-50 shrink-0 relative">
+                <input 
+                  type="text" 
+                  id="modal-search" 
+                  oninput="filterModalOptions()"
+                  placeholder="Typ om te zoeken..." 
+                  class="w-full rounded-lg border border-gray-200 bg-white p-2 pl-8 pr-3 text-xs outline-none focus:border-primary"
+                />
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              </div>
+
+              <!-- Scrollable results list (adapts height flex-grow) -->
+              <div id="modal-list" class="flex-grow overflow-y-auto py-1 text-xs custom-scroll max-h-[220px]">
+                <button class="w-full px-3 py-2.5 text-left hover:bg-gray-50 text-gray-900 border-b border-gray-50 font-medium" onclick="selectAfterOption('Eengezinswoning')">Eengezinswoning</button>
+                <button class="w-full px-3 py-2.5 text-left hover:bg-gray-50 text-gray-900 border-b border-gray-50 font-medium" onclick="selectAfterOption('Woning in appartement')">Woning in appartement</button>
+                <button class="w-full px-3 py-2.5 text-left hover:bg-gray-50 text-gray-900 border-b border-gray-50 font-medium" onclick="selectAfterOption('Twee onder een kap')">Twee onder een kap</button>
+                <button class="w-full px-3 py-2.5 text-left hover:bg-gray-50 text-gray-900 border-b border-gray-50 font-medium" onclick="selectAfterOption('Vrijstaand')">Vrijstaand</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Simulated keyboard (For modal screen) -->
+          <div id="after-keyboard" class="hidden absolute bottom-0 left-0 right-0 bg-gray-300 border-t border-gray-400 p-2 z-[200]">
+            <div class="text-center text-[10px] text-gray-500 font-bold mb-1">SIMULATED KEYBOARD ACTIVE</div>
+            <div class="grid grid-cols-10 gap-1 mb-1">
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">Q</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">W</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">E</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">R</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">T</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">Y</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">U</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">I</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">O</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">P</div>
+            </div>
+            <div class="grid grid-cols-9 gap-1 mb-1 px-2">
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">A</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">S</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">D</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">F</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">G</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">H</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">J</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">K</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow">L</div>
+            </div>
+            <div class="grid grid-cols-7 gap-1 px-4">
+              <div class="bg-gray-400 rounded py-2 text-center text-[10px] font-bold shadow text-white">SHIFT</div>
+              <div class="bg-white rounded py-2 text-center text-xs font-semibold shadow col-span-4">SPACE</div>
+              <div class="bg-gray-400 rounded py-2 text-center text-[10px] font-bold shadow text-white" onclick="toggleAfterKeyboard(false)">DONE</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // --- Screen 1 (Before) JavaScript logic ---
+    const beforeInput = document.getElementById('before-input');
+    const beforeDropdown = document.getElementById('before-dropdown');
+    const beforeKeyboard = document.getElementById('before-keyboard');
+    const beforeArrow = document.getElementById('before-arrow');
+
+    beforeInput.addEventListener('click', () => {
+      const isOpen = !beforeDropdown.classList.contains('hidden');
+      if (isOpen) {
+        beforeDropdown.classList.add('hidden');
+        beforeKeyboard.classList.add('hidden');
+        beforeArrow.classList.remove('rotate-180');
+      } else {
+        beforeDropdown.classList.remove('hidden');
+        beforeKeyboard.classList.remove('hidden');
+        beforeArrow.classList.add('rotate-180');
+      }
+    });
+
+    function toggleBeforeKeyboard(show) {
+      if (show) {
+        beforeKeyboard.classList.remove('hidden');
+      } else {
+        beforeKeyboard.classList.add('hidden');
+      }
+    }
+
+    function selectBeforeOption(val) {
+      beforeInput.value = val;
+      beforeDropdown.classList.add('hidden');
+      beforeKeyboard.classList.add('hidden');
+      beforeArrow.classList.remove('rotate-180');
+    }
+
+    // --- Screen 2 (After) JavaScript logic ---
+    let activeLayout = 'centered'; // 'centered' | 'bottom-sheet' | 'fullscreen'
+    const afterModal = document.getElementById('after-modal');
+    const afterKeyboard = document.getElementById('after-keyboard');
+    const afterTriggerText = document.getElementById('after-trigger-text');
+    const modalSearch = document.getElementById('modal-search');
+    const modalList = document.getElementById('modal-list');
+    const modalCard = document.getElementById('modal-card');
+    const modalHeader = document.getElementById('modal-header');
+
+    const allOptions = [
+      'Eengezinswoning',
+      'Woning in appartement',
+      'Twee onder een kap',
+      'Vrijstaand'
+    ];
+
+    function toggleAfterModal(show) {
+      if (show) {
+        afterModal.classList.remove('hidden');
+        modalSearch.value = '';
+        filterModalOptions();
+        resetModalPosition();
+        setTimeout(() => {
+          modalSearch.focus();
+          toggleAfterKeyboard(true);
+        }, 100);
+      } else {
+        afterModal.classList.add('hidden');
+        toggleAfterKeyboard(false);
+      }
+    }
+
+    function toggleAfterKeyboard(show) {
+      if (show) {
+        afterKeyboard.classList.remove('hidden');
+        if (activeLayout === 'bottom-sheet') {
+          afterModal.style.bottom = '220px';
+        } else if (activeLayout === 'fullscreen') {
+          afterModal.style.bottom = '220px';
+        } else {
+          afterModal.style.bottom = '0px';
+        }
+      } else {
+        afterKeyboard.classList.add('hidden');
+        afterModal.style.bottom = '0px';
+      }
+    }
+
+    modalSearch.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleAfterKeyboard(true);
+    });
+
+    function filterModalOptions() {
+      const q = modalSearch.value.trim().toLowerCase();
+      const filtered = allOptions.filter(opt => opt.toLowerCase().includes(q));
+      
+      if (filtered.length === 0) {
+        modalList.innerHTML = '<div class="px-3 py-4 text-center text-xs text-gray-400">Geen resultaten</div>';
+        return;
+      }
+
+      modalList.innerHTML = filtered.map(opt => `
+        <button class="w-full px-3 py-2.5 text-left hover:bg-gray-50 text-gray-900 border-b border-gray-50 font-medium" onclick="selectAfterOption('${opt}')">
+          ${opt}
+        </button>
+      `).join('');
+    }
+
+    function selectAfterOption(val) {
+      afterTriggerText.textContent = val;
+      afterTriggerText.classList.remove('text-gray-400');
+      afterTriggerText.classList.add('text-gray-900');
+      toggleAfterModal(false);
+    }
+
+    // --- Layout Switcher Logic ---
+    function changeActiveLayout(layout) {
+      activeLayout = layout;
+      resetModalPosition();
+      
+      // Update buttons
+      const btnCentered = document.getElementById('btn-centered');
+      const btnBottom = document.getElementById('btn-bottom');
+      const btnFullscreen = document.getElementById('btn-fullscreen');
+      
+      [btnCentered, btnBottom, btnFullscreen].forEach(btn => {
+        btn.className = "px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white border border-gray-200 text-gray-700 hover:bg-gray-50";
+      });
+
+      const activeBtn = document.getElementById(`btn-${layout}`);
+      activeBtn.className = "px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-700 text-white shadow";
+
+      // Update titles
+      const afterTitle = document.getElementById('after-title');
+      const afterDesc = document.getElementById('after-desc');
+
+      // Update classes of modal elements
+      afterModal.className = "hidden absolute inset-0 z-[100] transition-all duration-150";
+      modalCard.className = "bg-white flex flex-col border border-gray-100 overflow-hidden";
+      modalHeader.className = "flex items-center justify-between p-3 border-b border-gray-100 shrink-0 select-none";
+
+      if (layout === 'centered') {
+        afterTitle.textContent = "Mobile Search Modal (Centered)";
+        afterDesc.textContent = "Centered overlay modal. Option list scrolls above keyboard.";
+        afterModal.classList.add("bg-black/50", "backdrop-blur-[2px]", "flex", "items-center", "justify-center", "p-4");
+        modalCard.classList.add("w-full", "max-w-[320px]", "rounded-2xl", "shadow-xl", "max-h-[85%]", "animate-[zoomIn_0.15s_ease-out]");
+        modalHeader.classList.add("cursor-grab", "active:cursor-grabbing");
+      } else if (layout === 'bottom-sheet') {
+        afterTitle.textContent = "Mobile Bottom Sheet";
+        afterDesc.textContent = "Slide-up bottom panel. Sits naturally right above keyboard.";
+        afterModal.classList.add("bg-black/50", "backdrop-blur-[1px]", "flex", "items-end", "justify-center");
+        modalCard.classList.add("w-full", "rounded-t-3xl", "shadow-2xl", "max-h-[80%]", "animate-[slideUp_0.25s_ease-out]");
+      } else if (layout === 'fullscreen') {
+        afterTitle.textContent = "Mobile Full Screen";
+        afterDesc.textContent = "Airbnb-style search page. Clean full height list view.";
+        afterModal.classList.add("bg-white", "flex", "items-start", "justify-center");
+        modalCard.classList.add("w-full", "h-full", "max-h-full", "rounded-none", "shadow-none");
+      }
+      
+      toggleAfterModal(false);
+    }
+
+    // --- Draggable Modal Logic ---
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let posX = 0;
+    let posY = 0;
+
+    modalHeader.addEventListener('pointerdown', (e) => {
+      if (activeLayout !== 'centered') return;
+      if (e.target.closest('button')) return;
+      isDragging = true;
+      startX = e.clientX - posX;
+      startY = e.clientY - posY;
+      modalHeader.setPointerCapture(e.pointerId);
+    });
+
+    modalHeader.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      posX = e.clientX - startX;
+      posY = e.clientY - startY;
+      modalCard.style.transform = `translate(${posX}px, ${posY}px)`;
+    });
+
+    modalHeader.addEventListener('pointerup', (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      modalHeader.releasePointerCapture(e.pointerId);
+    });
+
+    function resetModalPosition() {
+      posX = 0;
+      posY = 0;
+      modalCard.style.transform = 'translate(0px, 0px)';
+      afterModal.style.bottom = '0px';
+    }
+  </script>
+</body>
+</html>

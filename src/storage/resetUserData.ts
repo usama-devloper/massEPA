@@ -25,6 +25,7 @@ const LOCAL_STORAGE_KEYS = [
   PHOTO_CAPTURE_STORAGE_KEY,
   LS_INTERIOR,
   LS_INTERIOR_ROOMS,
+  'algemeenConfirmedFields',
 ] as const;
 
 const INDEXED_DB_KEYS = [

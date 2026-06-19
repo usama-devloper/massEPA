@@ -10,7 +10,11 @@
     "save": "Save",
     "cancel": "Cancel",
     "close": "Close",
-    "add": "Add"
+    "add": "Add",
+    "select": "Select",
+    "selectOption": "Select option",
+    "search": "Type to search...",
+    "noResults": "No results found"
   },
   "themes": {
     "forest": {
@@ -200,6 +204,7 @@
     "backToMaterialSelect": "Choose from list",
     "thickness": "Estimated thickness (mm)",
     "thicknessPlaceholder": "Thickness",
+    "yearBuilt": "Insulation year",
     "doorIsolated": "Is the door insulated?",
     "continueInstallatie": "Continue to installations",
     "guide": {

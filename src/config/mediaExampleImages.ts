@@ -56,6 +56,7 @@ const INTERIOR_EXAMPLE_FILES: Record<string, string> = {
   'ZOLDER|Roof windows': 'Zolder_Roof windows.jpg',
   'SERRE|General View': 'Serre_General view.jpg',
   'WASRUIMTE|General View': 'Wasruimte.jpg',
+  'OVERLUIP|General View': 'Overloop_General view.jpg',
 };
 
 export function photoInteriorExampleImageUrl(

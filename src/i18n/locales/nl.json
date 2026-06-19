@@ -10,7 +10,11 @@
     "save": "Opslaan",
     "cancel": "Annuleren",
     "close": "Sluiten",
-    "add": "Toevoegen"
+    "add": "Toevoegen",
+    "select": "Kies",
+    "selectOption": "Kies een optie",
+    "search": "Typ om te zoeken...",
+    "noResults": "Geen resultaten gevonden"
   },
   "themes": {
     "forest": {
@@ -186,7 +190,7 @@
     "title": "Isolatie details",
     "subtitle": "Geef details en visueel bewijs voor isolatielagen van het gebouw",
     "backToUpload": "Terug naar huisontwerp",
-	"customMaterial": "Aangepast materiaal",
+    "customMaterial": "Aangepast materiaal",
     "customMaterialPlaceholder": "Aangepaste materiaal-placeholder...",
     "categories": {
       "gevel": "Gevel isolatie",
@@ -200,6 +204,7 @@
     "backToMaterialSelect": "Kies uit lijst",
     "thickness": "Geschatte dikte (mm)",
     "thicknessPlaceholder": "Dikte",
+    "yearBuilt": "Isolatiejaar",
     "doorIsolated": "Is deur geïsoleerd?",
     "continueInstallatie": "Doorgaan naar installaties",
     "guide": {
