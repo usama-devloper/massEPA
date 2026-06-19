@@ -9,6 +9,7 @@
     "done": "Klaar",
     "save": "Opslaan",
     "cancel": "Annuleren",
+    "close": "Sluiten",
     "add": "Toevoegen"
   },
   "themes": {
@@ -63,6 +64,15 @@
       "description": "Kies de taal voor menu's, labels en berichten in de app.",
       "nl": "Nederlands",
       "en": "Engels"
+    },
+    "reset": {
+      "title": "Gegevens resetten",
+      "description": "Wis alle audit-antwoorden, foto's, plattegronden en gebouwgegevens die je hebt ingevuld. Je login, profiel, taal en thema blijven behouden.",
+      "button": "Ingevulde gegevens resetten",
+      "confirm": "Alle ingevulde auditgegevens resetten? Dit kan niet ongedaan worden gemaakt.",
+      "working": "Bezig met resetten…",
+      "success": "Je ingevulde gegevens zijn gereset.",
+      "error": "Resetten is mislukt. Probeer het opnieuw."
     }
   },
   "profile": {
@@ -76,7 +86,18 @@
     "address": "Adres",
     "notProvided": "Niet ingevuld",
     "logout": "Uitloggen",
-    "fieldUpdated": "{field} succesvol bijgewerkt!"
+    "fieldUpdated": "{field} succesvol bijgewerkt!",
+    "subtitleReadOnly": "Jouw profielgegevens",
+    "requestUpdate": "Wijziging aanvragen",
+    "requestUpdateSent": "Je wijzigingsverzoek is verzonden. We nemen zo snel mogelijk contact met je op.",
+    "requestUpdateTitle": "Wijziging aanvragen",
+    "requestUpdateSubmit": "Verzend aanvraag",
+    "requestUpdateCancel": "Annuleren",
+    "straatnaam": "Straatnaam",
+    "houseNumber": "Huisnummer",
+    "toev": "Toevoeging (optioneel)",
+    "postcode": "Postcode",
+    "woonplaats": "Woonplaats"
   },
   "clients": {
     "title": "Clients",
@@ -167,7 +188,6 @@
     "backToUpload": "Terug naar huisontwerp",
 	"customMaterial": "Aangepast materiaal",
     "customMaterialPlaceholder": "Aangepaste materiaal-placeholder...",
-    "evidenceAdded": "{{graaf}} Bewijs toegevoegd",
     "categories": {
       "gevel": "Gevel isolatie",
       "vloer": "Vloer isolatie",
@@ -218,7 +238,13 @@
     "subtitle": "Geef details over verwarming, koeling, ventilatie en zonne-energie",
     "backToInsulation": "Terug naar isolatie",
     "selectSection": "Selecteer dit onderdeel om vragen te beantwoorden",
+    "selectCategory": "Selecteer categorie",
     "ventilation": "Ventilatie",
+    "ventilationType": "Type ventilatie",
+    "ventilationTypes": {
+      "natural": "Natuurlijk",
+      "mechanical": "Mechanisch"
+    },
     "ventilationCo2": "Is er een ventilatiesysteem met een CO2 sensor?",
     "sensorLocation": "Sensorlocatie (meerdere mogelijk)",
     "otherLocation": "Andere locatie…",
@@ -257,7 +283,9 @@
     "cooling": "Koeling",
     "activeCooling": "Is er actieve koeling aanwezig?",
     "coolingRooms": "In welke ruimtes is er actieve koeling?",
-    "continueKozijn": "Doorgaan naar kozijn & glas"
+    "noCoolingRoomsAvailable": "Geen voor koeling geschikte ruimtes (Woonkamer, slaapkamer, keuken, eetkamer) geselecteerd in Huisontwerp.",
+    "continueKozijn": "Doorgaan naar kozijn & glas",
+    "continuePhotos": "Doorgaan naar foto's"
   },
   "kozijn": {
     "title": "Kozijn & glas",
@@ -342,14 +370,13 @@
     "title": "Foto's",
     "subtitle": "Leg bewijs vast voor buiten- en binnenruimtes",
     "backToKozijn": "Terug naar kozijn & glas",
-    "exterior": "Exterieur",
     "interior": "Interieur",
     "photoCount": "{count}/{total} foto's",
     "capturePhoto": "Foto maken",
     "deletePhoto": "Foto verwijderen",
     "photoCaptured": "Foto vastgelegd",
     "photoDeleted": "Foto verwijderd",
-    "continueReview": "Doorgaan naar eindcontrole",
+    "continueReview": "Terug naar Dashboard",
     "guide": {
       "subtitleWithContext": "Tips voor {label}",
       "camera": {
@@ -377,16 +404,40 @@
       "reviewTip4": "Maak foto's vanuit meerdere hoeken",
       "savedToast": "{count} foto('s) opgeslagen"
     },
-	 "exterior": {
-    "voor": "Voorgevel",
-    "achter": "Achtergevel",
-    "links": "Linkergevel",
-    "rechts": "Rechtergevel"
-  },
+    "exterior": {
+      "voor": "Voorgevel",
+      "achter": "Achtergevel",
+      "links": "Linkergevel",
+      "rechts": "Rechtergevel"
+    },
     "category": {
       "doorIsolated": "Is de deur geïsoleerd?",
       "glassType": "Type glas?",
-      "frameType": "Type kozijn?"
+      "frameType": "Type kozijn?",
+      "externalDoor": "Externe deur",
+      "externalDoorNumbered": "Externe deur {n}",
+      "windowNumbered": "Raam {n}",
+      "windowsNumbered": "Ramen {n}",
+      "roofWindow": "Dakraam",
+      "roofWindowNumbered": "Dakraam {n}",
+      "addAnotherDoor": "Nog een deur toevoegen",
+      "addAnotherWindow": "Nog een raam toevoegen",
+      "instanceRemoved": "Verwijderd"
+    },
+    "categories": {
+      "fullRoomView": "Overzicht van de kamer",
+      "windows": "Ramen",
+      "heatingControlPanel": "Thermostaat / bediening",
+      "ventilationPanel": "Ventilatie-rooster / bediening",
+      "window": "Raam",
+      "heatingSystem": "Verwarmingssysteem",
+      "co2Sensor": "CO₂-sensor",
+      "doors": "Deuren",
+      "heatingSystemBrandType": "Verwarmingssysteem - merk & type",
+      "pvSystemBrandType": "Zonnepanelen (PV) - merk & type",
+      "tapwaterSystemBrandType": "Tapwatersysteem - merk & type",
+      "generalView": "Algemeen overzicht",
+      "roofWindows": "Dakramen"
     }
   },
   "photoInterior": {
@@ -405,6 +456,7 @@
     "footerHint": "Los de {count} openstaande items op om definitieve indiening te ontgrendelen.",
     "footerSub": "Voortgang wordt automatisch opgeslagen in de beveiligde audit-cloud.",
     "submitAudit": "Definitieve audit indienen",
+    "pending": "Incompleet",
     "items": {
       "verification": {
         "title": "Verificatie",
@@ -413,31 +465,53 @@
       },
       "algemeen": {
         "title": "Algemeen",
-        "description": "Algemene gebouwkenmerken en bouwjaar zijn nog niet afgerond.",
-        "action": "Info bijwerken"
+        "descriptionComplete": "Algemene gebouwkenmerken zijn succesvol ingevoerd.",
+        "descriptionMissing": "Ontbrekend: {items}",
+        "missingYear": "bouwjaar",
+        "missingNeighborhood": "buurt",
+        "missingDistrict": "wijk",
+        "missingMunicipality": "gemeente",
+        "action": "Gegevens bijwerken"
       },
+
       "drawing": {
-        "title": "Tekening",
-        "description": "Architectonische plattegronden moeten voor alle verdiepingen worden geüpload.",
+        "title": "Huisontwerp",
+        "descriptionComplete": "Plattegronden succesvol geüpload ({count} bestand(en)).",
+        "descriptionNotRequired": "Plattegronden zijn gemarkeerd als niet beschikbaar / niet vereist.",
+        "descriptionMissing": "Huisontwerp is incompleet. (Ontbrekend: {items})",
+        "missingFloorRooms": "geen ruimtes geselecteerd op {floor}",
         "action": "Nu uploaden"
       },
       "constructie": {
-        "title": "Constructie",
-        "descriptionVerified": "Constructiedetails van het gebouw zijn geverifieerd.",
+        "title": "Isolatie",
+        "descriptionComplete": "Isolatiegegevens zijn geverifieerd en compleet.",
+        "descriptionNoInsulation": "Geen nieuwe isolatie toegepast na de bouw.",
         "descriptionNotSelected": "Isolatiestatus niet geselecteerd.",
-        "descriptionMissing": "Ontbreekt: {items}.",
-        "missingSpecs": "isolatiemateriaal en dikte",
-        "missingDoor": "deurstatus",
-        "action": "Waarden verifiëren"
+        "descriptionMissing": "Ontbrekend: {items}",
+        "missingSpecs": "isolatiemateriaal en -dikte",
+        "missingDoor": "deurisolatiestatus",
+        "action": "Waarden controleren"
       },
       "installatie": {
-        "title": "Installatie",
-        "description": "Specificaties voor ventilatie, verwarming en PV vereisen fabrieksgegevens.",
+        "title": "Installaties",
+        "descriptionComplete": "Alle specificaties voor verwarming, ventilatie en zonnepanelen zijn geverifieerd.",
+        "descriptionMissing": "Ontbrekend: {items}",
+        "missingVentilationType": "type ventilatie",
+        "missingVentilationCo2": "antwoord CO₂-sensor ventilatie",
+        "missingHeating": "locatie verwarmingssysteem",
+        "missingSolar": "antwoord installatie zonnepanelen",
         "action": "Specificaties toevoegen"
       },
       "photo": {
-        "title": "Foto",
-        "description": "Verplicht fotobewijs voor de woning ontbreekt.",
+        "title": "Foto's",
+        "descriptionComplete": "Alle verplichte gevelfoto's zijn succesvol vastgelegd.",
+        "descriptionMissing": "Ontbrekend: {items}",
+        "missingVoor": "voorgevelfoto",
+        "missingAchter": "achtergevelfoto",
+        "missingPhoto": "{room} - {category} foto",
+        "missingGlassType": "{room} - {category} glastype",
+        "missingFrameType": "{room} - {category} kozijntype",
+        "missingInsulation": "{room} - {category} isolatie",
         "action": "Foto's maken"
       }
     }
@@ -524,11 +598,17 @@
   },
   "upload": {
     "title": "Huisontwerp",
+    "editRooms": "Ruimtes Huisontwerp Aanpassen",
+    "editRoomsSubtitle": "Selecteer actieve ruimtes of voeg eigen ruimtes toe",
+    "editRoomsButton": "Ontwerp ruimtes aanpassen",
     "continueInsulation": "Doorgaan naar isolatie details",
     "backToAlgemeen": "Terug naar algemeen",
+
     "uploadLabelRequired": "PDF of afbeelding (max. 25 MB)",
     "uploadLabelSkip": "Plattegronden niet verplicht",
-    "floorPlansTitle": "Plattegronden",
+    "floorPlansTitle": "Plattegronden uploaden",
+    "clickToUpload": "Klik om plattegronden vast te leggen of te uploaden",
+    "uploadFloorPlans": "Plattegronden uploaden",
     "noPlansHintPrefix": "Bij Algemeen gaf u aan dat u ",
     "noPlansBold": "geen plattegronden heeft",
     "noPlansHintSuffix": ". U kunt doorgaan zonder tekeningen te uploaden. Gebruik de volgende onderdelen om ruimtes en overige gegevens in te vullen.",
@@ -545,6 +625,14 @@
     "floorPlanAlt": "Plattegrond {n}",
     "modalAlt": "Plattegrond volledig",
     "guide": {
+      "title": "Plattegrond Assistent",
+      "subtitle": "Handige tips voor het vastleggen of uploaden van plattegronden",
+      "illustration": "Fotografeer of selecteer tekeningen",
+      "tip1": "Gebruik duidelijke PDF-bestanden of maak scherpe foto's van de tekeningen",
+      "tip2": "Zorg ervoor dat de volledige plattegrond duidelijk en leesbaar is",
+      "tip3": "Houd de camera stil en vermijd schittering of schaduwen",
+      "tip4": "PDF, JPG en PNG-formaten worden geaccepteerd",
+      "tip5": "U kunt meerdere bestanden tegelijk uploaden of fotograferen",
       "camera": {
         "title": "Capture Assistant",
         "subtitle": "Korte tips voordat u plattegronden fotografeert",
@@ -624,9 +712,6 @@
 	"addMorePhotos": "Voeg meer foto's toe",
     "toast": {
       "roomRemoved": "{label} verwijderd",
-      "filesUploaded": "{count} bestand(en) succesvol geüpload",
-      "photoCaptured": "Foto succesvol vastgelegd",
-      "fileDeleted": "Bestand verwijderd",
       "pdfNoPreview": "PDF kan niet worden bekeken",
       "filesUploadFailed": "Bestand kon niet worden opgeslagen — probeer een kleinere afbeelding",
       "storageQuotaFailed": "Foto's konden niet worden opgeslagen — opslag is vol. Verwijder foto's of gebruik kleinere afbeeldingen.",
@@ -636,7 +721,7 @@
       "roomDeleted": "Ruimte \"{name}\" verwijderd",
       "insulationRequired": "Selecteer Ja of Nee voor de isolatievraag",
       "floorPlanRequired": "Upload minimaal één plattegrond",
-	  "filesUploaded": "{{count}} Bestanden geüpload",
+	  "filesUploaded": "{count} Bestanden geüpload",
       "photoCaptured": "Foto vastgelegd",
       "fileDeleted": "Bestand verwijderd"
     }

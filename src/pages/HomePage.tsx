@@ -132,7 +132,7 @@ export function HomePage({
             </h1>
           )}
 
-          {numberOfFloors !== null && numberOfFloors > 0 && (
+          {selectedRole !== UserRole.CLIENT && numberOfFloors !== null && numberOfFloors > 0 && (
             <FloorLabel count={numberOfFloors} t={t} />
           )}
 

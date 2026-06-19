@@ -1,12 +1,12 @@
 // src/pages/InstallatiePage.tsx
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Check, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, ChevronUp, X, Home } from 'lucide-react';
 import { AppSelect } from '../components/common/AppSelect';
-import { CustomRoomAndersInput } from '../components/common/CustomRoomAndersInput';
 import { InstallatieSectionIcon } from '../components/common/InstallatieSectionIcon';
 import { TopBar } from '../components/common/TopBar';
 import { AppSidebar } from '../components/common/AppSidebar';
+import { HouseDesignRoomsModal } from '../components/common/HouseDesignRoomsModal';
 import { MobileSidebar } from '../components/common/MobileSidebar';
 import { PageBackLink } from '../components/common/PageBackLink';
 import { BackToTop } from '../components/common/BackToTop';
@@ -172,17 +172,7 @@ function toggleFloorRoom(
   return { ...byFloor, [floorId]: next };
 }
 
-function isFloorAndersActive(
-  floorId: string,
-  andersFloors: string[],
-  byFloor: Record<string, string[]>,
-  floorUploadRooms: string[],
-): boolean {
-  return (
-    andersFloors.includes(floorId) ||
-    getFloorCustomRooms(floorId, byFloor, floorUploadRooms).length > 0
-  );
-}
+
 
 /**
  * Keep current House design picks, Anders, and free-text Anders locations.
@@ -291,6 +281,7 @@ export const InstallatiePage = ({
   const { toast, setToast, showToast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [houseDesignRevision, setHouseDesignRevision] = useState(0);
+  const [editRoomsModalOpen, setEditRoomsModalOpen] = useState(false);
   
   // Load saved data from storage on mount
   const savedData = loadInstallatieFromStorage();
@@ -322,6 +313,9 @@ export const InstallatiePage = ({
   );
 
   // Ventilation state
+  const [ventilationType, setVentilationType] = useState<'natural' | 'mechanical' | null>(
+    savedData.ventilationType ?? null,
+  );
   const [ventilationCo2, setVentilationCo2] = useState<boolean | null>(savedData.ventilationCo2);
   const [ventSensorsByFloor, setVentSensorsByFloor] = useState<Record<string, string[]>>(
     () => initialVentSensorsByFloor,
@@ -451,6 +445,7 @@ export const InstallatiePage = ({
   const clearSection = (section: InstallatieSectionId) => {
     switch (section) {
       case 'ventilation':
+        setVentilationType(null);
         setVentilationCo2(null);
         clearVentilationSensors();
         break;
@@ -514,6 +509,20 @@ export const InstallatiePage = ({
     setVentAndersEditorFloor(null);
   };
 
+  const handleVentilationTypeClick = (type: 'natural' | 'mechanical') => {
+    if (ventilationType === type) {
+      setVentilationType(null);
+      setVentilationCo2(null);
+      clearVentilationSensors();
+    } else {
+      setVentilationType(type);
+      if (type === 'natural') {
+        setVentilationCo2(null);
+        clearVentilationSensors();
+      }
+    }
+  };
+
   const handleVentilationCo2Click = (value: boolean) => {
     if (ventilationCo2 === value) {
       setVentilationCo2(null);
@@ -561,6 +570,7 @@ export const InstallatiePage = ({
   useEffect(() => {
     saveInstallatieToStorage({
       selectedSections,
+      ventilationType,
       ventilationCo2,
       ventilatieSensors: ventilatieSensorsFlat,
       ventilatieSensorsByFloor: ventSensorsByFloor,
@@ -588,6 +598,7 @@ export const InstallatiePage = ({
     });
   }, [
     selectedSections,
+    ventilationType,
     ventilationCo2,
     ventilatieSensorsFlat,
     ventSensorsByFloor,
@@ -618,6 +629,7 @@ export const InstallatiePage = ({
     // Save before navigating
     saveInstallatieToStorage({
       selectedSections,
+      ventilationType,
       ventilationCo2,
       ventilatieSensors: ventilatieSensorsFlat,
       ventilatieSensorsByFloor: ventSensorsByFloor,
@@ -643,28 +655,12 @@ export const InstallatiePage = ({
       coolingGeneratorType,
       coolingEmissionSystem,
     });
-    setCurrentStep(Step.KOZIJN_GLAS);
+    setCurrentStep(Step.PHOTO_CAPTURE);
   };
 
   const isBackOfficeOrInspector = selectedRole === UserRole.BACK_OFFICE || selectedRole === UserRole.INSPECTOR;
 
-  const handleAndersRoomAdded = (
-    floorId: string,
-    roomName: string,
-    setByFloor: Dispatch<SetStateAction<Record<string, string[]>>>,
-    closeEditor: () => void,
-    markAndersFloor: () => void,
-  ) => {
-    setByFloor((prev) => {
-      const current = prev[floorId] ?? [];
-      if (current.includes(roomName)) return prev;
-      return { ...prev, [floorId]: [...current, roomName] };
-    });
-    markAndersFloor();
-    closeEditor();
-    setHouseDesignRevision((v) => v + 1);
-    showToast(t('upload.toast.roomAdded', { name: translateUploadRoom(roomName, t) }), 'success');
-  };
+
 
   return (
     <div className="bg-background min-h-screen">
@@ -679,18 +675,18 @@ export const InstallatiePage = ({
         onLogoClick={onLogoClick}
       />
 
-      <AppSidebar
-        currentStep={currentStep}
-        handleStepChange={setCurrentStep}
+      <AppSidebar 
+        currentStep={currentStep} 
+        handleStepChange={setCurrentStep} 
         onLogout={onLogout}
         userName={userName}
         selectedRole={selectedRole}
       />
-
-      <MobileSidebar
-        isOpen={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-        currentStep={currentStep}
+      
+      <MobileSidebar 
+        isOpen={mobileMenuOpen} 
+        onClose={() => setMobileMenuOpen(false)} 
+        currentStep={currentStep} 
         handleStepChange={setCurrentStep}
         onLogout={onLogout}
         userName={userName}
@@ -700,7 +696,7 @@ export const InstallatiePage = ({
       {/* Changed pb-8 to pb-28 to prevent button overlap */}
       <main className="app-page-main md:ml-64 pb-28">
         <BackToTop />
-
+        
         <div className="app-shell-content">
           <PageBackLink label={t('installatie.backToInsulation')} onClick={() => setCurrentStep(Step.INSULATION_DETAILS)} />
 
@@ -716,7 +712,7 @@ export const InstallatiePage = ({
               <div className="p-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <button
+          <button 
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -730,7 +726,7 @@ export const InstallatiePage = ({
                       title={t('installatie.selectSection')}
                     >
                       {isSectionSelected('ventilation') && <Check size={14} strokeWidth={3} />}
-                    </button>
+          </button>
                     <InstallatieSectionIcon
                       section="ventilation"
                       selected={isSectionSelected('ventilation')}
@@ -740,9 +736,15 @@ export const InstallatiePage = ({
                       onClick={() => isSectionSelected('ventilation') && toggleSection('ventilation')}
                     >
                       <h2 className="font-display font-black text-lg text-primary">{t('installatie.ventilation')}</h2>
-                      {isSectionSelected('ventilation') && ventilationCo2 !== null && (
+                      {isSectionSelected('ventilation') && ventilationType && (
                         <p className="text-[10px] font-black uppercase tracking-wider text-primary mt-0.5">
-                          {ventilationCo2 ? 'CO2 sensor present' : 'No CO2 sensor'}
+                          {ventilationType === 'natural'
+                            ? t('installatie.ventilationTypes.natural')
+                            : `${t('installatie.ventilationTypes.mechanical')}${
+                                ventilationCo2 !== null
+                                  ? ` • ${ventilationCo2 ? 'CO2 sensor present' : 'No CO2 sensor'}`
+                                  : ''
+                              }`}
                         </p>
                       )}
                     </div>
@@ -768,139 +770,111 @@ export const InstallatiePage = ({
                     className="overflow-hidden"
                   >
                     <div className="px-5 pb-5 pt-0 border-t border-gray-100 bg-white rounded-b-2xl space-y-4">
-                      <div>
-                        <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.ventilationCo2')}</p>
+                      <div className="pt-4">
+                        <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.ventilationType')}</p>
                         <div className="flex gap-3">
                           <button
-                            onClick={() => handleVentilationCo2Click(true)}
+                            type="button"
+                            onClick={() => handleVentilationTypeClick('natural')}
                             className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                              ventilationCo2 === true
+                              ventilationType === 'natural'
                                 ? 'bg-primary text-white shadow-md'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                           >
-                            {t('common.yes')} {ventilationCo2 === true && '✓'}
+                            {t('installatie.ventilationTypes.natural')}
                           </button>
                           <button
-                            onClick={() => handleVentilationCo2Click(false)}
+                            type="button"
+                            onClick={() => handleVentilationTypeClick('mechanical')}
                             className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                              ventilationCo2 === false
+                              ventilationType === 'mechanical'
                                 ? 'bg-primary text-white shadow-md'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                           >
-                            {t('common.no')} {ventilationCo2 === false && '✓'}
+                            {t('installatie.ventilationTypes.mechanical')}
                           </button>
                         </div>
                       </div>
 
-                      {ventilationCo2 === true && (
-                      <div className="space-y-4 pt-4 border-t border-gray-100">
-                        <div>
-                          <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-2">
-                            {t('installatie.sensorLocation')}
-                          </label>
-                          <div className="space-y-3">
-                            {uploadRoomsByFloor.map(({ floorId, rooms }) => (
-                              <div key={floorId}>
-                                <p className="text-[10px] font-black uppercase tracking-wider text-primary/80 mb-1.5">
-                                  {interiorFloorLabel(floorId, t)}
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                  {rooms.map((loc) => (
-                                    <button
-                                      key={`${floorId}-${loc}`}
-                                      type="button"
-                                      onClick={() => {
-                                        setVentSensorsByFloor((prev) => toggleFloorRoom(prev, floorId, loc));
-                                      }}
-                                      className={`px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
-                                        (ventSensorsByFloor[floorId] ?? []).includes(loc)
-                                          ? 'bg-primary text-white shadow-md'
-                                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                      }`}
-                                    >
-                                      {translateUploadRoom(loc, t)}
-                                    </button>
-                                  ))}
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      if (ventAndersEditorFloor === floorId) {
-                                        setVentAndersEditorFloor(null);
-                                        return;
-                                      }
-                                      setVentAndersEditorFloor(floorId);
-                                      setVentAndersFloors((prev) =>
-                                        prev.includes(floorId) ? prev : [...prev, floorId],
-                                      );
-                                    }}
-                                    className={`px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
-                                      isFloorAndersActive(floorId, ventAndersFloors, ventSensorsByFloor, rooms)
-                                        ? 'bg-primary text-white shadow-md'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
-                                  >
-                                    {ROOM_ANDERS}
-                                  </button>
-                                  {getFloorCustomRooms(floorId, ventSensorsByFloor, rooms).map((room) => (
-                                    <span
-                                      key={room}
-                                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider bg-primary text-white shadow-md"
-                                    >
-                                      {translateUploadRoom(room, t)}
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setVentSensorsByFloor((prev) => toggleFloorRoom(prev, floorId, room));
-                                          const remaining = getFloorCustomRooms(
-                                            floorId,
-                                            toggleFloorRoom(ventSensorsByFloor, floorId, room),
-                                            rooms,
-                                          );
-                                          if (remaining.length === 0) {
-                                            setVentAndersFloors((prev) => prev.filter((f) => f !== floorId));
-                                          }
-                                        }}
-                                        className="rounded p-0.5 transition-colors hover:bg-white/20"
-                                        aria-label="Remove room"
-                                      >
-                                        <X size={12} strokeWidth={3} />
-                                      </button>
-                                    </span>
+                      {ventilationType === 'mechanical' && (
+                        <div className="space-y-4 pt-4 border-t border-gray-100">
+                          <div>
+                            <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.ventilationCo2')}</p>
+                <div className="flex gap-3">
+                  <button 
+                                type="button"
+                                onClick={() => handleVentilationCo2Click(true)}
+                                className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                                  ventilationCo2 === true
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                {t('common.yes')}
+                  </button>
+                  <button 
+                                type="button"
+                                onClick={() => handleVentilationCo2Click(false)}
+                                className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                                  ventilationCo2 === false
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                {t('common.no')}
+                  </button>
+                </div>
+              </div>
+
+                          {ventilationCo2 === true && (
+                            <div className="space-y-4 pt-4 border-t border-gray-100">
+                              <div>
+                                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-2">
+                                  {t('installatie.sensorLocation')}
+                                </label>
+                                <div className="space-y-3">
+                                  {uploadRoomsByFloor.map(({ floorId, rooms }) => (
+                                    <div key={floorId}>
+                                      <p className="text-[10px] font-black uppercase tracking-wider text-primary/80 mb-1.5">
+                                        {interiorFloorLabel(floorId, t)}
+                                      </p>
+                                      <div className="flex flex-wrap gap-2">
+                                        {rooms.map((loc) => (
+                                          <button
+                                            key={`${floorId}-${loc}`}
+                                            type="button"
+                                            onClick={() => {
+                                              setVentSensorsByFloor((prev) => toggleFloorRoom(prev, floorId, loc));
+                                            }}
+                                            className={`px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
+                                              (ventSensorsByFloor[floorId] ?? []).includes(loc)
+                                                ? 'bg-primary text-white shadow-md'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
+                                          >
+                                            {translateUploadRoom(loc, t)}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
                                   ))}
                                 </div>
-                                {ventAndersEditorFloor === floorId && (
-                                  <CustomRoomAndersInput
-                                    floorId={floorId}
-                                    placeholder={t('upload.roomNamePlaceholder')}
-                                    onCancel={() => {
-                                      setVentAndersEditorFloor(null);
-                                      if (
-                                        getFloorCustomRooms(floorId, ventSensorsByFloor, rooms).length === 0
-                                      ) {
-                                        setVentAndersFloors((prev) => prev.filter((f) => f !== floorId));
-                                      }
-                                    }}
-                                    onRoomAdded={(roomName) => {
-                                      handleAndersRoomAdded(
-                                        floorId,
-                                        roomName,
-                                        setVentSensorsByFloor,
-                                        () => setVentAndersEditorFloor(null),
-                                        () =>
-                                          setVentAndersFloors((prev) =>
-                                            prev.includes(floorId) ? prev : [...prev, floorId],
-                                          ),
-                                      );
-                                    }}
-                                  />
-                                )}
+                                <div className="pt-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditRoomsModalOpen(true)}
+                                    className="px-4 py-2 border border-primary/20 text-primary hover:bg-primary/5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
+                                  >
+                                    <Home size={12} />
+                                    {t('upload.editRoomsButton') || 'Edit House Design Rooms'}
+                                  </button>
+                                </div>
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
                       )}
                     </div>
                   </motion.div>
@@ -941,7 +915,7 @@ export const InstallatiePage = ({
                           {translateHeatingType(heatingSystemType, t)} • {heatingLocation === 'Anders' ? otherHeatingLocation : heatingLocation}
                         </p>
                       )}
-                    </div>
+                  </div>
                   </div>
                   {isSectionSelected('heating') && (
                     <button
@@ -977,7 +951,7 @@ export const InstallatiePage = ({
                         />
                         
                         {/* Heating Location with Anders pattern */}
-                        <div>
+                  <div>
                           <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
                             {t('installatie.location')}
                           </label>
@@ -987,6 +961,7 @@ export const InstallatiePage = ({
                               onChange={setHeatingLocation}
                               placeholder={t('installatie.selectLocation')}
                               options={locationSelectOptions}
+                              searchable={true}
                             />
                           ) : (
                             <div className="relative">
@@ -1008,10 +983,10 @@ export const InstallatiePage = ({
                               >
                                 <ChevronDown size={18} />
                               </button>
-                            </div>
+                  </div>
                           )}
-                        </div>
-                      </div>
+                </div>
+              </div>
 
                       {isBackOfficeOrInspector && (
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 pt-4 border-t border-gray-100">
@@ -1095,8 +1070,8 @@ export const InstallatiePage = ({
                     <div className="px-5 pb-5 pt-0 border-t border-gray-100 bg-white rounded-b-2xl space-y-4">
                       <div>
                         <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.tapwaterSame')}</p>
-                        <div className="flex gap-3">
-                          <button
+                <div className="flex gap-3">
+                  <button 
                             onClick={() => handleHeatingSameAsWaterClick(true)}
                             className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
                               heatingSameAsWater === true
@@ -1104,9 +1079,9 @@ export const InstallatiePage = ({
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                           >
-                            {t('common.yes')} {heatingSameAsWater === true && '✓'}
-                          </button>
-                          <button
+                            {t('common.yes')}
+                  </button>
+                  <button 
                             onClick={() => handleHeatingSameAsWaterClick(false)}
                             className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
                               heatingSameAsWater === false
@@ -1114,12 +1089,12 @@ export const InstallatiePage = ({
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                           >
-                            {t('common.no')} {heatingSameAsWater === false && '✓'}
-                          </button>
-                        </div>
-                      </div>
+                            {t('common.no')}
+                  </button>
+                </div>
+              </div>
 
-                      {heatingSameAsWater === false && isBackOfficeOrInspector && (
+                      {heatingSameAsWater === false && (
                         <div className="space-y-4 pt-4 border-t border-gray-100">
                           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <AppSelect
@@ -1132,16 +1107,18 @@ export const InstallatiePage = ({
                                 label: type,
                               }))}
                             />
-                            <AppSelect
-                              label={t('installatie.deviceType')}
-                              value={tapWaterDevice}
-                              onChange={setTapWaterDevice}
-                              placeholder={t('installatie.selectDeviceType')}
-                              options={TAP_WATER_DEVICES.map((type) => ({
-                                value: type,
-                                label: type,
-                              }))}
-                            />
+                            {isBackOfficeOrInspector && (
+                              <AppSelect
+                                label={t('installatie.deviceType')}
+                                value={tapWaterDevice}
+                                onChange={setTapWaterDevice}
+                                placeholder={t('installatie.selectDeviceType')}
+                                options={TAP_WATER_DEVICES.map((type) => ({
+                                  value: type,
+                                  label: type,
+                                }))}
+                              />
+                            )}
                           </div>
                           
                           {/* Tap Water Location with Anders pattern */}
@@ -1155,6 +1132,7 @@ export const InstallatiePage = ({
                                 onChange={setTapWaterLocation}
                                 placeholder={t('installatie.selectLocation')}
                                 options={locationSelectOptions}
+                                searchable={true}
                               />
                             ) : (
                               <div className="relative">
@@ -1245,8 +1223,8 @@ export const InstallatiePage = ({
                     <div className="px-5 pb-5 pt-0 border-t border-gray-100 bg-white rounded-b-2xl space-y-4">
                       <div>
                         <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.solarInstalled')}</p>
-                        <div className="flex gap-3">
-                          <button
+                <div className="flex gap-3">
+                  <button 
                             onClick={() => handleSolarPanelsClick(true)}
                             className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
                               solarPanels === true
@@ -1254,9 +1232,9 @@ export const InstallatiePage = ({
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                           >
-                            {t('common.yes')} {solarPanels === true && '✓'}
-                          </button>
-                          <button
+                            {t('common.yes')}
+                  </button>
+                  <button 
                             onClick={() => handleSolarPanelsClick(false)}
                             className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
                               solarPanels === false
@@ -1264,16 +1242,16 @@ export const InstallatiePage = ({
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                           >
-                            {t('common.no')} {solarPanels === false && '✓'}
-                          </button>
-                        </div>
+                            {t('common.no')}
+                  </button>
+                </div>
                       </div>
 
-                      {solarPanels === true && (
+                {solarPanels === true && (
                         <div className="space-y-4 pt-4 border-t border-gray-100">
                           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             {/* Number of Panels - No limit (max removed) */}
-                            <div>
+                    <div>
                               <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
                                 {t('installatie.panelCount')}
                               </label>
@@ -1298,11 +1276,11 @@ export const InstallatiePage = ({
                                 placeholder="8"
                                 className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                               />
-                            </div>
+                    </div>
                             
                             {/* Tilt Angle */}
                             {isBackOfficeOrInspector && (
-                              <div>
+                    <div>
                                 <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
                                   {t('installatie.tiltAngle')}
                                 </label>
@@ -1330,10 +1308,10 @@ export const InstallatiePage = ({
                                     className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                                   />
                                   <span className="ml-2 text-sm text-gray-500">°</span>
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                    </div>
+                  </div>
+                )}
+              </div>
                           
                           {/* Building Integration */}
                           {isBackOfficeOrInspector && (
@@ -1363,7 +1341,7 @@ export const InstallatiePage = ({
               <div className="p-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <button
+                  <button 
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1377,7 +1355,7 @@ export const InstallatiePage = ({
                       title={t('installatie.selectSection')}
                     >
                       {isSectionSelected('cooling') && <Check size={14} strokeWidth={3} />}
-                    </button>
+                  </button>
                     <InstallatieSectionIcon section="cooling" selected={isSectionSelected('cooling')} />
                     <div
                       className={`flex-1 min-w-0 ${isSectionSelected('cooling') ? 'cursor-pointer' : ''}`}
@@ -1394,13 +1372,13 @@ export const InstallatiePage = ({
                     </div>
                   </div>
                   {isSectionSelected('cooling') && (
-                    <button
+                  <button 
                       type="button"
                       className="text-gray-400 flex-shrink-0 ml-2"
                       onClick={() => toggleSection('cooling')}
-                    >
+                  >
                       {isExpanded('cooling') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </button>
+                  </button>
                   )}
                 </div>
               </div>
@@ -1425,7 +1403,7 @@ export const InstallatiePage = ({
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                           >
-                            {t('common.yes')} {activeCooling === true && '✓'}
+                            {t('common.yes')}
                           </button>
                           <button
                             onClick={() => handleActiveCoolingClick(false)}
@@ -1435,10 +1413,10 @@ export const InstallatiePage = ({
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                           >
-                            {t('common.no')} {activeCooling === false && '✓'}
+                            {t('common.no')}
                           </button>
-                        </div>
-                      </div>
+              </div>
+            </div>
 
                       {activeCooling === true && (
                         <div className="space-y-4 pt-4 border-t border-gray-100">
@@ -1447,104 +1425,63 @@ export const InstallatiePage = ({
                               {t('installatie.coolingRooms')}
                             </label>
                             <div className="space-y-3">
-                              {uploadRoomsByFloor.map(({ floorId, rooms }) => (
-                                <div key={floorId}>
-                                  <p className="text-[10px] font-black uppercase tracking-wider text-primary/80 mb-1.5">
-                                    {interiorFloorLabel(floorId, t)}
-                                  </p>
-                                  <div className="flex flex-wrap gap-2">
-                                    {rooms.map((room) => (
-                                      <button
-                                        key={`${floorId}-${room}`}
-                                        type="button"
-                                        onClick={() => {
-                                          setCoolRoomsByFloor((prev) => toggleFloorRoom(prev, floorId, room));
-                                        }}
-                                        className={`px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
-                                          (coolRoomsByFloor[floorId] ?? []).includes(room)
-                                            ? 'bg-primary text-white shadow-md'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                        }`}
-                                      >
-                                        {translateUploadRoom(room, t)}
-                                      </button>
-                                    ))}
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        if (coolAndersEditorFloor === floorId) {
-                                          setCoolAndersEditorFloor(null);
-                                          return;
-                                        }
-                                        setCoolAndersEditorFloor(floorId);
-                                        setCoolAndersFloors((prev) =>
-                                          prev.includes(floorId) ? prev : [...prev, floorId],
-                                        );
-                                      }}
-                                      className={`px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
-                                        isFloorAndersActive(floorId, coolAndersFloors, coolRoomsByFloor, rooms)
-                                          ? 'bg-primary text-white shadow-md'
-                                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                      }`}
-                                    >
-                                      {ROOM_ANDERS}
-                                    </button>
-                                    {getFloorCustomRooms(floorId, coolRoomsByFloor, rooms).map((room) => (
-                                      <span
-                                        key={room}
-                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider bg-primary text-white shadow-md"
-                                      >
-                                        {translateUploadRoom(room, t)}
+                              {(() => {
+                                const allowedBases = ['WOONKAMER', 'SLAAPKAMER', 'KEUKEN', 'EETKAMER'];
+                                const filteredFloors = uploadRoomsByFloor
+                                  .map(({ floorId, rooms }) => ({
+                                    floorId,
+                                    rooms: rooms.filter((room) => {
+                                      const base = room.replace(/\s+\d+$/, '').toUpperCase();
+                                      return allowedBases.includes(base);
+                                    }),
+                                  }))
+                                  .filter(({ rooms }) => rooms.length > 0);
+
+                                if (filteredFloors.length === 0) {
+                                  return (
+                                    <p className="text-xs text-gray-500 italic">
+                                      {t('installatie.noCoolingRoomsAvailable')}
+                                    </p>
+                                  );
+                                }
+
+                                return filteredFloors.map(({ floorId, rooms }) => (
+                                  <div key={floorId}>
+                                    <p className="text-[10px] font-black uppercase tracking-wider text-primary/80 mb-1.5">
+                                      {interiorFloorLabel(floorId, t)}
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {rooms.map((room) => (
                                         <button
+                                          key={`${floorId}-${room}`}
                                           type="button"
                                           onClick={() => {
                                             setCoolRoomsByFloor((prev) => toggleFloorRoom(prev, floorId, room));
-                                            const remaining = getFloorCustomRooms(
-                                              floorId,
-                                              toggleFloorRoom(coolRoomsByFloor, floorId, room),
-                                              rooms,
-                                            );
-                                            if (remaining.length === 0) {
-                                              setCoolAndersFloors((prev) => prev.filter((f) => f !== floorId));
-                                            }
                                           }}
-                                          className="rounded p-0.5 transition-colors hover:bg-white/20"
-                                          aria-label="Remove room"
+                                          className={`px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
+                                            (coolRoomsByFloor[floorId] ?? []).includes(room)
+                                              ? 'bg-primary text-white shadow-md'
+                                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                          }`}
                                         >
-                                          <X size={12} strokeWidth={3} />
+                                          {translateUploadRoom(room, t)}
                                         </button>
-                                      </span>
-                                    ))}
+                                      ))}
+                                    </div>
                                   </div>
-                                  {coolAndersEditorFloor === floorId && (
-                                    <CustomRoomAndersInput
-                                      floorId={floorId}
-                                      placeholder={t('upload.roomNamePlaceholder')}
-                                      onCancel={() => {
-                                        setCoolAndersEditorFloor(null);
-                                        if (
-                                          getFloorCustomRooms(floorId, coolRoomsByFloor, rooms).length === 0
-                                        ) {
-                                          setCoolAndersFloors((prev) => prev.filter((f) => f !== floorId));
-                                        }
-                                      }}
-                                      onRoomAdded={(roomName) => {
-                                        handleAndersRoomAdded(
-                                          floorId,
-                                          roomName,
-                                          setCoolRoomsByFloor,
-                                          () => setCoolAndersEditorFloor(null),
-                                          () =>
-                                            setCoolAndersFloors((prev) =>
-                                              prev.includes(floorId) ? prev : [...prev, floorId],
-                                            ),
-                                        );
-                                      }}
-                                    />
-                                  )}
-                                </div>
-                              ))}
-                          </div>
+                                ));
+                              })()}
+                            </div>
+                            <div className="pt-3">
+                              <button
+                                type="button"
+                                onClick={() => setEditRoomsModalOpen(true)}
+                                className="px-4 py-2 border border-primary/20 text-primary hover:bg-primary/5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
+                              >
+                                <Home size={12} />
+                                {t('upload.editRoomsButton') || 'Edit House Design Rooms'}
+                              </button>
+                            </div>
                           </div>
 
                           {isBackOfficeOrInspector && (
@@ -1558,6 +1495,7 @@ export const InstallatiePage = ({
                                   value: type,
                                   label: type,
                                 }))}
+                                searchable={true}
                               />
                               <AppSelect
                                 label={t('installatie.emissionSystem')}
@@ -1582,10 +1520,19 @@ export const InstallatiePage = ({
         </div>
       </main>
 
-      <StepContinueFooter onClick={handleContinue} label={t('installatie.continueKozijn')} />
+      <StepContinueFooter onClick={handleContinue} label={t('installatie.continuePhotos')} />
 
       <AnimatePresence>
         {toast && <Toast {...toast} onClose={() => setToast(null)} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {editRoomsModalOpen && (
+          <HouseDesignRoomsModal
+            open={editRoomsModalOpen}
+            onClose={() => setEditRoomsModalOpen(false)}
+          />
+        )}
       </AnimatePresence>
     </div>
   );

@@ -26,6 +26,8 @@ export type PhotoCaptureStoredData = {
   exterior: ExteriorPhotos;
   interior: InteriorPhotos;
   interiorDetails?: InteriorCategoryDetails;
+  /** Extra numbered door/window keys per room id, e.g. `Doors 2`. */
+  extraInteriorCategories?: Record<string, string[]>;
 };
 
 const EXTERIOR_KEYS = ['voor', 'achter', 'links', 'rechts'] as const;
@@ -111,13 +113,29 @@ function sanitizeInteriorCategoryDetails(
   return out;
 }
 
+function sanitizeExtraInteriorCategories(
+  extra: Record<string, string[]> | undefined,
+): Record<string, string[]> {
+  if (!extra || typeof extra !== 'object') return {};
+  const out: Record<string, string[]> = {};
+  for (const [roomId, categories] of Object.entries(extra)) {
+    if (!Array.isArray(categories)) continue;
+    const cleaned = categories
+      .map((c) => migratePhotoCaptureCategoryKey(String(c)))
+      .filter((c) => c.length > 0);
+    if (cleaned.length > 0) out[roomId] = [...new Set(cleaned)];
+  }
+  return out;
+}
+
 function normalizeStoredPayload(raw: unknown): PhotoCaptureStoredData | null {
   if (!raw || typeof raw !== 'object') return null;
   const data = raw as Partial<PhotoCaptureStoredData> & { exteriorPhotos?: ExteriorPhotos };
   const exterior = sanitizeExteriorPhotos(data.exterior ?? data.exteriorPhotos);
   const interior = sanitizeInteriorPhotos(data.interior);
   const interiorDetails = sanitizeInteriorCategoryDetails(data.interiorDetails);
-  return { exterior, interior, interiorDetails };
+  const extraInteriorCategories = sanitizeExtraInteriorCategories(data.extraInteriorCategories);
+  return { exterior, interior, interiorDetails, extraInteriorCategories };
 }
 
 /** Mirror exterior counts to localStorage for dashboard progress (small payload). */
@@ -153,7 +171,7 @@ export async function loadPhotoCaptureFromStorage(): Promise<PhotoCaptureStoredD
     /* ignore */
   }
 
-  return { exterior: emptyExteriorPhotos(), interior: {}, interiorDetails: {} };
+  return { exterior: emptyExteriorPhotos(), interior: {}, interiorDetails: {}, extraInteriorCategories: {} };
 }
 
 export async function savePhotoCaptureToStorage(data: PhotoCaptureStoredData): Promise<void> {
@@ -161,6 +179,7 @@ export async function savePhotoCaptureToStorage(data: PhotoCaptureStoredData): P
     exterior: sanitizeExteriorPhotos(data.exterior),
     interior: sanitizeInteriorPhotos(data.interior),
     interiorDetails: sanitizeInteriorCategoryDetails(data.interiorDetails),
+    extraInteriorCategories: sanitizeExtraInteriorCategories(data.extraInteriorCategories),
   };
 
   try {

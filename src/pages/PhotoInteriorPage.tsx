@@ -301,14 +301,14 @@ export function PhotoInteriorPage({
       </main>
 
       {selectedRoom && (
-        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div className="fixed inset-0 z-[3700] flex items-end sm:items-center justify-center p-0 sm:p-4 pt-[var(--app-topbar-height)] sm:pt-4">
           <button
             type="button"
             className="absolute inset-0 bg-black/55 backdrop-blur-sm border-0 cursor-default"
             aria-label="Close"
             onClick={() => setSelectedRoomId(null)}
           />
-          <div className="relative w-full max-w-2xl bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[85vh] overflow-hidden">
+          <div className="relative w-full max-w-2xl bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-full sm:max-h-[85vh] min-h-0 overflow-hidden">
             <div className="p-5 border-b border-outline-variant/10 flex justify-between items-center gap-3">
               <div className="min-w-0">
                 <h2 className="font-display font-black text-lg text-on-surface border-l-4 border-primary pl-3 truncate">
@@ -328,7 +328,7 @@ export function PhotoInteriorPage({
               </button>
             </div>
 
-            <div className="p-5 space-y-4 overflow-y-auto flex-1">
+            <div className="p-5 space-y-4 overflow-y-auto overscroll-contain flex-1 min-h-0">
               {subCategoriesFor(selectedRoom.id).map((item, idx) => {
                 const subCatId = `${selectedRoom.id}_${idx}`;
                 const photos = interiorPhotos[subCatId] ?? [];

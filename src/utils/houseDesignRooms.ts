@@ -1,5 +1,6 @@
 import {
   buildInteriorFloorSections,
+  getInteriorFloorSlice,
   getSelectedRoomsForFloor,
 } from './interiorRoomsFromUpload';
 import {
@@ -127,16 +128,16 @@ export function resolveRoomSearchInput(input: string, allowedRooms?: string[]): 
 const KELDER_DEFAULT_ROOMS = ['KELDER', 'BERGING'] as const;
 
 export const defaultRoomCategories: Record<string, string[]> = {
-  BG: ['HAL', 'MK', 'WC', 'WOONKAMER', 'KEUKEN', 'BADKAMER', 'SLAAPKAMER', 'TECHNICAL ROOM', 'BERGING', 'AANBOUW', 'SERRE', 'WASRUIMTE', 'EETKAMER'],
-  '1e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'AANBOUW', 'ZOLDER', 'WASRUIMTE'],
-  '2e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'AANBOUW', 'ZOLDER', 'DAKKAPEL', 'WASRUIMTE'],
-  '3e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'AANBOUW', 'ZOLDER', 'WASRUIMTE'],
-  '4e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'AANBOUW', 'ZOLDER', 'WASRUIMTE'],
-  '5e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'AANBOUW', 'ZOLDER', 'WASRUIMTE'],
-  '6e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'AANBOUW', 'ZOLDER', 'WASRUIMTE'],
-  '7e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'AANBOUW', 'ZOLDER', 'WASRUIMTE'],
-  '8e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'AANBOUW', 'ZOLDER', 'WASRUIMTE'],
-  '9e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'AANBOUW', 'ZOLDER', 'WASRUIMTE'],
+  BG: ['HAL', 'MK', 'WC', 'WOONKAMER', 'KEUKEN', 'BADKAMER', 'SLAAPKAMER', 'TECHNICAL ROOM', 'BERGING', 'SERRE', 'WASRUIMTE', 'EETKAMER'],
+  '1e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'ZOLDER', 'WASRUIMTE'],
+  '2e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'ZOLDER', 'WASRUIMTE'],
+  '3e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'ZOLDER', 'WASRUIMTE'],
+  '4e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'ZOLDER', 'WASRUIMTE'],
+  '5e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'ZOLDER', 'WASRUIMTE'],
+  '6e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'ZOLDER', 'WASRUIMTE'],
+  '7e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'ZOLDER', 'WASRUIMTE'],
+  '8e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'ZOLDER', 'WASRUIMTE'],
+  '9e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC', 'ZOLDER', 'WASRUIMTE'],
 };
 
 /** Start floor: HAL. Other floors: OVERLUIP (overloop) instead of HAL. */
@@ -158,6 +159,51 @@ export const GROUND_FLOOR_ONLY_ROOMS = [
 
 export function isGroundFloorOnlyRoom(room: string): boolean {
   return (GROUND_FLOOR_ONLY_ROOMS as readonly string[]).includes(normalizeRoomName(room));
+}
+
+/** Attic / dormer — only on the highest Algemeen floor (top floor). */
+export const TOP_FLOOR_ONLY_ROOMS = ['ZOLDER', 'DAKKAPEL'] as const;
+
+export function isTopFloorOnlyRoom(room: string): boolean {
+  const base = getRoomBaseName(room);
+  return (TOP_FLOOR_ONLY_ROOMS as readonly string[]).includes(base);
+}
+
+export function resolveTopFloorKey(
+  startFloorKey?: string,
+  numberOfFloors?: number,
+): string {
+  const hints = loadHouseDesignAlgemeenHints();
+  const start = startFloorKey ?? hints.startFloorKey;
+  const floors = numberOfFloors ?? hints.numberOfFloors;
+  const slice = getInteriorFloorSlice(floors, start);
+  return slice[slice.length - 1] ?? start;
+}
+
+function pruneTopFloorOnlySelections(
+  floor: string,
+  rooms: string[],
+  topFloorKey: string,
+): string[] {
+  if (floor === topFloorKey) return rooms;
+  return rooms.filter((room) => !isTopFloorOnlyRoom(room));
+}
+
+export function pruneTopFloorOnlyRoomRecords(
+  records: Record<string, string[]>,
+  allowedFloors: string[],
+  startFloorKey: string,
+  numberOfFloors?: number,
+): Record<string, string[]> {
+  const topFloorKey = resolveTopFloorKey(startFloorKey, numberOfFloors);
+  const allowed = new Set(allowedFloors);
+  const out: Record<string, string[]> = {};
+  for (const [floor, rooms] of Object.entries(records)) {
+    if (!allowed.has(floor)) continue;
+    const pruned = pruneTopFloorOnlySelections(floor, rooms, topFloorKey);
+    if (pruned.length > 0) out[floor] = pruned;
+  }
+  return out;
 }
 
 function includesBgExtraStandardRooms(floor: string, startFloorKey: string): boolean {
@@ -214,26 +260,56 @@ export function reconcileHouseDesignRoomMeta(
   >,
   allowedFloors: string[],
   startFloorKey: string,
+  numberOfFloors?: number,
 ): Pick<
   HouseDesignPageMeta,
   'selectedRooms' | 'selectedCustomRooms' | 'customRooms' | 'suppressedStandardRooms'
 > {
+  const topFloorKey = resolveTopFloorKey(startFloorKey, numberOfFloors);
   const selectedRooms = { ...(meta.selectedRooms ?? {}) };
+  const selectedCustomRooms = { ...(meta.selectedCustomRooms ?? {}) };
+  const customRooms = { ...(meta.customRooms ?? {}) };
 
   for (const floor of allowedFloors) {
     const current = selectedRooms[floor];
-    if (!current) continue;
-    const reconciled = reconcileSelectedRoomsForFloor(floor, current, startFloorKey);
-    if (reconciled.length > 0) {
-      selectedRooms[floor] = reconciled;
-    } else {
-      delete selectedRooms[floor];
+    if (current) {
+      let reconciled = reconcileSelectedRoomsForFloor(floor, current, startFloorKey);
+      reconciled = pruneTopFloorOnlySelections(floor, reconciled, topFloorKey);
+      if (reconciled.length > 0) {
+        selectedRooms[floor] = reconciled;
+      } else {
+        delete selectedRooms[floor];
+      }
+    }
+
+    if (selectedCustomRooms[floor]) {
+      const pruned = pruneTopFloorOnlySelections(
+        floor,
+        selectedCustomRooms[floor],
+        topFloorKey,
+      );
+      if (pruned.length > 0) {
+        selectedCustomRooms[floor] = pruned;
+      } else {
+        delete selectedCustomRooms[floor];
+      }
+    }
+
+    if (customRooms[floor]) {
+      const pruned = pruneTopFloorOnlySelections(floor, customRooms[floor], topFloorKey);
+      if (pruned.length > 0) {
+        customRooms[floor] = pruned;
+      } else {
+        delete customRooms[floor];
+      }
     }
   }
 
   return {
     ...meta,
     selectedRooms,
+    selectedCustomRooms,
+    customRooms,
   };
 }
 
@@ -257,6 +333,17 @@ function mapStandardRoomsForFloor(
     mapped = mergeBgStandardRoomsOntoFloor(mapped);
   } else if (!includesBgExtraStandardRooms(floor, startFloorKey)) {
     mapped = mapped.filter((room) => !isGroundFloorOnlyRoom(room));
+  }
+
+  const topFloorKey = resolveTopFloorKey(startFloorKey);
+  if (floor === topFloorKey) {
+    for (const room of TOP_FLOOR_ONLY_ROOMS) {
+      if (!mapped.includes(room)) {
+        mapped.push(room);
+      }
+    }
+  } else {
+    mapped = mapped.filter((room) => !isTopFloorOnlyRoom(room));
   }
 
   return mapped;
@@ -364,10 +451,7 @@ export function isStandardRoomForFloor(
 
 export function getAllRoomsOnFloorFromMeta(
   floor: string,
-  meta: Pick<
-    HouseDesignPageMeta,
-    'customRooms' | 'selectedCustomRooms' | 'suppressedStandardRooms'
-  >,
+  meta: Partial<Pick<HouseDesignPageMeta, 'customRooms' | 'selectedCustomRooms' | 'suppressedStandardRooms'>>,
 ): string[] {
   const suppressed = meta.suppressedStandardRooms?.[floor] ?? [];
   const standard = getEffectiveStandardRooms(floor, suppressed);
@@ -511,6 +595,9 @@ export const CHAIN_NUMBERED_ROOM_BASES = [
   'AANBOUW',
   'ZOLDER',
   'WC',
+  'BADKAMER',
+  'BERGING',
+  'KEUKEN'
 ] as const;
 
 export type RoomChipItem = {
@@ -846,7 +933,7 @@ function pruneRecordToKeys<T extends string[]>(
   return result;
 }
 
-function applyRoomAddPlanToMeta(meta: HouseDesignPageMeta, floor: string, plan: RoomAddPlan): HouseDesignPageMeta {
+function applyRoomAddPlanToMeta(meta: Partial<HouseDesignPageMeta>, floor: string, plan: RoomAddPlan): HouseDesignPageMeta {
   const selectedRooms = { ...(meta.selectedRooms ?? {}) };
   const selectedCustomRooms = { ...(meta.selectedCustomRooms ?? {}) };
   const suppressedStandardRooms = { ...(meta.suppressedStandardRooms ?? {}) };

@@ -7,7 +7,7 @@ export const PHOTO_CAPTURE_ROOM_CATEGORIES: Record<string, string[]> = {
   KEUKEN: ['Window', 'CO₂ sensor'],
   BADKAMER: ['Window', 'Heating system'],
   HAL: ['Doors', 'Window'],
-  MK: ['Heating system - merk & type', 'PV system - merk & type'],
+  MK: ['Heating system - merk & type', 'PV system - merk & type', 'Tapwater system - brand & type'],
   WC: ['Window'],
   BERGING: ['General View'],
   'TECHNICAL ROOM': ['General View'],
@@ -43,16 +43,129 @@ export const PHOTO_CAPTURE_DOOR_CATEGORIES = ['Doors'] as const;
 
 export const PHOTO_CAPTURE_WINDOW_CATEGORIES = ['Window', 'Windows', 'Roof windows'] as const;
 
+export function migratePhotoCaptureCategoryKey(category: string): string {
+  return PHOTO_CAPTURE_CATEGORY_ALIASES[category] ?? category;
+}
+
+/** Strip optional instance suffix, e.g. `Doors 2` → `Doors`. */
+export function getPhotoCaptureCategoryBase(category: string): string {
+  const key = migratePhotoCaptureCategoryKey(category.trim());
+  const match = key.match(/^(Doors|Window|Windows|Roof windows)(?:\s+(\d+))?$/);
+  if (match) return match[1];
+  return key;
+}
+
+export function getPhotoCaptureCategoryNumber(category: string): number {
+  const key = migratePhotoCaptureCategoryKey(category.trim());
+  const match = key.match(/^(Doors|Window|Windows|Roof windows)(?:\s+(\d+))?$/);
+  if (!match) return 1;
+  return match[2] ? parseInt(match[2], 10) : 1;
+}
+
+export function buildPhotoCaptureCategoryInstance(baseCategory: string, number: number): string {
+  if (number <= 1) return baseCategory;
+  return `${baseCategory} ${number}`;
+}
+
+const MULTI_INSTANCE_CATEGORY_BASES = new Set([
+  'Doors',
+  'Window',
+  'Windows',
+  'Roof windows',
+]);
+
+export function isPhotoCaptureMultiInstanceCategory(category: string): boolean {
+  return MULTI_INSTANCE_CATEGORY_BASES.has(getPhotoCaptureCategoryBase(category));
+}
+
 export function isPhotoCaptureDoorCategory(category: string): boolean {
-  return (PHOTO_CAPTURE_DOOR_CATEGORIES as readonly string[]).includes(category);
+  return getPhotoCaptureCategoryBase(category) === 'Doors';
 }
 
 export function isPhotoCaptureWindowCategory(category: string): boolean {
-  return (PHOTO_CAPTURE_WINDOW_CATEGORIES as readonly string[]).includes(category);
+  const base = getPhotoCaptureCategoryBase(category);
+  return base === 'Window' || base === 'Windows' || base === 'Roof windows';
 }
 
-export function migratePhotoCaptureCategoryKey(category: string): string {
-  return PHOTO_CAPTURE_CATEGORY_ALIASES[category] ?? category;
+export function nextPhotoCaptureCategoryInstance(
+  existingCategories: Iterable<string>,
+  baseCategory: string,
+): string {
+  let max = 1;
+  for (const category of existingCategories) {
+    if (getPhotoCaptureCategoryBase(category) === baseCategory) {
+      max = Math.max(max, getPhotoCaptureCategoryNumber(category));
+    }
+  }
+  return buildPhotoCaptureCategoryInstance(baseCategory, max + 1);
+}
+
+export function countPhotoCaptureCategoryInstances(
+  categories: Iterable<string>,
+  baseCategory: string,
+): number {
+  let count = 0;
+  for (const category of categories) {
+    if (getPhotoCaptureCategoryBase(category) === baseCategory) count += 1;
+  }
+  return count;
+}
+
+/** Base categories plus numbered door/window instances for a room. */
+export function buildPhotoCaptureCategoryList(
+  roomName: string,
+  roomId: string,
+  extraCategoriesByRoom: Record<string, string[]>,
+  interiorPhotos: Record<string, Record<string, string[]>>,
+  interiorDetails: Record<string, Record<string, unknown>>,
+): string[] {
+  const baseCategories = getPhotoCaptureCategories(roomName);
+  const known = new Set<string>([
+    ...(extraCategoriesByRoom[roomId] ?? []),
+    ...Object.keys(interiorPhotos[roomId] ?? {}),
+    ...Object.keys(interiorDetails[roomId] ?? {}),
+  ]);
+
+  const result: string[] = [];
+  const placed = new Set<string>();
+
+  for (const base of baseCategories) {
+    if (isPhotoCaptureMultiInstanceCategory(base)) {
+      const numberedFirst = buildPhotoCaptureCategoryInstance(base, 1);
+      const instances = [...known]
+        .filter((c) => getPhotoCaptureCategoryBase(c) === base)
+        .sort(
+          (a, b) =>
+            getPhotoCaptureCategoryNumber(a) - getPhotoCaptureCategoryNumber(b),
+        );
+
+      if (instances.length === 0) {
+        result.push(base);
+        placed.add(base);
+      } else if (instances.includes(numberedFirst)) {
+        for (const instance of instances) {
+          if (!placed.has(instance)) {
+            result.push(instance);
+            placed.add(instance);
+          }
+        }
+      } else {
+        result.push(base);
+        placed.add(base);
+        for (const instance of instances.filter((c) => c !== base)) {
+          if (!placed.has(instance)) {
+            result.push(instance);
+            placed.add(instance);
+          }
+        }
+      }
+    } else {
+      result.push(base);
+      placed.add(base);
+    }
+  }
+
+  return result;
 }
 
 export function getPhotoCaptureCategories(roomName: string): string[] {
@@ -194,35 +307,46 @@ function photoCaptureFloorSection(floorId: string): PhotoCaptureSection {
 
 /**
  * Photo Capture accordion order:
- * voorgevel → start floor (BG, or 1e/2e when apartment) → kelder → achter/links/rechts → remaining floors.
+ * front side (voor) → left side (links) → right side (rechts) → BG/starting floor → kelder (if available) → back side (achter) → remaining floors.
  */
 export function buildPhotoCaptureSectionOrder(
   floorSections: string[],
   startFloorKey: string,
 ): PhotoCaptureSection[] {
-  const sections: PhotoCaptureSection[] = [{ type: 'exterior', id: 'voor' }];
-
-  const startFloor = floorSections.includes('BG') ? 'BG' : startFloorKey;
+  const sections: PhotoCaptureSection[] = [];
   const placed = new Set<string>();
 
+  // 1. front side (voor)
+  sections.push({ type: 'exterior', id: 'voor' });
+
+  // 2. left side (links)
+  sections.push({ type: 'exterior', id: 'links' });
+
+  // 3. right side (rechts)
+  sections.push({ type: 'exterior', id: 'rechts' });
+
+  // 4. BG (or starting floor if no BG is present)
+  const startFloor = floorSections.includes('BG') ? 'BG' : startFloorKey;
   if (floorSections.includes(startFloor)) {
     sections.push(photoCaptureFloorSection(startFloor));
     placed.add(startFloor);
   }
 
+  // 5. kelder (if kelder is available)
   if (floorSections.includes('KELDER')) {
     sections.push(photoCaptureFloorSection('KELDER'));
     placed.add('KELDER');
   }
 
-  for (const facadeId of ['achter', 'links', 'rechts'] as const) {
-    sections.push({ type: 'exterior', id: facadeId });
-  }
+  // 6. Back side (achter)
+  sections.push({ type: 'exterior', id: 'achter' });
 
+  // 7. and then 1e, 2e .... (remaining floors)
   for (const floor of floorSections) {
-    if (placed.has(floor)) continue;
-    sections.push(photoCaptureFloorSection(floor));
-    placed.add(floor);
+    if (!placed.has(floor)) {
+      sections.push(photoCaptureFloorSection(floor));
+      placed.add(floor);
+    }
   }
 
   return sections;

@@ -8,6 +8,9 @@
       "password": "test1234",
       "role": "Bewoner",
       "displayName": "Demo Owner (alias)",
+      "defaultFullName": "Jan de Vries",
+      "defaultPhone": "06 12345678",
+      "defaultAddress": "Jaagmeent 175 1356 AR Almere",
       "hints": ["beowner", "beown", "beowo", "owner", "owne", "own", "eigenaar"]
     },
     {

@@ -20,6 +20,7 @@ export type HouseDesignPageStoredData = {
   customRooms: Record<string, string[]>;
   selectedCustomRooms: Record<string, string[]>;
   suppressedStandardRooms: Record<string, string[]>;
+  startFloorKey?: string;
 };
 
 export type HouseDesignPageMeta = Omit<HouseDesignPageStoredData, 'files'>;
@@ -54,6 +55,10 @@ function parseHouseDesignMeta(
     suppressedStandardRooms:
       parsed.suppressedStandardRooms && typeof parsed.suppressedStandardRooms === 'object'
         ? parsed.suppressedStandardRooms
+        : undefined,
+    startFloorKey:
+      parsed.startFloorKey && typeof parsed.startFloorKey === 'string'
+        ? parsed.startFloorKey
         : undefined,
   };
 }

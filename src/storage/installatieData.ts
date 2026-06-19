@@ -15,6 +15,7 @@ export interface InstallatieData {
   selectedSections: InstallatieSectionId[];
 
   // Ventilation
+  ventilationType: 'natural' | 'mechanical' | null;
   ventilationCo2: boolean | null;
   ventilatieSensors: string[];
   /** Per-floor sensor locations (standard + Anders). */
@@ -57,6 +58,7 @@ const defaultData: InstallatieData = {
   selectedSections: [],
 
   // Ventilation
+  ventilationType: null,
   ventilationCo2: null,
   ventilatieSensors: [],
   otherVentilatieText: '',
@@ -116,6 +118,9 @@ export const loadInstallatieFromStorage = (): InstallatieData => {
         ...parsed,
         selectedSections: normalizeSelectedSections(parsed.selectedSections),
         heatingSystemType: normalizeHeatingSystemType(parsed.heatingSystemType),
+        ventilationType: (parsed.ventilationType === 'natural' || parsed.ventilationType === 'mechanical')
+          ? parsed.ventilationType
+          : null,
       };
     } catch {
       /* ignore */

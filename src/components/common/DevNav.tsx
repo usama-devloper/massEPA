@@ -14,11 +14,8 @@ const DEV_NAV_STEPS: Step[] = [
   Step.UPLOAD,
   Step.INSULATION_DETAILS,
   Step.INSTALLATIE,
-  Step.KOZIJN_GLAS,
   Step.PHOTO_CAPTURE,
   Step.PHOTO_INTERIOR,
-  Step.FINAL_REVIEW,
-  Step.COMPLETE,
   Step.SETTINGS,
 ];
 
@@ -29,10 +26,7 @@ const DEV_NAV_BUTTONS: { step: Step; label: string }[] = [
   { step: Step.UPLOAD, label: 'Upload' },
   { step: Step.INSULATION_DETAILS, label: 'Ins' },
   { step: Step.INSTALLATIE, label: 'Inst' },
-  { step: Step.KOZIJN_GLAS, label: 'Koz' },
   { step: Step.PHOTO_CAPTURE, label: 'Photo' },
-  { step: Step.FINAL_REVIEW, label: 'Final Review' },
-  { step: Step.COMPLETE, label: 'Done' },
   { step: Step.SETTINGS, label: 'Set' },
 ];
 

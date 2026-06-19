@@ -46,10 +46,7 @@ export const MobileSidebar = ({
     { step: Step.UPLOAD, label: t('nav.upload') },
     { step: Step.INSULATION_DETAILS, label: t('nav.insulation') },
     { step: Step.INSTALLATIE, label: t('nav.installatie') },
-    { step: Step.KOZIJN_GLAS, label: t('nav.kozijnGlas') },
     { step: Step.PHOTO_CAPTURE, label: t('nav.photos') },
-    { step: Step.FINAL_REVIEW, label: t('nav.finalReview') },
-    { step: Step.COMPLETE, label: t('nav.complete') },
     { step: Step.SETTINGS, label: t('nav.settings') },
   ];
 

@@ -1,4 +1,6 @@
 import type { TranslateFn } from '../context/LanguageContext';
+import { getPhotoCaptureCategoryBase, getPhotoCaptureCategoryNumber } from '../utils/photoCaptureRooms';
+
 
 /** Map stored Dutch/domain values → i18n key (labels stay in JSON). */
 function pick(value: string, map: Record<string, string>, t: TranslateFn): string {
@@ -59,6 +61,7 @@ const UPLOAD_ROOMS: Record<string, string> = {
 
 const UPLOAD_FLOORS: Record<string, string> = {
   BG: 'upload.floors.ground',
+  KELDER: 'upload.floors.kelder',
   '1e': 'upload.floors.first',
   '2e': 'upload.floors.second',
   '3e': 'upload.floors.third',
@@ -169,3 +172,52 @@ export function translateKozijnLocation(value: string, t: TranslateFn): string {
 export function translateKozijnFloor(value: string, t: TranslateFn): string {
   return pick(value, KOZIJN_FLOOR, t);
 }
+
+export function translatePhotoCategory(
+  category: string,
+  t: TranslateFn,
+  options?: { siblingCount?: number },
+): string {
+  const base = getPhotoCaptureCategoryBase(category);
+  const n = getPhotoCaptureCategoryNumber(category);
+  const siblingCount = options?.siblingCount ?? 1;
+
+  if (base === 'Doors') {
+    return siblingCount > 1
+      ? t('photos.category.externalDoorNumbered', { n })
+      : t('photos.category.externalDoor');
+  }
+  if (base === 'Window') {
+    return siblingCount > 1
+      ? t('photos.category.windowNumbered', { n })
+      : t('photos.categories.window');
+  }
+  if (base === 'Windows') {
+    return siblingCount > 1
+      ? t('photos.category.windowsNumbered', { n })
+      : t('photos.categories.windows');
+  }
+  if (base === 'Roof windows') {
+    return siblingCount > 1
+      ? t('photos.category.roofWindowNumbered', { n })
+      : t('photos.category.roofWindow');
+  }
+
+  const categoryKeys: Record<string, string> = {
+    'Full room view': 'photos.categories.fullRoomView',
+    'Heating control panel': 'photos.categories.heatingControlPanel',
+    'Ventilation panel': 'photos.categories.ventilationPanel',
+    'Heating system': 'photos.categories.heatingSystem',
+    'CO₂ sensor': 'photos.categories.co2Sensor',
+    'Heating system - merk & type': 'photos.categories.heatingSystemBrandType',
+    'PV system - merk & type': 'photos.categories.pvSystemBrandType',
+    'Tapwater system - brand & type': 'photos.categories.tapwaterSystemBrandType',
+    'General View': 'photos.categories.generalView',
+  };
+
+  const key = categoryKeys[base];
+  if (!key) return category;
+
+  return t(key);
+}
+

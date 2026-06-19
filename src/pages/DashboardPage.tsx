@@ -128,13 +128,11 @@ export function DashboardPage({
   const { t } = useLanguage();
 
   const [progressData, setProgressData] = useState<CategoryProgress[]>([
-    { name: 'ALGEMEEN', icon: dashboardCategoryIcon(Step.ALGEMEEN), step: Step.ALGEMEEN, progress: 0, subtext: '0/5 fields' },
+    { name: t('dashboard.categories.algemeen'), icon: dashboardCategoryIcon(Step.ALGEMEEN), step: Step.ALGEMEEN, progress: 0, subtext: '0/5 fields' },
     { name: t('dashboard.categories.upload'), icon: dashboardCategoryIcon(Step.UPLOAD), step: Step.UPLOAD, progress: 0, subtext: '0/2 sections' },
-    { name: 'ISOLATIE', icon: dashboardCategoryIcon(Step.INSULATION_DETAILS), step: Step.INSULATION_DETAILS, progress: 0, subtext: '0/4 cats' },
-    { name: 'INSTALLATIE', icon: dashboardCategoryIcon(Step.INSTALLATIE), step: Step.INSTALLATIE, progress: 0, subtext: '0/8 sec' },
-    { name: 'KOZIJN & GLAS', icon: dashboardCategoryIcon(Step.KOZIJN_GLAS), step: Step.KOZIJN_GLAS, progress: 0, subtext: '0/6 items' },
-    { name: 'PHOTOS', icon: dashboardCategoryIcon(Step.PHOTO_CAPTURE), step: Step.PHOTO_CAPTURE, progress: 0, subtext: '0/4 items' },
-    { name: 'COMPLETE', icon: dashboardCategoryIcon(Step.COMPLETE), step: Step.COMPLETE, progress: 0, subtext: '0%' },
+    { name: t('dashboard.categories.insulation'), icon: dashboardCategoryIcon(Step.INSULATION_DETAILS), step: Step.INSULATION_DETAILS, progress: 0, subtext: '0/4 cats' },
+    { name: t('dashboard.categories.installatie'), icon: dashboardCategoryIcon(Step.INSTALLATIE), step: Step.INSTALLATIE, progress: 0, subtext: '0/8 sec' },
+    { name: t('dashboard.categories.photos'), icon: dashboardCategoryIcon(Step.PHOTO_CAPTURE), step: Step.PHOTO_CAPTURE, progress: 0, subtext: '0/4 items' },
   ]);
 
   // Load progress from localStorage
@@ -258,33 +256,6 @@ export function DashboardPage({
       }
     }
 
-    // KOZIJN & GLAS Progress
-    const kozijnData = localStorage.getItem('massEPA_kozijn_glas_v1');
-    if (kozijnData) {
-      try {
-        const parsed = JSON.parse(kozijnData);
-        let itemsCompleted = 0;
-        let totalItems = 0;
-        const kozijnItems = parsed.kozijnItems || [];
-        totalItems += kozijnItems.length;
-        for (const item of kozijnItems) {
-          if (item.frameType && item.frameType !== '') itemsCompleted++;
-        }
-        const glasItems = parsed.glasItems || [];
-        totalItems += glasItems.length;
-        for (const item of glasItems) {
-          if (item.glassType && item.glassType !== '') itemsCompleted++;
-        }
-        const progress = totalItems > 0 ? Math.round((itemsCompleted / totalItems) * 100) : 0;
-        patch[Step.KOZIJN_GLAS] = {
-          progress,
-          subtext: `${itemsCompleted}/${totalItems} items`,
-        };
-      } catch {
-        /* ignore */
-      }
-    }
-
     applyProgress(patch);
 
     void loadPhotoCaptureFromStorage().then((photoState) => {
@@ -305,9 +276,24 @@ export function DashboardPage({
 
   useEffect(() => {
     setProgressData((prev) =>
-      prev.map((item) =>
-        item.step === Step.UPLOAD ? { ...item, name: t('dashboard.categories.upload') } : item,
-      ),
+      prev.map((item) => {
+        switch (item.step) {
+          case Step.ALGEMEEN:
+            return { ...item, name: t('dashboard.categories.algemeen') };
+          case Step.UPLOAD:
+            return { ...item, name: t('dashboard.categories.upload') };
+          case Step.INSULATION_DETAILS:
+            return { ...item, name: t('dashboard.categories.insulation') };
+          case Step.INSTALLATIE:
+            return { ...item, name: t('dashboard.categories.installatie') };
+          case Step.PHOTO_CAPTURE:
+            return { ...item, name: t('dashboard.categories.photos') };
+          case Step.COMPLETE:
+            return { ...item, name: t('dashboard.categories.complete') };
+          default:
+            return item;
+        }
+      }),
     );
   }, [t]);
 

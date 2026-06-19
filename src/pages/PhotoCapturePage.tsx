@@ -1,8 +1,8 @@
 // src/pages/PhotoCapturePage.tsx
 import { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { 
-  Camera, Trash2, CheckCircle, X,
+import {
+  Camera, Trash2, CheckCircle, X, Plus,
   DoorClosed, Zap, Sofa, Utensils, Accessibility, SettingsIcon, Bath, Bed, DoorOpen, Home, Package, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { Toast } from '../components/common/Toast';
@@ -35,17 +35,24 @@ import {
 } from '../utils/interiorRoomsFromUpload';
 import { HOUSE_DESIGN_ROOMS_CHANGED_EVENT } from '../utils/roomDeleteSync';
 import {
+  buildPhotoCaptureCategoryList,
+  buildPhotoCaptureCategoryInstance,
   buildPhotoCaptureSectionOrder,
+  countPhotoCaptureCategoryInstances,
   getPhotoCaptureCategories,
+  getPhotoCaptureCategoryBase,
+  getPhotoCaptureCategoryNumber,
   getPhotoCaptureRoomKey,
   isPhotoCaptureDoorCategory,
+  isPhotoCaptureMultiInstanceCategory,
   isPhotoCaptureWindowCategory,
+  nextPhotoCaptureCategoryInstance,
   sortPhotoCaptureRoomsForFloor,
   type PhotoCaptureSection,
 } from '../utils/photoCaptureRooms';
 import { KOZIJN_FRAME_TYPES, KOZIJN_GLASS_TYPES } from '../config/kozijnGlasOptions';
 import { AppSelect } from '../components/common/AppSelect';
-import { translateKozijnFrameType, translateKozijnGlassType } from '../i18n/translateOptions';
+import { translateKozijnFrameType, translateKozijnGlassType, translatePhotoCategory, translateUploadRoom, translateUploadFloor } from '../i18n/translateOptions';
 import {
   filesToPersistedUrls,
   revokeFileUrlIfBlob,
@@ -149,30 +156,31 @@ export function PhotoCapturePage({
   const { toast, setToast, showToast } = useToast();
   const { t } = useLanguage();
   const getExteriorLabel = (sectionId: string): string => {
-  const labels: Record<string, string> = {
-    'voor': t('photos.exterior.voor'),
-    'achter': t('photos.exterior.achter'),
-    'links': t('photos.exterior.links'),
-    'rechts': t('photos.exterior.rechts')
+    const labels: Record<string, string> = {
+      'voor': t('photos.exterior.voor'),
+      'achter': t('photos.exterior.achter'),
+      'links': t('photos.exterior.links'),
+      'rechts': t('photos.exterior.rechts')
+    };
+    return labels[sectionId] || sectionId;
   };
-  return labels[sectionId] || sectionId;
-};
 
   const [exteriorPhotos, setExteriorPhotos] = useState<ExteriorPhotos>(emptyExteriorPhotos);
   const [interiorPhotos, setInteriorPhotos] = useState<InteriorPhotos>({});
   const [interiorDetails, setInteriorDetails] = useState<InteriorCategoryDetails>({});
+  const [extraInteriorCategories, setExtraInteriorCategories] = useState<Record<string, string[]>>({});
   const photosPersistReadyRef = useRef(false);
-  
+
   const photoViewer = usePhotoViewer();
   const [viewerPhotoUrls, setViewerPhotoUrls] = useState<string[]>([]);
-  
+
   const [interiorModalOpen, setInteriorModalOpen] = useState(false);
   const [selectedInteriorRoomId, setSelectedInteriorRoomId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  
+
   const [currentFloorForModal, setCurrentFloorForModal] = useState<string>('');
   const [currentRoomIndex, setCurrentRoomIndex] = useState<number>(0);
-  
+
   const [floorGroups, setFloorGroups] = useState<FloorGroup[]>([]);
   const [sectionOrder, setSectionOrder] = useState<PhotoCaptureSection[]>([]);
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
@@ -233,6 +241,7 @@ export function PhotoCapturePage({
       void loadPhotoCaptureFromStorage().then((data) => {
         setInteriorPhotos(data.interior);
         setInteriorDetails(data.interiorDetails ?? {});
+        setExtraInteriorCategories(data.extraInteriorCategories ?? {});
       });
     };
 
@@ -249,6 +258,7 @@ export function PhotoCapturePage({
       setExteriorPhotos(data.exterior);
       setInteriorPhotos(data.interior);
       setInteriorDetails(data.interiorDetails ?? {});
+      setExtraInteriorCategories(data.extraInteriorCategories ?? {});
       photosPersistReadyRef.current = true;
     });
     return () => {
@@ -263,12 +273,13 @@ export function PhotoCapturePage({
         exterior: exteriorPhotos,
         interior: interiorPhotos,
         interiorDetails,
+        extraInteriorCategories,
       });
     }, 400);
     return () => window.clearTimeout(timer);
-  }, [exteriorPhotos, interiorPhotos, interiorDetails]);
+  }, [exteriorPhotos, interiorPhotos, interiorDetails, extraInteriorCategories]);
 
- 
+
 
   const getExteriorPhotos = (sectionId: string): string[] => exteriorPhotos[sectionId as keyof ExteriorPhotos] || [];
   const getExteriorPhotoCount = (sectionId: string): number => exteriorPhotos[sectionId as keyof ExteriorPhotos]?.length || 0;
@@ -288,7 +299,15 @@ export function PhotoCapturePage({
 
   const getRoomIcon = (roomName: string): React.ReactNode =>
     ROOM_ICONS[getPhotoCaptureRoomKey(roomName)] || ROOM_ICONS.default;
-  const getCategoriesForRoom = (roomName: string): string[] => getPhotoCaptureCategories(roomName);
+
+  const getCategoriesForRoom = (roomId: string, roomName: string): string[] =>
+    buildPhotoCaptureCategoryList(
+      roomName,
+      roomId,
+      extraInteriorCategories,
+      interiorPhotos,
+      interiorDetails,
+    );
 
   const getInteriorRoomNameById = (roomId: string): string | undefined => {
     for (const group of floorGroups) {
@@ -296,6 +315,118 @@ export function PhotoCapturePage({
       if (room) return room.name;
     }
     return undefined;
+  };
+
+  const migrateInteriorCategoryKey = (roomId: string, from: string, to: string) => {
+    if (from === to) return;
+
+    setInteriorPhotos((prev) => {
+      const room = { ...(prev[roomId] ?? {}) };
+      if (room[from]) {
+        room[to] = room[from];
+        delete room[from];
+      }
+      if (Object.keys(room).length === 0) {
+        const next = { ...prev };
+        delete next[roomId];
+        return next;
+      }
+      return { ...prev, [roomId]: room };
+    });
+
+    setInteriorDetails((prev) => {
+      const room = { ...(prev[roomId] ?? {}) };
+      if (room[from]) {
+        room[to] = room[from];
+        delete room[from];
+      }
+      if (Object.keys(room).length === 0) {
+        const next = { ...prev };
+        delete next[roomId];
+        return next;
+      }
+      return { ...prev, [roomId]: room };
+    });
+
+    setExtraInteriorCategories((prev) => {
+      const list = prev[roomId];
+      if (!list?.length) return prev;
+      const nextList = list.map((c) => (c === from ? to : c));
+      return { ...prev, [roomId]: nextList };
+    });
+  };
+
+  const addExtraCategoryInstance = (roomId: string, roomName: string, baseCategory: string) => {
+    const existing = getCategoriesForRoom(roomId, roomName);
+    const numberedFirst = buildPhotoCaptureCategoryInstance(baseCategory, 1);
+    const instances = existing.filter((c) => getPhotoCaptureCategoryBase(c) === baseCategory);
+
+    if (instances.length === 1 && instances[0] === baseCategory) {
+      migrateInteriorCategoryKey(roomId, baseCategory, numberedFirst);
+      const nextCategory = buildPhotoCaptureCategoryInstance(baseCategory, 2);
+      setExtraInteriorCategories((prev) => ({
+        ...prev,
+        [roomId]: [...(prev[roomId] ?? []), nextCategory],
+      }));
+      return;
+    }
+
+    const nextCategory = nextPhotoCaptureCategoryInstance(existing, baseCategory);
+    setExtraInteriorCategories((prev) => ({
+      ...prev,
+      [roomId]: [...(prev[roomId] ?? []), nextCategory],
+    }));
+  };
+
+  const removeExtraCategoryInstance = (roomId: string, roomName: string, category: string) => {
+    const base = getPhotoCaptureCategoryBase(category);
+    const numberedFirst = buildPhotoCaptureCategoryInstance(base, 1);
+    if (getPhotoCaptureCategoryNumber(category) <= 1 && category !== numberedFirst) return;
+
+    const existing = getCategoriesForRoom(roomId, roomName);
+    const afterRemove = existing.filter((c) => c !== category);
+    const siblingsAfter = afterRemove.filter((c) => getPhotoCaptureCategoryBase(c) === base);
+    const shouldCollapseToBase =
+      siblingsAfter.length === 1 && siblingsAfter[0] === numberedFirst;
+
+    setExtraInteriorCategories((prev) => {
+      const next = { ...prev };
+      const filtered = (next[roomId] ?? []).filter((c) => c !== category);
+      if (filtered.length > 0) next[roomId] = filtered;
+      else delete next[roomId];
+      return next;
+    });
+
+    const photos = interiorPhotos[roomId]?.[category] ?? [];
+    photos.forEach((url) => revokeFileUrlIfBlob(url));
+
+    setInteriorPhotos((prev) => {
+      const room = { ...(prev[roomId] ?? {}) };
+      delete room[category];
+      if (Object.keys(room).length === 0) {
+        const next = { ...prev };
+        delete next[roomId];
+        return next;
+      }
+      return { ...prev, [roomId]: room };
+    });
+
+    setInteriorDetails((prev) => {
+      const room = { ...(prev[roomId] ?? {}) };
+      delete room[category];
+      if (Object.keys(room).length === 0) {
+        const next = { ...prev };
+        delete next[roomId];
+        return next;
+      }
+      return { ...prev, [roomId]: room };
+    });
+
+    if (shouldCollapseToBase) {
+      migrateInteriorCategoryKey(roomId, numberedFirst, base);
+    }
+
+    showToast(t('photos.category.instanceRemoved'), 'success');
   };
 
   const getCategoryDetail = (roomId: string, category: string): InteriorCategoryDetail =>
@@ -352,22 +483,20 @@ export function PhotoCapturePage({
             <button
               type="button"
               onClick={() => toggleDoorIsolated(roomId, category, true)}
-              className={`rounded-lg px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all ${
-                detail.doorIsolated === true
+              className={`rounded-lg px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all ${detail.doorIsolated === true
                   ? 'bg-primary text-white shadow-md'
                   : 'bg-white/50 text-gray-600 hover:bg-white/70'
-              }`}
+                }`}
             >
               {t('common.yes')}
             </button>
             <button
               type="button"
               onClick={() => toggleDoorIsolated(roomId, category, false)}
-              className={`rounded-lg px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all ${
-                detail.doorIsolated === false
+              className={`rounded-lg px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all ${detail.doorIsolated === false
                   ? 'bg-primary text-white shadow-md'
                   : 'bg-white/50 text-gray-600 hover:bg-white/70'
-              }`}
+                }`}
             >
               {t('common.no')}
             </button>
@@ -452,14 +581,21 @@ export function PhotoCapturePage({
 
   const handleTempCameraCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0 && mediaGuideOpen) {
-      try {
-        const newPhotos = await filesToPersistedUrls(Array.from(files));
+
+    if (!files || files.length === 0) {
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      const newPhotos = await filesToPersistedUrls(Array.from(files));
+
+      if (mediaGuideOpen) {
         setPendingGuidePhotos((prev) => [...prev, ...newPhotos]);
         setMediaGuideStep('review');
-      } catch {
-        showToast(t('upload.toast.filesUploadFailed'), 'error');
       }
+    } catch {
+      showToast(t('upload.toast.filesUploadFailed'), 'error');
     }
     e.target.value = '';
   };
@@ -586,47 +722,47 @@ export function PhotoCapturePage({
   };
 
   const deleteExteriorPhoto = (sectionId: string, photoIndex: number) => {
-  const photoToDelete =
-    exteriorPhotos[sectionId as keyof ExteriorPhotos]?.[photoIndex];
+    const photoToDelete =
+      exteriorPhotos[sectionId as keyof ExteriorPhotos]?.[photoIndex];
 
-  revokeFileUrlIfBlob(photoToDelete);
+    revokeFileUrlIfBlob(photoToDelete);
 
-  setExteriorPhotos(prev => ({
-    ...prev,
-    [sectionId]: (prev[sectionId as keyof ExteriorPhotos] || []).filter(
-      (_, i) => i !== photoIndex
-    )
-  }));
-
-  if (photoViewer.isOpen && getExteriorPhotos(sectionId).length <= 1) {
-    photoViewer.close();
-  }
-
-  showToast('Photo deleted', 'success');
-};
-
- const deleteInteriorPhoto = (
-  uniqueId: string,
-  category: string,
-  photoIndex: number
-) => {
-  const photoToDelete =
-    interiorPhotos[uniqueId]?.[category]?.[photoIndex];
-
-  revokeFileUrlIfBlob(photoToDelete);
-
-  setInteriorPhotos(prev => ({
-    ...prev,
-    [uniqueId]: {
-      ...(prev[uniqueId] || {}),
-      [category]: (prev[uniqueId]?.[category] || []).filter(
-        (_: any, i: number) => i !== photoIndex
+    setExteriorPhotos(prev => ({
+      ...prev,
+      [sectionId]: (prev[sectionId as keyof ExteriorPhotos] || []).filter(
+        (_, i) => i !== photoIndex
       )
-    }
-  }));
+    }));
 
-  showToast('Photo deleted', 'success');
-};
+    if (photoViewer.isOpen && getExteriorPhotos(sectionId).length <= 1) {
+      photoViewer.close();
+    }
+
+    showToast('Photo deleted', 'success');
+  };
+
+  const deleteInteriorPhoto = (
+    uniqueId: string,
+    category: string,
+    photoIndex: number
+  ) => {
+    const photoToDelete =
+      interiorPhotos[uniqueId]?.[category]?.[photoIndex];
+
+    revokeFileUrlIfBlob(photoToDelete);
+
+    setInteriorPhotos(prev => ({
+      ...prev,
+      [uniqueId]: {
+        ...(prev[uniqueId] || {}),
+        [category]: (prev[uniqueId]?.[category] || []).filter(
+          (_: any, i: number) => i !== photoIndex
+        )
+      }
+    }));
+
+    showToast('Photo deleted', 'success');
+  };
 
   const openInteriorCapture = (roomId: string, floor: string, roomIdx: number) => {
     setSelectedInteriorRoomId(roomId);
@@ -669,8 +805,10 @@ export function PhotoCapturePage({
     void savePhotoCaptureToStorage({
       exterior: exteriorPhotos,
       interior: interiorPhotos,
+      interiorDetails,
+      extraInteriorCategories,
     });
-    setCurrentStep(Step.FINAL_REVIEW);
+    setCurrentStep(Step.DASHBOARD);
   };
   const handleStepChange = (step: Step) => setCurrentStep(step);
   const handleLogoClick = () => {
@@ -691,7 +829,7 @@ export function PhotoCapturePage({
         showUserMenu={true}
         userName={userName}
         onMenuClick={() => setMobileMenuOpen(true)}
-        onManageProfile={onManageProfile || (() => {})}
+        onManageProfile={onManageProfile || (() => { })}
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
         onLogoClick={handleLogoClick}
@@ -758,10 +896,9 @@ export function PhotoCapturePage({
         className="hidden"
         accept="image/*"
         capture="environment"
-        multiple
         onChange={handleTempCameraCapture}
       />
-      
+
       {/* Hidden camera input for interior rooms */}
       <input
         id="interior-camera-input"
@@ -777,14 +914,14 @@ export function PhotoCapturePage({
         <BackToTop />
 
         <div className="app-shell-content max-w-2xl mx-auto px-4">
-          <PageBackLink 
-            label={t('photos.backToKozijn')} 
-            onClick={() => setCurrentStep(Step.KOZIJN_GLAS)}
+          <PageBackLink
+            label={t('back.installatie')}
+            onClick={() => setCurrentStep(Step.INSTALLATIE)}
           />
 
-          <header className="mb-8">
-              <h1 className="font-display text-2xl sm:text-3xl font-black text-on-surface tracking-tighter">
-              PHOTO CAPTURE
+          <header className="app-page-title text-center">
+            <h1 className="font-display text-2xl sm:text-3xl font-black text-on-surface tracking-tighter">
+              {t('photos.title').toUpperCase()}
             </h1>
 
           </header>
@@ -795,9 +932,9 @@ export function PhotoCapturePage({
                 if (!shouldShowFloor(section.id)) return null;
                 const floorGroup = getFloorGroup(section.id);
                 if (!floorGroup) return null;
-                
+
                 const isExpandedSection = isExpanded(section.id);
-                
+
                 return (
                   <div
                     key={section.id}
@@ -815,7 +952,9 @@ export function PhotoCapturePage({
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{section.emoji}</span>
-                        <h2 className="font-bold text-lg text-gray-900">{section.label}</h2>
+                        <h2 className="font-bold text-lg text-gray-900">
+                          {translateUploadFloor(section.id, t)}
+                        </h2>
                       </div>
                       <div className="text-gray-500">
                         {isExpandedSection ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -853,7 +992,9 @@ export function PhotoCapturePage({
                                     </div>
                                     <div className="text-left">
                                       <div className="flex items-center gap-2">
-                                        <h4 className="font-bold text-gray-900 text-sm">{roomItem.name}</h4>
+                                        <h4 className="font-bold text-gray-900 text-sm">
+                                          {translateUploadRoom(roomItem.name, t)}
+                                        </h4>
                                         {isComplete && <CheckCircle size={12} className="text-emerald-500" />}
                                       </div>
                                       <p className="text-[11px] text-gray-600 font-medium">
@@ -877,144 +1018,145 @@ export function PhotoCapturePage({
                   </div>
                 );
               }
-              
-            if (section.type === 'exterior') {
-  const photos = getExteriorPhotos(section.id);
-  const photoCount = photos.length;
-  const isExpandedSection = isExpanded(section.id);
-  const isEmptyFacade = photoCount === 0;
 
-  const handleFacadeHeaderClick = () => {
-    if (isEmptyFacade) {
-      openCaptureSession({ sectionId: section.id });
-    } else {
-      toggleSection(section.id);
-    }
-  };
+              if (section.type === 'exterior') {
+                const photos = getExteriorPhotos(section.id);
+                const photoCount = photos.length;
+                const isExpandedSection = isExpanded(section.id);
+                const isEmptyFacade = photoCount === 0;
 
-  return (
-    <div
-      key={section.id}
-      className={`rounded-3xl overflow-hidden shadow-lg transition-all ${
-        isEmptyFacade ? 'cursor-pointer' : ''
-      }`}
-      style={{
-        background: 'rgba(255, 255, 255, 0.15)',
-        backdropFilter: 'blur(15px) saturate(160%)',
-        WebkitBackdropFilter: 'blur(15px) saturate(160%)',
-        border: '1px solid rgba(255, 255, 255, 0.3)'
-      }}
-      onClick={isEmptyFacade ? () => openCaptureSession({ sectionId: section.id }) : undefined}
-      onKeyDown={
-        isEmptyFacade
-          ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                openCaptureSession({ sectionId: section.id });
-              }
-            }
-          : undefined
-      }
-      role={isEmptyFacade ? 'button' : undefined}
-      tabIndex={isEmptyFacade ? 0 : undefined}
-    >
-      <div
-        className="p-5 flex items-center justify-between transition-colors hover:bg-white/10"
-        onClick={(e) => {
-          if (!isEmptyFacade) {
-            e.stopPropagation();
-            handleFacadeHeaderClick();
-          }
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">📸</span>
-          <h2 className="font-bold text-lg text-gray-900">
-            {getExteriorLabel(section.id)}
-          </h2>
-          {photoCount > 0 && (
-            <span className="text-xs font-medium bg-white/30 px-2 py-0.5 rounded-full text-gray-700">
-              {photoCount}
-            </span>
-          )}
-        </div>
-        {isEmptyFacade ? (
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
-            {t('photos.capturePhoto')}
-          </span>
-        ) : (
-          <div className="text-gray-500">
-            {isExpandedSection ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-          </div>
-        )}
-      </div>
-
-      <AnimatePresence>
-        {!isEmptyFacade && isExpandedSection && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="px-5 pb-5 pt-0">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-gray-600 font-medium">Capture {section.label} photos</p>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                const handleFacadeHeaderClick = () => {
+                  if (isEmptyFacade) {
                     openCaptureSession({ sectionId: section.id });
-                  }}
-                  className={CAMERA_CAPTURE_BTN_CLASS}
-                  aria-label={`Capture ${section.label} photos`}
-                >
-                  <Camera size={16} />
-                </button>
-              </div>
+                  } else {
+                    toggleSection(section.id);
+                  }
+                };
 
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {photos.map((photo, idx) => (
-                  <div key={idx} className="relative flex-shrink-0 group">
-                    <div className="h-10 w-10 overflow-hidden rounded-md border border-white/40 shadow-sm">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openModal(photos, idx);
-                        }}
-                        className="block h-full w-full"
-                      >
-                        <img
-                          src={photo}
-                          alt={`${section.label} ${idx + 1}`}
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      </button>
-                    </div>
-                    <button
-                      type="button"
+                return (
+                  <div
+                    key={section.id}
+                    className={`rounded-3xl overflow-hidden shadow-lg transition-all ${isEmptyFacade ? 'cursor-pointer' : ''
+                      }`}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.15)',
+                      backdropFilter: 'blur(15px) saturate(160%)',
+                      WebkitBackdropFilter: 'blur(15px) saturate(160%)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)'
+                    }}
+                    onClick={isEmptyFacade ? () => openCaptureSession({ sectionId: section.id }) : undefined}
+                    onKeyDown={
+                      isEmptyFacade
+                        ? (e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            openCaptureSession({ sectionId: section.id });
+                          }
+                        }
+                        : undefined
+                    }
+                    role={isEmptyFacade ? 'button' : undefined}
+                    tabIndex={isEmptyFacade ? 0 : undefined}
+                  >
+                    <div
+                      className="p-5 flex items-center justify-between transition-colors hover:bg-white/10"
                       onClick={(e) => {
-                        e.stopPropagation();
-                        deleteExteriorPhoto(section.id, idx);
+                        if (!isEmptyFacade) {
+                          e.stopPropagation();
+                          handleFacadeHeaderClick();
+                        }
                       }}
-                      className="absolute -top-1.5 -right-1.5 z-10 rounded-full bg-red-500 p-0.5 text-white shadow-md"
                     >
-                      <Trash2 size={8} />
-                    </button>
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">📸</span>
+                        <h2 className="font-bold text-lg text-gray-900">
+                          {getExteriorLabel(section.id)}
+                        </h2>
+                        {photoCount > 0 && (
+                          <span className="text-xs font-medium bg-white/30 px-2 py-0.5 rounded-full text-gray-700">
+                            {photoCount}
+                          </span>
+                        )}
+                      </div>
+                      {isEmptyFacade ? (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                          {t('photos.capturePhoto')}
+                        </span>
+                      ) : (
+                        <div className="text-gray-500">
+                          {isExpandedSection ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </div>
+                      )}
+                    </div>
+
+                    <AnimatePresence>
+                      {!isEmptyFacade && isExpandedSection && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="px-5 pb-5 pt-0">
+                            <div className="flex items-center justify-between mb-4">
+                              <p className="text-sm text-gray-600 font-medium">
+                                {t('photos.guide.reviewTitle', { label: getExteriorLabel(section.id) })}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openCaptureSession({ sectionId: section.id });
+                                }}
+                                className={CAMERA_CAPTURE_BTN_CLASS}
+                                aria-label={t('photos.guide.reviewTitle', { label: getExteriorLabel(section.id) })}
+                              >
+                                <Camera size={16} />
+                              </button>
+                            </div>
+
+                            <div className="flex gap-2 overflow-x-auto pb-1">
+                              {photos.map((photo, idx) => (
+                                <div key={idx} className="relative flex-shrink-0 group">
+                                  <div className="h-10 w-10 overflow-hidden rounded-md border border-white/40 shadow-sm">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openModal(photos, idx);
+                                      }}
+                                      className="block h-full w-full"
+                                    >
+                                      <img
+                                        src={photo}
+                                        alt={`${getExteriorLabel(section.id)} ${idx + 1}`}
+                                        className="h-full w-full object-cover"
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).style.display = 'none';
+                                        }}
+                                      />
+                                    </button>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      deleteExteriorPhoto(section.id, idx);
+                                    }}
+                                    className="absolute -top-1.5 -right-1.5 z-10 rounded-full bg-red-500 p-0.5 text-white shadow-md"
+                                  >
+                                    <Trash2 size={8} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
+                );
+              }
               return null;
             })}
           </div>
@@ -1022,205 +1164,266 @@ export function PhotoCapturePage({
       </main>
 
       {/* Interior Capture Modal - Glass Effect */}
-     {/* Interior Capture Modal - Glass Effect with Swipe Gestures */}
-<AnimatePresence>
-  {interiorModalOpen && selectedInteriorRoomId && (() => {
-    let roomName = '';
-    let roomFloor = '';
-    let currentRoomIndexInGroup = currentRoomIndex;
-    let totalRooms = 0;
-    
-    const floorGroup = floorGroups.find(g => g.floor === currentFloorForModal);
-    if (floorGroup) {
-      totalRooms = floorGroup.rooms.length;
-      const currentRoom = floorGroup.rooms[currentRoomIndexInGroup];
-      if (currentRoom) {
-        roomName = currentRoom.name;
-        roomFloor = floorGroup.displayName;
-      }
-    }
-    
-    const hasPrevious = currentRoomIndexInGroup > 0;
-    const hasNext = floorGroup ? currentRoomIndexInGroup < floorGroup.rooms.length - 1 : false;
-    
-    const truncateName = (name: string, maxLength: number = 12) => {
-      if (name.length > maxLength) {
-        return name.substring(0, maxLength - 3) + '...';
-      }
-      return name;
-    };
-    
-    return (
-      <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/20 backdrop-blur-sm" onClick={closeInteriorModal}>
-        <motion.div
-          initial={{ opacity: 0, y: 100, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 100, scale: 0.95 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="relative rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-lg mx-2 sm:mx-auto overflow-hidden flex flex-col shadow-2xl"
-          style={{
-            background: 'rgba(255, 255, 255, 0.2)',
-            backdropFilter: 'blur(25px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(25px) saturate(180%)',
-            border: '1px solid rgba(255, 255, 255, 0.4)',
-            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)'
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Specular Highlight - Top Edge */}
-          <div 
-            className="absolute top-0 left-0 right-0 h-[2px] z-20"
-            style={{
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)'
-            }}
-          />
-          
-          {/* Shimmer Effect Overlay */}
-          <div 
-            className="absolute inset-0 pointer-events-none opacity-30"
-            style={{
-              background: 'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%)',
-              transform: 'translateX(-100%) rotate(25deg)',
-              animation: 'shimmer 4s ease-in-out infinite'
-            }}
-          />
-          
-          {/* Modal Header */}
-          <div 
-            className="relative p-4 border-b border-white/20 flex justify-between items-center"
-            style={{ background: 'rgba(255, 255, 255, 0.1)' }}
-          >
-            <div>
-              <h2 className="font-black text-lg text-gray-900 tracking-tight">{roomName}</h2>
-              <p className="text-xs text-gray-600 font-medium">{roomFloor}</p>
-            </div>
-            <div className="bg-white/40 border border-white/50 px-3 py-1 rounded-full text-sm font-bold text-gray-700 whitespace-nowrap">
-              {currentRoomIndexInGroup + 1} / {totalRooms}
-            </div>
-          </div>
+      {/* Interior Capture Modal - Glass Effect with Swipe Gestures */}
+      <AnimatePresence>
+        {interiorModalOpen && selectedInteriorRoomId && (() => {
+          let roomName = '';
+          let roomFloor = '';
+          let currentRoomIndexInGroup = currentRoomIndex;
+          let totalRooms = 0;
 
-          {/* Modal Content - with Swipe Gestures */}
-          <motion.div
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.2}
-            onDragEnd={(e, info) => {
-              const swipeThreshold = 50;
-              if (info.offset.x > swipeThreshold && hasPrevious) {
-                goToPreviousRoom();
-              } else if (info.offset.x < -swipeThreshold && hasNext) {
-                goToNextRoom();
-              }
-            }}
-            className="flex-1 overflow-y-auto p-4 space-y-4"
-          >
-            {getCategoriesForRoom(roomName).map((category, idx) => {
-              const photos = interiorPhotos[selectedInteriorRoomId]?.[category] || [];
-              const isComplete = photos.length > 0;
-              const categoryQuestions = renderCategoryQuestions(selectedInteriorRoomId, category);
+          const floorGroup = floorGroups.find(g => g.floor === currentFloorForModal);
+          if (floorGroup) {
+            totalRooms = floorGroup.rooms.length;
+            const currentRoom = floorGroup.rooms[currentRoomIndexInGroup];
+            if (currentRoom) {
+              roomName = currentRoom.name;
+              roomFloor = translateUploadFloor(currentFloorForModal, t);
+            }
+          }
 
-              return (
-                <div key={idx} className="space-y-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      openCaptureSession({
-                        roomId: selectedInteriorRoomId,
-                        category,
-                      })
+          const hasPrevious = currentRoomIndexInGroup > 0;
+          const hasNext = floorGroup ? currentRoomIndexInGroup < floorGroup.rooms.length - 1 : false;
+
+          const truncateName = (name: string, maxLength: number = 12) => {
+            if (name.length > maxLength) {
+              return name.substring(0, maxLength - 3) + '...';
+            }
+            return name;
+          };
+
+          return (
+            <div
+              className="fixed inset-0 z-[3700] flex items-end sm:items-center justify-center p-0 sm:p-4 pt-[var(--app-topbar-height)] sm:pt-4 bg-black/20 backdrop-blur-sm"
+              onClick={closeInteriorModal}
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 100, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 100, scale: 0.95 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="relative rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-lg mx-2 sm:mx-auto overflow-hidden flex flex-col shadow-2xl max-h-full sm:max-h-[85vh] min-h-0"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  backdropFilter: 'blur(25px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(25px) saturate(180%)',
+                  border: '1px solid rgba(255, 255, 255, 0.4)',
+                  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Specular Highlight - Top Edge */}
+                <div
+                  className="absolute top-0 left-0 right-0 h-[2px] z-20"
+                  style={{
+                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)'
+                  }}
+                />
+
+                {/* Modal Header */}
+                <div
+                  className="relative p-4 border-b border-white/20 flex justify-between items-center"
+                  style={{ background: 'rgba(255, 255, 255, 0.1)' }}
+                >
+                  <div>
+                    <h2 className="font-black text-lg text-gray-900 tracking-tight">
+                      {translateUploadRoom(roomName, t)}
+                    </h2>
+                    <p className="text-xs text-gray-600 font-medium">{roomFloor}</p>
+                  </div>
+                  <div className="bg-white/40 border border-white/50 px-3 py-1 rounded-full text-sm font-bold text-gray-700 whitespace-nowrap">
+                    {currentRoomIndexInGroup + 1} / {totalRooms}
+                  </div>
+                </div>
+
+                {/* Modal Content - with Swipe Gestures */}
+                <motion.div
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.2}
+                  onDragEnd={(e, info) => {
+                    const swipeThreshold = 50;
+                    if (info.offset.x > swipeThreshold && hasPrevious) {
+                      goToPreviousRoom();
+                    } else if (info.offset.x < -swipeThreshold && hasNext) {
+                      goToNextRoom();
                     }
-                    className="flex w-full items-center gap-2 rounded-xl border border-white/30 bg-white/20 px-3 py-2.5 text-left transition-all hover:bg-white/40 active:scale-[0.99]"
-                  >
-                    <span className="flex-1 truncate font-bold text-sm text-gray-800" title={category}>
-                      {category}
-                    </span>
-                    {isComplete && <CheckCircle size={12} className="flex-shrink-0 text-emerald-500" />}
-                  </button>
+                  }}
+                  className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4"
+                >
+                  {(() => {
+                    const categories = getCategoriesForRoom(selectedInteriorRoomId, roomName);
+                    type Row =
+                      | { kind: 'category'; category: string }
+                      | { kind: 'add'; base: string; variant: 'door' | 'window' };
 
-                  {categoryQuestions}
+                    const rows: Row[] = [];
+                    categories.forEach((category, idx) => {
+                      rows.push({ kind: 'category', category });
+                      if (!isPhotoCaptureMultiInstanceCategory(category)) return;
+                      const next = categories[idx + 1];
+                      if (!next || getPhotoCaptureCategoryBase(next) !== getPhotoCaptureCategoryBase(category)) {
+                        rows.push({
+                          kind: 'add',
+                          base: getPhotoCaptureCategoryBase(category),
+                          variant: isPhotoCaptureDoorCategory(category) ? 'door' : 'window',
+                        });
+                      }
+                    });
 
-                  {photos.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto pb-1 pt-1 pl-1">
-                      {photos.map((photo: string, pIdx: number) => (
-                        <div key={pIdx} className="relative flex-shrink-0 group">
-                          <div className="h-10 w-10 overflow-hidden rounded-md border border-white/40 bg-white/10 shadow-sm">
-                            <button
-                              type="button"
-                              onClick={() => openModal(photos, pIdx)}
-                              className="block h-full w-full"
-                            >
-                              <img
-                                src={photo}
-                                alt={`${category} ${pIdx + 1}`}
-                                className="h-full w-full object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
-                            </button>
-                          </div>
+                    return rows.map((row, idx) => {
+                      if (row.kind === 'add') {
+                        return (
                           <button
+                            key={`add-${row.base}-${idx}`}
                             type="button"
                             onClick={() =>
-                              deleteInteriorPhoto(selectedInteriorRoomId, category, pIdx)
+                              addExtraCategoryInstance(selectedInteriorRoomId, roomName, row.base)
                             }
-                            className="absolute -top-1.5 -right-1.5 z-10 rounded-full bg-red-500 p-0.5 text-white shadow-md opacity-100 md:opacity-0 md:group-hover:opacity-100"
-                            aria-label={t('photos.deletePhoto')}
+                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/40 bg-white/10 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-gray-700 transition-all hover:bg-white/25 active:scale-[0.99]"
                           >
-                            <Trash2 size={8} />
+                            <Plus size={14} />
+                            {row.variant === 'door'
+                              ? t('photos.category.addAnotherDoor')
+                              : t('photos.category.addAnotherWindow')}
                           </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </motion.div>
+                        );
+                      }
 
-          {/* Modal Footer — room strip + DONE */}
-          <div 
-            className="p-4 border-t border-white/20"
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(10px)'
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-0.5">
-                {floorGroup?.rooms.map((room, roomIdx) => {
-                  const isActive = roomIdx === currentRoomIndexInGroup;
-                  return (
+                      const { category } = row;
+                      const photos = interiorPhotos[selectedInteriorRoomId]?.[category] || [];
+                      const isComplete = photos.length > 0;
+                      const isExtraInstance = getPhotoCaptureCategoryNumber(category) > 1;
+                      const categoryLabel = translatePhotoCategory(category, t, {
+                        siblingCount: countPhotoCaptureCategoryInstances(
+                          categories,
+                          getPhotoCaptureCategoryBase(category),
+                        ),
+                      });
+
+                      return (
+                        <div key={category} className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openCaptureSession({
+                                  roomId: selectedInteriorRoomId,
+                                  category,
+                                })
+                              }
+                              className="flex flex-1 items-center gap-2 rounded-xl border border-white/30 bg-white/20 px-3 py-2.5 text-left transition-all hover:bg-white/40 active:scale-[0.99]"
+                            >
+                              <span
+                                className="flex-1 truncate font-bold text-sm text-gray-800"
+                                title={categoryLabel}
+                              >
+                                {categoryLabel}
+                              </span>
+                              {isComplete && (
+                                <CheckCircle size={12} className="flex-shrink-0 text-emerald-500" />
+                              )}
+                            </button>
+                            {isExtraInstance && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeExtraCategoryInstance(
+                                    selectedInteriorRoomId,
+                                    roomName,
+                                    category,
+                                  )
+                                }
+                                className="flex-shrink-0 rounded-lg border border-white/40 bg-white/20 p-2 text-gray-600 hover:bg-red-500/20 hover:text-red-600"
+                                aria-label={t('common.delete')}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+
+                          {photos.length > 0 && (
+                            <div className="flex gap-2 overflow-x-auto pb-1 pt-1 pl-1">
+                              {photos.map((photo: string, pIdx: number) => (
+                                <div key={pIdx} className="relative flex-shrink-0 group">
+                                  <div className="h-10 w-10 overflow-hidden rounded-md border border-white/40 bg-white/10 shadow-sm">
+                                    <button
+                                      type="button"
+                                      onClick={() => openModal(photos, pIdx)}
+                                      className="block h-full w-full"
+                                    >
+                                      <img
+                                        src={photo}
+                                        alt={`${categoryLabel} ${pIdx + 1}`}
+                                        className="h-full w-full object-cover"
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).style.display = 'none';
+                                        }}
+                                      />
+                                    </button>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      deleteInteriorPhoto(selectedInteriorRoomId, category, pIdx)
+                                    }
+                                    className="absolute -top-1.5 -right-1.5 z-10 rounded-full bg-red-500 p-0.5 text-white shadow-md opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                                    aria-label={t('photos.deletePhoto')}
+                                  >
+                                    <Trash2 size={8} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()}
+                </motion.div>
+
+                {/* Modal Footer — room strip + DONE */}
+                <div
+                  className="p-4 border-t border-white/20"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-0.5">
+                      {floorGroup?.rooms.map((room, roomIdx) => {
+                        const isActive = roomIdx === currentRoomIndexInGroup;
+                        return (
+                          <button
+                            key={room.uniqueId}
+                            type="button"
+                            onClick={() => goToRoomAtIndex(roomIdx)}
+                            className={`flex-shrink-0 rounded-xl px-3 py-2 text-[10px] font-bold uppercase tracking-wide transition-all whitespace-nowrap ${isActive
+                                ? 'bg-primary text-white shadow-md'
+                                : 'border border-white/50 bg-white/40 text-gray-700 hover:bg-white/60'
+                              }`}
+                            title={room.name}
+                          >
+                            {truncateName(translateUploadRoom(room.name, t), 12)}
+                          </button>
+                        );
+                      })}
+                    </div>
                     <button
-                      key={room.uniqueId}
                       type="button"
-                      onClick={() => goToRoomAtIndex(roomIdx)}
-                      className={`flex-shrink-0 rounded-xl px-3 py-2 text-[10px] font-bold uppercase tracking-wide transition-all whitespace-nowrap ${
-                        isActive
-                          ? 'bg-primary text-white shadow-md'
-                          : 'border border-white/50 bg-white/40 text-gray-700 hover:bg-white/60'
-                      }`}
-                      title={room.name}
+                      onClick={closeInteriorModal}
+                      className="flex-shrink-0 min-w-[80px] py-3 bg-primary text-white rounded-2xl font-bold text-sm tracking-widest uppercase shadow-lg shadow-primary/20 hover:brightness-110 transition-all px-4"
                     >
-                      {truncateName(room.name, 12)}
+                      {t('common.close').toUpperCase()}
                     </button>
-                  );
-                })}
-              </div>
-              <button
-                type="button"
-                onClick={closeInteriorModal}
-                className="flex-shrink-0 min-w-[80px] py-3 bg-primary text-white rounded-2xl font-bold text-sm tracking-widest uppercase shadow-lg shadow-primary/20 hover:brightness-110 transition-all px-4"
-              >
-                DONE
-              </button>
+                  </div>
+                </div>
+              </motion.div>
             </div>
-          </div>
-        </motion.div>
-      </div>
-    );
-  })()}
-</AnimatePresence>
+          );
+        })()}
+      </AnimatePresence>
 
       {photoMediaGuide && (
         <MediaInstructionModal
@@ -1243,9 +1446,16 @@ export function PhotoCapturePage({
           contextLabel={
             captureTargetSection
               ? getExteriorLabel(captureTargetSection)
-              : captureTargetCategory && interiorCaptureRoomName
-                ? `${interiorCaptureRoomName} — ${captureTargetCategory}`
-                : captureTargetCategory ?? undefined
+              : captureTargetCategory && interiorCaptureRoomName && captureTargetRoomId
+                ? `${translateUploadRoom(interiorCaptureRoomName, t)} — ${translatePhotoCategory(captureTargetCategory, t, {
+                    siblingCount: countPhotoCaptureCategoryInstances(
+                      getCategoriesForRoom(captureTargetRoomId, interiorCaptureRoomName),
+                      getPhotoCaptureCategoryBase(captureTargetCategory),
+                    ),
+                  })}`
+                : captureTargetCategory
+                  ? translatePhotoCategory(captureTargetCategory, t)
+                  : undefined
           }
           exampleImageUrl={
             captureTargetSection
@@ -1255,7 +1465,15 @@ export function PhotoCapturePage({
                 : undefined
           }
           layout="bottomSheet"
-          zIndex={400}
+          zIndex={3700}
+          reviewChildren={
+            mediaGuideStep === 'review' &&
+              captureTargetRoomId &&
+              captureTargetCategory &&
+              pendingGuidePhotos.length > 0
+              ? renderCategoryQuestions(captureTargetRoomId, captureTargetCategory)
+              : null
+          }
         />
       )}
 

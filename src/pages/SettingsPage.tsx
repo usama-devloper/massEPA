@@ -1,11 +1,14 @@
 // src/pages/SettingsPage.tsx
 import { useState } from 'react';
-import { Check, Languages, Palette } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
+import { Check, Languages, Palette, RotateCcw } from 'lucide-react';
 import { TopBar } from '../components/common/TopBar';
 import { AppSidebar } from '../components/common/AppSidebar';
 import { MobileSidebar } from '../components/common/MobileSidebar';
 import { PageBackLink } from '../components/common/PageBackLink';
 import { BackToTop } from '../components/common/BackToTop';
+import { Toast } from '../components/common/Toast';
+import { useToast } from '../hooks/useToast';
 import { Step, UserRole } from '../types';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -21,6 +24,7 @@ interface SettingsPageProps {
   onLogoClick?: () => void;
   userName: string;
   selectedRole: UserRole;
+  onResetUserData?: () => void | Promise<void>;
 }
 
 export const SettingsPage = ({
@@ -32,13 +36,31 @@ export const SettingsPage = ({
   onLogoClick,
   userName,
   selectedRole,
+  onResetUserData,
 }: SettingsPageProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const { themeId, setThemeId } = useTheme();
   const { locale, setLocale, t } = useLanguage();
+  const { toast, setToast, showToast } = useToast();
 
   const handleStepChange = (step: Step) => {
     setCurrentStep(step);
+  };
+
+  const handleResetData = async () => {
+    if (!onResetUserData) return;
+    if (!window.confirm(t('settings.reset.confirm'))) return;
+
+    setResetting(true);
+    try {
+      await onResetUserData();
+      showToast(t('settings.reset.success'), 'success');
+    } catch {
+      showToast(t('settings.reset.error'), 'error');
+    } finally {
+      setResetting(false);
+    }
   };
 
   return (
@@ -131,7 +153,7 @@ export const SettingsPage = ({
             </div>
           </section>
 
-          <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+          <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
             <h2 className="text-[11px] font-black uppercase tracking-widest text-primary mb-4">
               {t('settings.colorScheme')}
             </h2>
@@ -172,8 +194,29 @@ export const SettingsPage = ({
               })}
             </div>
           </section>
+
+          <section className="bg-white rounded-2xl p-6 shadow-sm border border-red-100">
+            <h2 className="text-[11px] font-black uppercase tracking-widest text-red-600 mb-4 flex items-center gap-2">
+              <RotateCcw size={14} />
+              {t('settings.reset.title')}
+            </h2>
+            <p className="text-xs text-gray-600 leading-relaxed mb-4">
+              {t('settings.reset.description')}
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleResetData()}
+              disabled={resetting || !onResetUserData}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl border-2 border-red-200 bg-red-50 px-5 py-3 text-xs font-black uppercase tracking-wider text-red-700 transition-all hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RotateCcw size={16} className={resetting ? 'animate-spin' : undefined} />
+              {resetting ? t('settings.reset.working') : t('settings.reset.button')}
+            </button>
+          </section>
         </div>
       </main>
+
+      <AnimatePresence>{toast && <Toast {...toast} onClose={() => setToast(null)} />}</AnimatePresence>
     </div>
   );
 };

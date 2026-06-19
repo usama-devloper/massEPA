@@ -1,12 +1,14 @@
 // src/pages/UserProfilePage.tsx
 import { useState } from 'react';
 import { AnimatePresence } from 'motion/react';
-import { User, Mail, Phone, MapPin, Edit2, Check, X, LogOut } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Edit2, Check, X, LogOut, Send } from 'lucide-react';
 import { TopBar } from '../components/common/TopBar';
 import { PageBackLink } from '../components/common/PageBackLink';
 import { Toast } from '../components/common/Toast';
 import { useToast } from '../hooks/useToast';
 import { useLanguage } from '../context/LanguageContext';
+import { ProfileUpdateRequestModal, type ProfileUpdateFormData } from '../components/profile/ProfileUpdateRequestModal';
+import { formatProfileAddress } from '../utils/profileAddress';
 
 interface UserProfilePageProps {
   userData: {
@@ -21,6 +23,7 @@ interface UserProfilePageProps {
   userName: string;
   onOpenSettings?: () => void;
   onLogoClick?: () => void;
+  readOnly?: boolean;
 }
 
 export function UserProfilePage({
@@ -31,6 +34,7 @@ export function UserProfilePage({
   userName,
   onOpenSettings,
   onLogoClick,
+  readOnly = false,
 }: UserProfilePageProps) {
   const [editMode, setEditMode] = useState<string | null>(null);
   const [editedData, setEditedData] = useState(userData);
@@ -63,6 +67,10 @@ export function UserProfilePage({
     setEditedData({ ...editedData, [field]: value });
   };
 
+  const handleRequestUpdate = () => {
+    setIsRequestModalOpen(true);
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -70,6 +78,25 @@ export function UserProfilePage({
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+
+  const handleRequestSubmit = (data: ProfileUpdateFormData) => {
+    const address = formatProfileAddress(data);
+    onUpdateUser({
+      fullName: data.fullName,
+      phoneNumber: data.phoneNumber,
+      email: data.email,
+      address,
+    });
+    setEditedData({
+      fullName: data.fullName,
+      phoneNumber: data.phoneNumber,
+      email: data.email,
+      address,
+    });
+    showToast(t('profile.requestUpdateSent'), 'success');
   };
 
   return (
@@ -92,7 +119,9 @@ export function UserProfilePage({
           <h1 className="font-display text-2xl sm:text-3xl font-black text-on-surface tracking-tighter">
             {t('profile.title')}
           </h1>
-          <p className="text-on-surface-variant mt-2">{t('profile.subtitle')}</p>
+          <p className="text-on-surface-variant mt-2">
+            {readOnly ? t('profile.subtitleReadOnly') : t('profile.subtitle')}
+          </p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/10 overflow-hidden">
@@ -128,19 +157,21 @@ export function UserProfilePage({
                     <p className="text-base font-semibold">{editedData.fullName || t('profile.notProvided')}</p>
                   )}
                 </div>
-                {editMode === 'fullName' ? (
-                  <div className="flex gap-2 ml-4">
-                    <button onClick={() => handleSave('fullName')} className="p-1 text-green-600 hover:bg-green-50 rounded">
-                      <Check size={18} />
+                {!readOnly && (
+                  editMode === 'fullName' ? (
+                    <div className="flex gap-2 ml-4">
+                      <button onClick={() => handleSave('fullName')} className="p-1 text-green-600 hover:bg-green-50 rounded">
+                        <Check size={18} />
+                      </button>
+                      <button onClick={handleCancel} className="p-1 text-red-600 hover:bg-red-50 rounded">
+                        <X size={18} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setEditMode('fullName')} className="p-1 text-primary hover:bg-primary/10 rounded transition-all">
+                      <Edit2 size={16} />
                     </button>
-                    <button onClick={handleCancel} className="p-1 text-red-600 hover:bg-red-50 rounded">
-                      <X size={18} />
-                    </button>
-                  </div>
-                ) : (
-                  <button onClick={() => setEditMode('fullName')} className="p-1 text-primary hover:bg-primary/10 rounded transition-all">
-                    <Edit2 size={16} />
-                  </button>
+                  )
                 )}
               </div>
             </div>
@@ -165,19 +196,21 @@ export function UserProfilePage({
                     <p className="text-base font-semibold">{editedData.phoneNumber || t('profile.notProvided')}</p>
                   )}
                 </div>
-                {editMode === 'phoneNumber' ? (
-                  <div className="flex gap-2 ml-4">
-                    <button onClick={() => handleSave('phoneNumber')} className="p-1 text-green-600 hover:bg-green-50 rounded">
-                      <Check size={18} />
+                {!readOnly && (
+                  editMode === 'phoneNumber' ? (
+                    <div className="flex gap-2 ml-4">
+                      <button onClick={() => handleSave('phoneNumber')} className="p-1 text-green-600 hover:bg-green-50 rounded">
+                        <Check size={18} />
+                      </button>
+                      <button onClick={handleCancel} className="p-1 text-red-600 hover:bg-red-50 rounded">
+                        <X size={18} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setEditMode('phoneNumber')} className="p-1 text-primary hover:bg-primary/10 rounded transition-all">
+                      <Edit2 size={16} />
                     </button>
-                    <button onClick={handleCancel} className="p-1 text-red-600 hover:bg-red-50 rounded">
-                      <X size={18} />
-                    </button>
-                  </div>
-                ) : (
-                  <button onClick={() => setEditMode('phoneNumber')} className="p-1 text-primary hover:bg-primary/10 rounded transition-all">
-                    <Edit2 size={16} />
-                  </button>
+                  )
                 )}
               </div>
             </div>
@@ -202,19 +235,21 @@ export function UserProfilePage({
                     <p className="text-base font-semibold">{editedData.email || t('profile.notProvided')}</p>
                   )}
                 </div>
-                {editMode === 'email' ? (
-                  <div className="flex gap-2 ml-4">
-                    <button onClick={() => handleSave('email')} className="p-1 text-green-600 hover:bg-green-50 rounded">
-                      <Check size={18} />
+                {!readOnly && (
+                  editMode === 'email' ? (
+                    <div className="flex gap-2 ml-4">
+                      <button onClick={() => handleSave('email')} className="p-1 text-green-600 hover:bg-green-50 rounded">
+                        <Check size={18} />
+                      </button>
+                      <button onClick={handleCancel} className="p-1 text-red-600 hover:bg-red-50 rounded">
+                        <X size={18} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setEditMode('email')} className="p-1 text-primary hover:bg-primary/10 rounded transition-all">
+                      <Edit2 size={16} />
                     </button>
-                    <button onClick={handleCancel} className="p-1 text-red-600 hover:bg-red-50 rounded">
-                      <X size={18} />
-                    </button>
-                  </div>
-                ) : (
-                  <button onClick={() => setEditMode('email')} className="p-1 text-primary hover:bg-primary/10 rounded transition-all">
-                    <Edit2 size={16} />
-                  </button>
+                  )
                 )}
               </div>
             </div>
@@ -241,22 +276,35 @@ export function UserProfilePage({
                     </p>
                   )}
                 </div>
-                {editMode === 'address' ? (
-                  <div className="flex gap-2 ml-4">
-                    <button onClick={() => handleSave('address')} className="p-1 text-green-600 hover:bg-green-50 rounded">
-                      <Check size={18} />
+                {!readOnly && (
+                  editMode === 'address' ? (
+                    <div className="flex gap-2 ml-4">
+                      <button onClick={() => handleSave('address')} className="p-1 text-green-600 hover:bg-green-50 rounded">
+                        <Check size={18} />
+                      </button>
+                      <button onClick={handleCancel} className="p-1 text-red-600 hover:bg-red-50 rounded">
+                        <X size={18} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setEditMode('address')} className="p-1 text-primary hover:bg-primary/10 rounded transition-all">
+                      <Edit2 size={16} />
                     </button>
-                    <button onClick={handleCancel} className="p-1 text-red-600 hover:bg-red-50 rounded">
-                      <X size={18} />
-                    </button>
-                  </div>
-                ) : (
-                  <button onClick={() => setEditMode('address')} className="p-1 text-primary hover:bg-primary/10 rounded transition-all">
-                    <Edit2 size={16} />
-                  </button>
+                  )
                 )}
               </div>
             </div>
+
+            {readOnly && (
+              <button
+                type="button"
+                onClick={handleRequestUpdate}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm bg-primary text-white hover:bg-primary/90 transition-all shadow-sm"
+              >
+                <Send size={18} />
+                {t('profile.requestUpdate')}
+              </button>
+            )}
           </div>
 
           <div className="p-6 bg-gray-50 border-t border-gray-100 space-y-3">
@@ -271,6 +319,13 @@ export function UserProfilePage({
         </div>
         </div>
       </main>
+
+      <ProfileUpdateRequestModal
+        open={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        onSubmit={handleRequestSubmit}
+        userData={userData}
+      />
       
       <AnimatePresence>{toast && <Toast {...toast} onClose={() => setToast(null)} />}</AnimatePresence>
     </div>

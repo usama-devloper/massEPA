@@ -149,9 +149,6 @@ export const InsulationDetailsPage = ({
   const [pendingCategoryForCamera, setPendingCategoryForCamera] = useState<string | null>(null);
   const insulationMediaGuide = getMediaInstruction('insulation', mediaGuideVariant);
 
-  // State to track which category is pending selection while taking photo
-  const [pendingCategorySelection, setPendingCategorySelection] = useState<string | null>(null);
-
   // Modal state
   const photoViewer = usePhotoViewer();
   const [currentCategory, setCurrentCategory] = useState<string>('');
@@ -219,25 +216,24 @@ export const InsulationDetailsPage = ({
   // SYNC: On page load, ensure categories with photos are selected when answer is YES
   useEffect(() => {
     if (hasNewInsulation === true) {
-      // For each category that has photos, ensure it's selected
       Object.entries(insulationImages).forEach(([category, images]) => {
-        if (images.length > 0 && !selectedCategories.includes(category)) {
-          setSelectedCategories(prev => [...prev, category]);
+        if (images.length > 0) {
+          setSelectedCategories((prev) =>
+            prev.includes(category) ? prev : [...prev, category],
+          );
         }
       });
     }
   }, []); // Run only once on mount
 
-  // SYNC: Whenever photos change, ensure categories with photos are selected (when answer is YES)
+  // SYNC: Whenever photos are added, ensure that category is selected (when answer is YES)
   useEffect(() => {
     if (hasNewInsulation === true) {
       Object.entries(insulationImages).forEach(([category, images]) => {
-        if (images.length > 0 && !selectedCategories.includes(category)) {
-          // Auto-select category that has photos
-          setSelectedCategories(prev => [...prev, category]);
-        } else if (images.length === 0 && selectedCategories.includes(category)) {
-          // Auto-unselect category that has no photos
-          setSelectedCategories(prev => prev.filter(c => c !== category));
+        if (images.length > 0) {
+          setSelectedCategories((prev) =>
+            prev.includes(category) ? prev : [...prev, category],
+          );
         }
       });
     }
@@ -293,7 +289,6 @@ export const InsulationDetailsPage = ({
     setMediaGuideStep('instructions');
     setMediaGuideOpen(false);
     setPendingCategoryForCamera(null);
-    setPendingCategorySelection(null);
   };
 
   const openMediaGuide = (category: string, variant: MediaInstructionVariant) => {
@@ -327,12 +322,6 @@ export const InsulationDetailsPage = ({
         `${insulationCategoryLabel(category as InsulationCategoryId, t)} selected automatically`,
         'success',
       );
-    }
-    if (pendingCategorySelection === category) {
-      if (!selectedCategories.includes(category)) {
-        toggleCategorySelection(category);
-      }
-      setPendingCategorySelection(null);
     }
   };
 
@@ -372,15 +361,11 @@ export const InsulationDetailsPage = ({
         [category]: []
       }));
       
-      // Clear any pending selection
-      if (pendingCategorySelection === category) {
-        setPendingCategorySelection(null);
-      }
-      
+      setExpandedInsulation((prev) => (prev.includes(category) ? [] : prev));
       showToast(`${insulationCategoryLabel(category as InsulationCategoryId, t)} deselected and photos removed`, 'success');
     } else {
-      setPendingCategorySelection(category);
-      openMediaGuide(category, 'camera');
+      toggleCategorySelection(category);
+      setExpandedInsulation([category]);
     }
   };
 
@@ -448,12 +433,6 @@ export const InsulationDetailsPage = ({
       [category]: updatedImages
     }));
 
-    // AUTO-UNSELECT: If this was the last photo, unselect the category
-    if (updatedImages.length === 0 && selectedCategories.includes(category)) {
-      toggleCategorySelection(category);
-      showToast(`${insulationCategoryLabel(category as InsulationCategoryId, t)} unselected (no photos remaining)`, 'success');
-    }
-
     showToast(t('upload.toast.fileDeleted'), 'success');
   };
 
@@ -503,41 +482,11 @@ export const InsulationDetailsPage = ({
   };
 
   const showMaterialSpecs = selectedRole !== UserRole.CLIENT;
-  const isClient = selectedRole === UserRole.CLIENT;
 
-  // Validation function - Checks if ALL required fields are filled
+  // Continue on No, or Yes only when at least one category is ticked — photos/specs optional.
   const isFormComplete = (): boolean => {
-    // New insulation question must be answered
-    if (hasNewInsulation === null) return false;
-    
-    // If NO, no further validation needed
     if (hasNewInsulation === false) return true;
-    
-    // If YES, at least one category must be selected
-    if (hasNewInsulation === true) {
-      if (selectedCategories.length === 0) return false;
-      
-      // For CLIENT role: Each selected category must have at least one photo
-      if (selectedRole === UserRole.CLIENT) {
-        for (const category of selectedCategories) {
-          const images = insulationImages[category] || [];
-          if (images.length === 0) return false;
-        }
-        return true;
-      }
-      
-      // For BACK_OFFICE and INSPECTOR: Each selected category must have material and thickness
-      for (const category of selectedCategories) {
-        const spec = insulationSpecs[category];
-        if (!spec) return false;
-        if (!spec.material || spec.material === '') return false;
-        if (spec.material === 'Anders' && (!spec.customMaterial || spec.customMaterial.trim() === '')) return false;
-        if (!spec.thickness || parseInt(spec.thickness) <= 0) return false;
-      }
-      
-      return true;
-    }
-    
+    if (hasNewInsulation === true) return selectedCategories.length > 0;
     return false;
   };
 
@@ -599,7 +548,7 @@ export const InsulationDetailsPage = ({
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
-                  {t('common.yes')} {hasNewInsulation === true && '✓'}
+                  {t('common.yes')}
                 </button>
                 <button
                   onClick={() => handleNewInsulationClick(false)}
@@ -609,7 +558,7 @@ export const InsulationDetailsPage = ({
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
-                  {t('common.no')} {hasNewInsulation === false && '✓'}
+                  {t('common.no')}
                 </button>
               </div>
             </div>
@@ -654,7 +603,7 @@ export const InsulationDetailsPage = ({
                                   ? 'bg-primary text-white'
                                   : 'border-2 border-gray-300 bg-white'
                               }`}
-                              title={isClient ? "Click to take photo and select" : "Click to select category"}
+                              title={t('insulation.selectCategory')}
                             >
                               {isSelected && <Check size={14} strokeWidth={3} />}
                             </button>
@@ -911,7 +860,7 @@ export const InsulationDetailsPage = ({
                         : 'bg-gray-100 text-gray-600 hover:bg-white'
                     }`}
                   >
-                    {t('common.yes')} {doorIsolated === true && '✓'}
+                    {t('common.yes')}
                   </button>
                   <button
                     type="button"
@@ -922,7 +871,7 @@ export const InsulationDetailsPage = ({
                         : 'bg-gray-100 text-gray-600 hover:bg-white'
                     }`}
                   >
-                    {t('common.no')} {doorIsolated === false && '✓'}
+                    {t('common.no')}
                   </button>
                 </div>
               </section>

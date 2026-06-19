@@ -14,6 +14,8 @@ import { BackToTop } from '../components/common/BackToTop';
 import { PageBackLink } from '../components/common/PageBackLink';
 import { Step, UserRole } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { idbGet } from '../storage/idbKv';
+import type { PhotoCaptureStoredData } from '../storage/photoCaptureData';
 import { buildAuditReviewItems } from '../utils/auditReviewItems';
 
 interface FinalReviewPageProps {
@@ -30,6 +32,11 @@ interface FinalReviewPageProps {
   wijk: string;
   gemeente: string;
   hasFloorPlans: boolean | null;
+  vloerenType: string;
+  wandenType: string;
+  gboT: string;
+  leidingdoorvoeren: string;
+  avr: string;
 }
 
 export function FinalReviewPage({
@@ -46,14 +53,40 @@ export function FinalReviewPage({
   wijk,
   gemeente,
   hasFloorPlans,
+  vloerenType,
+  wandenType,
+  gboT,
+  leidingdoorvoeren,
+  avr,
 }: FinalReviewPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [uploadedFilesCount, setUploadedFilesCount] = useState(0);
+  const [photoCaptureData, setPhotoCaptureData] = useState<PhotoCaptureStoredData | null>(null);
   const { t } = useLanguage();
 
   useEffect(() => {
     setRefreshKey((k) => k + 1);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    idbGet<any[]>('massEPA_upload_files_v1').then((files) => {
+      if (cancelled) return;
+      setUploadedFilesCount(files ? files.length : 0);
+    });
+
+    idbGet<PhotoCaptureStoredData>('massEPA_photos_v1').then((data) => {
+      if (cancelled) return;
+      if (data) {
+        setPhotoCaptureData(data);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
 
   const reviewItems = useMemo(
     () =>
@@ -65,10 +98,33 @@ export function FinalReviewPage({
           gemeente,
           hasFloorPlans,
           selectedRole,
+          vloerenType,
+          wandenType,
+          gboT,
+          leidingdoorvoeren,
+          avr,
+          uploadedFilesCount,
+          photoCaptureData,
         },
         t,
       ),
-    [bouwjaar, buurt, wijk, gemeente, hasFloorPlans, selectedRole, refreshKey, t],
+    [
+      bouwjaar,
+      buurt,
+      wijk,
+      gemeente,
+      hasFloorPlans,
+      selectedRole,
+      vloerenType,
+      wandenType,
+      gboT,
+      leidingdoorvoeren,
+      avr,
+      uploadedFilesCount,
+      photoCaptureData,
+      refreshKey,
+      t,
+    ],
   );
 
   const completedCount = reviewItems.filter((item) => item.complete).length;
@@ -184,15 +240,29 @@ export function FinalReviewPage({
                     {item.complete ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
                   </div>
                   <div className="min-w-0">
-                    <h3
-                      className={`font-display text-sm font-black leading-tight ${
-                        item.complete
-                          ? 'text-gray-400'
-                          : 'text-gray-900 transition-colors group-hover:text-primary'
-                      }`}
-                    >
-                      {item.title}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3
+                        className={`font-display text-sm font-black leading-tight ${
+                          item.complete
+                            ? 'text-gray-400'
+                            : 'text-gray-900 transition-colors group-hover:text-primary'
+                        }`}
+                      >
+                        {item.title}
+                      </h3>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${
+                          item.complete
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-rose-100 text-rose-700'
+                        }`}
+                      >
+                        {item.complete ? t('common.done') : t('finalReview.pending')}
+                      </span>
+                      <span className="rounded-full bg-gray-100 text-gray-500 px-2 py-0.5 text-[9px] font-black">
+                        {item.answeredCount}/{item.totalCount}
+                      </span>
+                    </div>
                     <p className="mt-0.5 truncate text-[11px] leading-snug text-gray-400 sm:whitespace-normal">
                       {item.description}
                     </p>

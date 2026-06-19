@@ -319,15 +319,6 @@
 
 /* Add to your index.css or App.css */
 
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%) rotate(25deg);
-  }
-  100% {
-    transform: translateX(100%) rotate(25deg);
-  }
-}
-
 @keyframes pulse {
   0%, 100% {
     opacity: 0.3;

@@ -1,5 +1,5 @@
 import type { MediaInstructionScreen, MediaInstructionVariant } from './mediaInstructions';
-import { getPhotoCaptureRoomKey } from '../utils/photoCaptureRooms';
+import { getPhotoCaptureRoomKey, getPhotoCaptureCategoryBase } from '../utils/photoCaptureRooms';
 
 /** Example photos for Capture Assistant — one image per screen (camera & upload share it). */
 const SCREEN_EXAMPLE_IMAGES: Partial<Record<MediaInstructionScreen, string>> = {
@@ -53,6 +53,7 @@ const INTERIOR_EXAMPLE_FILES: Record<string, string> = {
   'EETKAMER|Window': 'Eetkamer_Window.jpg',
   'AANBOUW|General View': 'Aanbouw_General view.jpg',
   'ZOLDER|General View': 'Zolder_General view.jpg',
+  'ZOLDER|Roof windows': 'Zolder_Roof windows.jpg',
   'SERRE|General View': 'Serre_General view.jpg',
   'WASRUIMTE|General View': 'Wasruimte.jpg',
 };
@@ -61,7 +62,7 @@ export function photoInteriorExampleImageUrl(
   roomName: string,
   category: string,
 ): string | undefined {
-  const key = `${getPhotoCaptureRoomKey(roomName)}|${category}`;
+  const key = `${getPhotoCaptureRoomKey(roomName)}|${getPhotoCaptureCategoryBase(category)}`;
   const filename = INTERIOR_EXAMPLE_FILES[key];
   if (!filename) return undefined;
   return `${INTERIOR_EXAMPLE_BASE}${encodeURI(filename)}`;

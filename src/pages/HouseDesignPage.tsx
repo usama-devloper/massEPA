@@ -1,7 +1,7 @@
 // src/pages/HouseDesignPage.tsx
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, HelpCircle, Camera, X, ArrowRight, Info, CloudUpload, Plus, Trash2, ChevronDown, ChevronUp, FileText, Search } from 'lucide-react';
+import { Menu, HelpCircle, Camera, X, ArrowRight, CloudUpload, Plus, Trash2, ChevronDown, ChevronUp, FileText, Search } from 'lucide-react';
 import { TopBar } from '../components/common/TopBar';
 import { AppSidebar } from '../components/common/AppSidebar';
 import { MobileSidebar } from '../components/common/MobileSidebar';
@@ -35,7 +35,9 @@ import {
   generateRoomSuggestions,
   getEffectiveStandardRooms,
   normalizeRoomName,
+  pruneTopFloorOnlyRoomRecords,
   reconcileHouseDesignRoomMeta,
+  getRoomBaseName,
   type RoomChipItem,
   type RoomSuggestion,
 } from '../utils/houseDesignRooms';
@@ -194,22 +196,37 @@ function createInitialUploadState() {
   const hasAnyRoom = Object.values(loadedRooms).some(
     (rooms) => Array.isArray(rooms) && rooms.length > 0,
   );
-  const initialSelected = hasAnyRoom ? loadedRooms : {};
-  const repaired = repairKelderRoomState(
-    parsed.customRooms || {},
-    parsed.suppressedStandardRooms || {},
-    initialSelected,
-  );
+  
+  const startFloorChanged = parsed.startFloorKey
+    ? parsed.startFloorKey !== hints.startFloorKey
+    : (hasAnyRoom && (
+        !loadedRooms[hints.startFloorKey] ||
+        Object.entries(loadedRooms).some(([floor, rooms]) => 
+          floor !== hints.startFloorKey && rooms.some(r => r === 'MK' || r === 'WOONKAMER' || r === 'KEUKEN')
+        )
+      ));
+  const initialSelected = (hasAnyRoom && !startFloorChanged)
+    ? loadedRooms
+    : { [hints.startFloorKey]: ['HAL', 'MK'] };
+    
+  const repaired = startFloorChanged
+    ? { suppressed: {}, selectedRooms: initialSelected }
+    : repairKelderRoomState(
+        parsed.customRooms || {},
+        parsed.suppressedStandardRooms || {},
+        initialSelected,
+      );
 
   const reconciled = reconcileHouseDesignRoomMeta(
     {
       selectedRooms: repaired.selectedRooms,
-      customRooms: parsed.customRooms || {},
-      selectedCustomRooms: parsed.selectedCustomRooms || {},
+      customRooms: startFloorChanged ? {} : (parsed.customRooms || {}),
+      selectedCustomRooms: startFloorChanged ? {} : (parsed.selectedCustomRooms || {}),
       suppressedStandardRooms: repaired.suppressed,
     },
     allowedKeys,
     hints.startFloorKey,
+    hints.numberOfFloors,
   );
 
   const rooms = sanitizeRoomMeta(reconciled, allowedKeys);
@@ -315,7 +332,7 @@ export const HouseDesignPage = ({
     const startFloorChanged = hints.startFloorKey !== lastStartFloorKeyRef.current;
     if (startFloorChanged) {
       lastStartFloorKeyRef.current = hints.startFloorKey;
-      setSelectedRooms({});
+      setSelectedRooms({ [hints.startFloorKey]: ['HAL', 'MK'] });
       setSelectedCustomRooms({});
       setCustomRooms({});
       setSuppressedStandardRooms({});
@@ -345,6 +362,36 @@ export const HouseDesignPage = ({
       setSuppressedStandardRooms((prev) => applyFloorBoundary(prev));
     }
 
+    const pruneTopFloorRooms = (record: Record<string, string[]>) =>
+      pruneTopFloorOnlyRoomRecords(
+        record,
+        newSections,
+        hints.startFloorKey,
+        hints.numberOfFloors,
+      );
+
+    setSelectedCustomRooms((prev) => {
+      const bounded = sectionsChanged ? applyFloorBoundary(prev) : prev;
+      const next = pruneTopFloorRooms(bounded);
+      const prevFlat = Object.values(bounded).flat().sort().join();
+      const nextFlat = Object.values(next).flat().sort().join();
+      if (Object.keys(bounded).sort().join() === Object.keys(next).sort().join() && prevFlat === nextFlat) {
+        return prev;
+      }
+      return next;
+    });
+
+    setCustomRooms((prev) => {
+      const bounded = sectionsChanged ? applyFloorBoundary(prev) : prev;
+      const next = pruneTopFloorRooms(bounded);
+      const prevFlat = Object.values(bounded).flat().sort().join();
+      const nextFlat = Object.values(next).flat().sort().join();
+      if (Object.keys(bounded).sort().join() === Object.keys(next).sort().join() && prevFlat === nextFlat) {
+        return prev;
+      }
+      return next;
+    });
+
     setSelectedRooms((prev) => {
       const bounded = sectionsChanged ? applyFloorBoundary(prev) : prev;
       const next =
@@ -352,6 +399,7 @@ export const HouseDesignPage = ({
           { selectedRooms: bounded, selectedCustomRooms: {}, customRooms: {}, suppressedStandardRooms: {} },
           newSections,
           hints.startFloorKey,
+          hints.numberOfFloors,
         ).selectedRooms ?? {};
       const prevFlat = Object.values(bounded).flat().sort().join();
       const nextFlat = Object.values(next).flat().sort().join();
@@ -387,12 +435,13 @@ export const HouseDesignPage = ({
   useEffect(() => {
     const timer = setTimeout(() => {
       const allowedKeys = getDisplaySectionKeys(numberOfFloors, hasKelder, startFloorKey);
-      saveHouseDesignPageMetaToStorage(
-        sanitizeRoomMeta(
+      saveHouseDesignPageMetaToStorage({
+        ...sanitizeRoomMeta(
           { selectedRooms, customRooms, selectedCustomRooms, suppressedStandardRooms },
           allowedKeys,
         ),
-      );
+        startFloorKey,
+      });
     }, 400);
 
     return () => clearTimeout(timer);
@@ -613,6 +662,8 @@ export const HouseDesignPage = ({
     setMediaGuideOpen(false);
   };
 
+
+
   const openMediaGuide = (variant: MediaInstructionVariant) => {
     discardPendingGuideFiles();
     setMediaGuideVariant(variant);
@@ -625,6 +676,21 @@ export const HouseDesignPage = ({
       cameraInputRef.current?.click();
     } else {
       fileInputRef.current?.click();
+    }
+  };
+
+  const handleContinueFromInstructions = (selectedVariant?: 'camera' | 'upload') => {
+    if (selectedVariant) {
+      setMediaGuideVariant(selectedVariant);
+      setTimeout(() => {
+        if (selectedVariant === 'camera') {
+          cameraInputRef.current?.click();
+        } else {
+          fileInputRef.current?.click();
+        }
+      }, 100);
+    } else {
+      triggerMediaGuidePicker();
     }
   };
 
@@ -982,16 +1048,17 @@ export const HouseDesignPage = ({
           </header>
 
           <div className="space-y-6">
+
+
             {/* Upload Section */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-outline-variant/10">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-[11px] font-black uppercase tracking-widest text-primary">
-                  {hasFloorPlans === false ? t('upload.uploadLabelSkip') : t('upload.uploadLabelRequired')}
-                </span>
-                <button className="text-gray-400 hover:text-primary transition-colors">
-                  <Info size={16} />
-                </button>
-              </div>
+              {hasFloorPlans === false && (
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-[11px] font-black uppercase tracking-widest text-primary">
+                    {t('upload.uploadLabelSkip')}
+                  </span>
+                </div>
+              )}
 
               {/* Hidden file inputs */}
               <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={handleFileUpload} />
@@ -1007,31 +1074,33 @@ export const HouseDesignPage = ({
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3 rounded-xl bg-gray-50 p-3">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="font-display font-black text-sm uppercase">{t('upload.floorPlansTitle')}</span>
-
+                uploadedFiles.length === 0 ? (
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                     <button
                       type="button"
                       onClick={() => openMediaGuide('upload')}
-                      className="p-2 rounded-lg transition-all bg-primary/10 text-primary hover:bg-primary hover:text-white"
-                      aria-label={t('upload.guide.upload.continue')}
+                      className="font-display font-black text-sm uppercase text-gray-800 hover:text-primary transition-colors flex items-center gap-2 focus:outline-none"
                     >
-                      <CloudUpload size={20} />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => openMediaGuide('camera')}
-                      className="p-2 rounded-lg transition-all bg-primary/10 text-primary hover:bg-primary hover:text-white"
-                      aria-label={t('upload.guide.camera.continue')}
-                    >
-                      <Camera size={20} />
+                      <span>{t('upload.floorPlansTitle')}</span>
+                      <CloudUpload size={16} className="text-gray-400 hover:text-primary transition-colors flex-shrink-0" />
                     </button>
                   </div>
+                ) : (
+                  <div className="space-y-3 rounded-xl bg-gray-50 p-4 border border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <button
+                        type="button"
+                        onClick={() => openMediaGuide('upload')}
+                        className="font-display font-black text-sm uppercase text-gray-800 hover:text-primary transition-colors flex items-center gap-2 focus:outline-none"
+                      >
+                        <span>{t('upload.floorPlansTitle')}</span>
+                        <CloudUpload size={16} className="text-gray-400 hover:text-primary transition-colors flex-shrink-0" />
+                      </button>
+                    </div>
 
-                  {renderFloorPlanThumbnailStrip()}
-                </div>
+                    {renderFloorPlanThumbnailStrip()}
+                  </div>
+                )
               )}
             </div>
 
@@ -1171,7 +1240,7 @@ export const HouseDesignPage = ({
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-visible"
                           >
-                            <div className="p-4 pt-0 border-t border-gray-100 space-y-3">
+                            <div className="p-4 pt-3 border-t border-gray-100 space-y-3">
                               {(() => {
                                 const chipGroups = buildFloorRoomChipGroups(
                                   standardRooms,
@@ -1181,20 +1250,42 @@ export const HouseDesignPage = ({
                                   standardSlots,
                                 );
                                 if (chipGroups.length === 0) return null;
+
+                                const row1: React.ReactNode[] = [];
+                                const row2: React.ReactNode[] = [];
+                                const row3: React.ReactNode[] = [];
+                                const row4: React.ReactNode[] = [];
+
+                                chipGroups.forEach((group) => {
+                                  const roomBase = getRoomBaseName(group.kind === 'chain' ? group.base : group.chip.room);
+                                  const element = group.kind === 'chain' ? (
+                                    <div
+                                      key={`chain-${group.base}`}
+                                      className="flex flex-wrap items-center gap-2"
+                                    >
+                                      {group.chips.map((chip) => renderRoomChip(section, chip))}
+                                    </div>
+                                  ) : (
+                                    renderRoomChip(section, group.chip)
+                                  );
+
+                                  if (roomBase === 'HAL' || roomBase === 'OVERLUIP' || roomBase === 'MK') {
+                                    row1.push(element);
+                                  } else if (roomBase === 'KEUKEN' || roomBase === 'WOONKAMER') {
+                                    row2.push(element);
+                                  } else if (roomBase === 'SLAAPKAMER' || roomBase === 'WC' || roomBase === 'BADKAMER') {
+                                    row3.push(element);
+                                  } else {
+                                    row4.push(element);
+                                  }
+                                });
+
                                 return (
-                                  <div className="flex flex-wrap gap-2">
-                                    {chipGroups.map((group) =>
-                                      group.kind === 'chain' ? (
-                                        <div
-                                          key={`chain-${group.base}`}
-                                          className="flex flex-wrap items-center gap-2"
-                                        >
-                                          {group.chips.map((chip) => renderRoomChip(section, chip))}
-                                        </div>
-                                      ) : (
-                                        renderRoomChip(section, group.chip)
-                                      ),
-                                    )}
+                                  <div className="flex flex-col gap-3">
+                                    {row1.length > 0 && <div className="flex flex-wrap gap-2">{row1}</div>}
+                                    {row2.length > 0 && <div className="flex flex-wrap gap-2">{row2}</div>}
+                                    {row3.length > 0 && <div className="flex flex-wrap gap-2">{row3}</div>}
+                                    {row4.length > 0 && <div className="flex flex-wrap gap-2">{row4}</div>}
                                   </div>
                                 );
                               })()}
@@ -1320,11 +1411,12 @@ export const HouseDesignPage = ({
           variant={mediaGuideVariant}
           pendingFiles={pendingGuideFiles}
           onRemovePending={removePendingGuideFile}
-          onContinueFromInstructions={triggerMediaGuidePicker}
+          onContinueFromInstructions={handleContinueFromInstructions}
           onAddMore={triggerMediaGuidePicker}
           onDone={handleMediaGuideDone}
           exampleImageUrl={mediaExampleImageUrl('upload', mediaGuideVariant)}
           layout="bottomSheet"
+          allowBothVariants={true}
         />
       )}
 

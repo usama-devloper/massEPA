@@ -1,7 +1,8 @@
 // src/App.tsx
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Step, UserRole, type FormData } from './types';
-import { loadAppSnapshot, saveAppSnapshot, type AppSnapshotV1 } from './storage/appSnapshot';
+import { loadAppSnapshot, saveAppSnapshot, createDefaultSnapshot, type AppSnapshotV1 } from './storage/appSnapshot';
+import { resetFilledUserData } from './storage/resetUserData';
 import { loadBuildingAnswersDoc, mergeBuildingAnswersDoc, normalizeAddressKey } from './storage/buildingAnswers';
 import { mergeAlgemeenInStorage } from './storage/algemeenData';
 import { getDevTestUserByEmail } from './data/devTestUsers';
@@ -235,7 +236,13 @@ function App() {
     if (dev) {
       setSelectedRole(dev.role);
       setLoggedInUser(dev.displayName);
-      setFormData((prev) => ({ ...prev, email: dev.email }));
+      setFormData((prev) => ({
+        ...prev,
+        email: dev.email,
+        ...(dev.defaultFullName ? { fullName: dev.defaultFullName } : {}),
+        ...(dev.defaultPhone ? { phoneNumber: dev.defaultPhone } : {}),
+        ...(dev.defaultAddress ? { address: dev.defaultAddress } : {}),
+      }));
     } else {
       setLoggedInUser(formData.fullName || 'User');
     }
@@ -262,6 +269,26 @@ function App() {
 
   const handleManageProfile = () => {
     setCurrentStep(Step.USER_PROFILE);
+  };
+
+  const handleResetUserData = async () => {
+    await resetFilledUserData(formData.address);
+    const defaults = createDefaultSnapshot().building;
+    setRenovationStatus(defaults.renovationStatus);
+    setRenovationYear(defaults.renovationYear);
+    setBouwjaar(defaults.bouwjaar);
+    setFloorArea(defaults.floorArea);
+    setVloerenType(defaults.vloerenType);
+    setWandenType(defaults.wandenType);
+    setGboT(defaults.gboT);
+    setLeidingdoorvoeren(defaults.leidingdoorvoeren);
+    setAvr(defaults.avr);
+    setBuurt(defaults.buurt);
+    setWijk(defaults.wijk);
+    setGemeente(defaults.gemeente);
+    setGebouwhoogte(defaults.gebouwhoogte);
+    setHasFloorPlans(defaults.hasFloorPlans);
+    hydrateSeq.current += 1;
   };
 
   const handleOpenClientDossier = (profile: FormData, building: AppSnapshotV1['building']) => {
@@ -396,6 +423,7 @@ function App() {
           onContinue={handleProfileContinue}
           onLogout={handleLogout}
           userName={loggedInUser || formData.fullName || 'User'}
+          readOnly={selectedRole === UserRole.CLIENT}
           onOpenSettings={() => setCurrentStep(Step.SETTINGS)}
           onLogoClick={handleLogoNavigation}
         />
@@ -483,6 +511,11 @@ function App() {
           wijk={wijk}
           gemeente={gemeente}
           hasFloorPlans={hasFloorPlans}
+          vloerenType={vloerenType}
+          wandenType={wandenType}
+          gboT={gboT}
+          leidingdoorvoeren={leidingdoorvoeren}
+          avr={avr}
         />
       );
 
@@ -490,7 +523,7 @@ function App() {
       return <CompletePage {...appPageProps} />;
 
     case Step.SETTINGS:
-      return <SettingsPage {...appPageProps} />;
+      return <SettingsPage {...appPageProps} onResetUserData={handleResetUserData} />;
 
     case Step.CLIENTS:
       if (selectedRole === UserRole.CLIENT) {

@@ -551,13 +551,13 @@ export const KozijnGlasPage = ({
                             onClick={() => handleAllKozijnenSameClick(true)}
                             className={`px-6 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all ${allKozijnenSame === true ? 'bg-primary text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
                           >
-                            {t('common.yes')} {allKozijnenSame === true && '✓'}
+                            {t('common.yes')}
                           </button>
                           <button 
                             onClick={() => handleAllKozijnenSameClick(false)}
                             className={`px-6 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all ${allKozijnenSame === false ? 'bg-primary text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
                           >
-                            {t('common.no')} {allKozijnenSame === false && '✓'}
+                            {t('common.no')}
                           </button>
                         </div>
                       </div>
@@ -646,13 +646,13 @@ export const KozijnGlasPage = ({
                             onClick={() => handleAllGlasSameClick(true)}
                             className={`px-6 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all ${allGlasSame === true ? 'bg-primary text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
                           >
-                            {t('common.yes')} {allGlasSame === true && '✓'}
+                            {t('common.yes')}
                           </button>
                           <button 
                             onClick={() => handleAllGlasSameClick(false)}
                             className={`px-6 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all ${allGlasSame === false ? 'bg-primary text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
                           >
-                            {t('common.no')} {allGlasSame === false && '✓'}
+                            {t('common.no')}
                           </button>
                         </div>
                       </div>

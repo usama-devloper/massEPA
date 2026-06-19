@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Camera, Check, CheckCircle, FileText, Trash2, Upload } from 'lucide-react';
+import { Camera, Check, CheckCircle, FileText, Trash2, Upload, X } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import type { MediaInstructionEntry, MediaInstructionVariant } from '../../config/mediaInstructions';
 
@@ -23,7 +23,7 @@ type MediaInstructionModalProps = {
   variant: MediaInstructionVariant;
   pendingFiles: MediaInstructionPendingFile[];
   onRemovePending: (index: number) => void;
-  onContinueFromInstructions: () => void;
+  onContinueFromInstructions: (variant?: 'camera' | 'upload') => void;
   onAddMore: () => void;
   onDone: () => void;
   /** i18n prefix for review step, e.g. `upload.guide` or `insulation.guide` */
@@ -37,6 +37,10 @@ type MediaInstructionModalProps = {
   /** Compact tips shown in review step above thumbnails */
   reviewTipsKeys?: string[];
   zIndex?: number;
+  /** Extra content shown on review step below photo thumbnails (e.g. category questions) */
+  reviewChildren?: React.ReactNode;
+  children?: React.ReactNode;
+  allowBothVariants?: boolean;
 };
 
 const glassPanelStyle = {
@@ -64,6 +68,9 @@ export const MediaInstructionModal = ({
   exampleImageUrl,
   reviewTipsKeys,
   zIndex = 250,
+  reviewChildren,
+  children,
+  allowBothVariants = false,
 }: MediaInstructionModalProps) => {
   const { t } = useLanguage();
   const isReview = step === 'review';
@@ -139,16 +146,6 @@ export const MediaInstructionModal = ({
               className="absolute top-0 left-0 right-0 h-[2px] z-20"
               style={{
                 background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)',
-              }}
-            />
-
-            <div
-              className="absolute inset-0 pointer-events-none opacity-30"
-              style={{
-                background:
-                  'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%)',
-                transform: 'translateX(-100%) rotate(25deg)',
-                animation: 'shimmer 4s ease-in-out infinite',
               }}
             />
 
@@ -250,41 +247,46 @@ export const MediaInstructionModal = ({
                   )}
 
                   {pendingFiles.length > 0 ? (
-                    <div className="p-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {pendingFiles.map((file, idx) => (
-                        <div
-                          key={`${file.url}-${idx}`}
-                          className="relative aspect-square rounded-xl overflow-hidden bg-white/10 border border-white/30"
-                          title={file.name}
-                        >
-                          {file.type === 'application/pdf' ? (
-                            <div className="flex h-full w-full flex-col items-center justify-center bg-red-50/80">
-                              <FileText size={28} className="text-red-500" />
-                              <span className="mt-1 text-[10px] font-bold text-red-600 px-1 truncate max-w-full">
-                                PDF
-                              </span>
-                            </div>
-                          ) : (
-                            <img
-                              src={file.url}
-                              alt={file.name}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                              }}
-                            />
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => onRemovePending(idx)}
-                            className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md active:scale-95 transition-transform"
-                            aria-label={t('common.delete')}
+                    <>
+                      {reviewChildren && (
+                        <div className="px-5 pt-4 pb-2">{reviewChildren}</div>
+                      )}
+                      <div className="p-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {pendingFiles.map((file, idx) => (
+                          <div
+                            key={`${file.url}-${idx}`}
+                            className="relative aspect-square rounded-xl overflow-hidden bg-white/10 border border-white/30"
+                            title={file.name}
                           >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                            {file.type === 'application/pdf' ? (
+                              <div className="flex h-full w-full flex-col items-center justify-center bg-red-50/80">
+                                <FileText size={28} className="text-red-500" />
+                                <span className="mt-1 text-[10px] font-bold text-red-600 px-1 truncate max-w-full">
+                                  PDF
+                                </span>
+                              </div>
+                            ) : (
+                              <img
+                                src={file.url}
+                                alt={file.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => onRemovePending(idx)}
+                              className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md active:scale-95 transition-transform"
+                              aria-label={t('common.delete')}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </>
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-3 p-8 rounded-2xl border-2 border-dashed border-white/40 bg-white/5 mx-5 my-5">
                       <button
@@ -304,31 +306,61 @@ export const MediaInstructionModal = ({
 
             <div className="relative p-5 flex gap-3 border-t border-white/20">
               {!isReview ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="flex-1 py-3 rounded-xl border border-white/40 bg-white/30 text-gray-700 font-bold text-sm hover:bg-white/50 transition-all"
-                  >
-                    {t('common.cancel')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => runPickerAction(onContinueFromInstructions)}
-                    className="flex-1 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:brightness-110 transition-all shadow-lg flex items-center justify-center gap-2"
-                  >
-                    {variant === 'camera' ? <Camera size={16} /> : <Upload size={16} />}
-                    <span>{t(entry.continueKey)}</span>
-                  </button>
-                </>
+                allowBothVariants ? (
+                  <div className="flex gap-3 w-full">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="py-3 px-4 rounded-xl border border-white/40 bg-white/30 text-gray-700 hover:bg-white/50 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
+                      aria-label="Close"
+                    >
+                      <X size={20} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => runPickerAction(() => onContinueFromInstructions?.('upload'))}
+                      className="flex-1 py-3 rounded-xl bg-primary text-white font-bold text-xs sm:text-sm hover:brightness-110 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-1.5 min-w-0"
+                    >
+                      <Upload size={16} className="flex-shrink-0" />
+                      <span className="truncate">{t('upload.guide.upload.continue')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => runPickerAction(() => onContinueFromInstructions?.('camera'))}
+                      className="flex-1 py-3 rounded-xl bg-primary text-white font-bold text-xs sm:text-sm hover:brightness-110 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-1.5 min-w-0"
+                    >
+                      <Camera size={16} className="flex-shrink-0" />
+                      <span className="truncate">{t('upload.guide.camera.continue')}</span>
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="flex-1 py-3 rounded-xl border border-white/40 bg-white/30 text-gray-700 font-bold text-sm hover:bg-white/50 transition-all"
+                    >
+                      {t('common.cancel')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => runPickerAction(() => onContinueFromInstructions?.(variant))}
+                      className="flex-1 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:brightness-110 transition-all shadow-lg flex items-center justify-center gap-2"
+                    >
+                      {variant === 'camera' ? <Camera size={16} /> : <Upload size={16} />}
+                      <span>{t(entry.continueKey)}</span>
+                    </button>
+                  </>
+                )
               ) : (
                 <>
                   <button
                     type="button"
                     onClick={onClose}
-                    className="py-3 px-4 rounded-xl border border-white/40 bg-white/30 text-gray-700 font-bold text-sm hover:bg-white/50 transition-all"
+                    className="py-3 px-4 rounded-xl border border-white/40 bg-white/30 text-gray-700 hover:bg-white/50 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
+                    aria-label="Close"
                   >
-                    {t('common.cancel')}
+                    <X size={20} />
                   </button>
                   <button
                     type="button"

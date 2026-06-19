@@ -532,7 +532,7 @@ export function Algemeen({
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
-                      {t('common.yes')} {hasKelder === true && '✓'}
+                      {t('common.yes')}
                     </button>
                     <button
                       type="button"
@@ -543,7 +543,7 @@ export function Algemeen({
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
-                      {t('common.no')} {hasKelder === false && '✓'}
+                      {t('common.no')}
                     </button>
                   </div>
                 </div>
@@ -561,7 +561,7 @@ export function Algemeen({
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
-                      {t('common.yes')} {hasKruipruimte === true && '✓'}
+                      {t('common.yes')}
                     </button>
                     <button
                       type="button"
@@ -572,7 +572,7 @@ export function Algemeen({
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
-                      {t('common.no')} {hasKruipruimte === false && '✓'}
+                      {t('common.no')}
                     </button>
                   </div>
                 </div>
@@ -609,7 +609,7 @@ export function Algemeen({
                       renovationStatus === 'Ja' ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-600'
                     }`}
                   >
-                    {t('common.yes')} {renovationStatus === 'Ja' && '✓'}
+                    {t('common.yes')}
                   </button>
                   <button
                     type="button"
@@ -618,7 +618,7 @@ export function Algemeen({
                       renovationStatus === 'Nee' ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-600'
                     }`}
                   >
-                    {t('common.no')} {renovationStatus === 'Nee' && '✓'}
+                    {t('common.no')}
                   </button>
                 </div>
               </div>
@@ -628,7 +628,7 @@ export function Algemeen({
             <AnimatePresence>
               {isBackOfficeOrInspector && renovationShowsYear && (
                 <motion.div
-                  initial={{ opacity: 0, height: 0 }}
+                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   className="overflow-hidden pb-3"
@@ -660,7 +660,7 @@ export function Algemeen({
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
-                  {t('common.yes')} {hasFloorPlans === true && '✓'}
+                  {t('common.yes')}
                 </button>
                 <button
                   type="button"
@@ -671,7 +671,7 @@ export function Algemeen({
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
-                  {t('common.no')} {hasFloorPlans === false && '✓'}
+                  {t('common.no')}
                 </button>
               </div>
             </div>

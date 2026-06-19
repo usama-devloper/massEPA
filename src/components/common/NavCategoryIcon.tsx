@@ -72,7 +72,6 @@ export const DASHBOARD_PROGRESS_STEPS: Step[] = [
   Step.UPLOAD,
   Step.INSULATION_DETAILS,
   Step.INSTALLATIE,
-  Step.KOZIJN_GLAS,
   Step.PHOTO_CAPTURE,
   Step.COMPLETE,
 ];

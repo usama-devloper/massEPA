@@ -6,6 +6,9 @@ export type DevTestUserRecord = {
   password: string;
   role: UserRole;
   displayName: string;
+  defaultFullName?: string;
+  defaultPhone?: string;
+  defaultAddress?: string;
   hints: readonly string[];
 };
 
@@ -18,6 +21,9 @@ type DevTestUsersFile = {
     password?: string;
     role: string;
     displayName: string;
+    defaultFullName?: string;
+    defaultPhone?: string;
+    defaultAddress?: string;
     hints: string[];
   }>;
 };
@@ -33,6 +39,9 @@ export const DEV_TEST_USERS: readonly DevTestUserRecord[] = file.users.map((u) =
   password: (u.password ?? file.defaultPassword).trim(),
   role: asUserRole(u.role),
   displayName: u.displayName.trim(),
+  defaultFullName: u.defaultFullName?.trim() || undefined,
+  defaultPhone: u.defaultPhone?.trim() || undefined,
+  defaultAddress: u.defaultAddress?.trim() || undefined,
   hints: u.hints.map((h) => h.trim().toLowerCase()).filter(Boolean),
 }));
 
