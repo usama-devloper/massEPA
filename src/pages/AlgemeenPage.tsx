@@ -51,6 +51,7 @@ interface AlgemeenPageProps {
   gebouwhoogte: string;
   setGebouwhoogte: (value: string) => void;
   hasFloorPlans: boolean | null;
+  profilePhoto?: string;
 }
 
 // Position options based on Building Type
@@ -117,6 +118,7 @@ export function Algemeen({
   renovationYear, setRenovationYear, bouwjaar, setBouwjaar, floorArea, setFloorArea,
   buurt, setBuurt,
   wijk, setWijk, gemeente, setGemeente, gebouwhoogte, setGebouwhoogte, hasFloorPlans,
+  profilePhoto,
 }: AlgemeenPageProps) {
   const { t } = useLanguage();
   const savedOnMount = loadAlgemeenFromStorage();
@@ -305,9 +307,6 @@ export function Algemeen({
       if (hasKruipruimte === null) return false;
     }
     
-    // Floor plans question always required
-    if (hasFloorPlans === null) return false;
-    
     // City field for non-CLIENT users
     if (selectedRole !== UserRole.CLIENT && !city.trim()) return false;
     
@@ -361,6 +360,7 @@ export function Algemeen({
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
         onLogoClick={onLogoClick}
+        profilePhoto={profilePhoto}
       />
 
       <AppSidebar 
@@ -537,6 +537,7 @@ export function Algemeen({
                     needsConfirmation={fieldNeedsConfirmation('whichFloor')}
                     onOpen={() => handleConfirmField('whichFloor')}
                     placeholder={t('Select floor')}
+                    searchable={false}
                     options={WHICH_FLOOR_VALUES.map((value) => ({
                       value,
                       label: translateAlgemeenOption(value, t),
@@ -549,6 +550,7 @@ export function Algemeen({
                     needsConfirmation={fieldNeedsConfirmation('numberOfFloors')}
                     onOpen={() => handleConfirmField('numberOfFloors')}
                     placeholder={t('Select number of floors')}
+                    searchable={false}
                     options={FLOOR_COUNT_OPTIONS}
                   />
                 </>
@@ -560,6 +562,7 @@ export function Algemeen({
                   needsConfirmation={fieldNeedsConfirmation('numberOfFloors')}
                   onOpen={() => handleConfirmField('numberOfFloors')}
                   placeholder={t('Select number of floors')}
+                  searchable={false}
                   options={FLOOR_COUNT_OPTIONS}
                 />
               )}
@@ -694,35 +697,6 @@ export function Algemeen({
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {/* Floor plans question - Yes/No inline */}
-            <div className="flex items-center justify-between py-3 border-t border-gray-100 mt-2">
-              <span className="text-sm font-bold text-gray-700">{t('algemeen.labels.hasFloorPlans')}</span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setHasFloorPlans(toggleBooleanChoice(hasFloorPlans, true))}
-                  className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-                    hasFloorPlans === true
-                      ? 'bg-primary text-white shadow-md'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {t('common.yes')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setHasFloorPlans(toggleBooleanChoice(hasFloorPlans, false))}
-                  className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-                    hasFloorPlans === false
-                      ? 'bg-primary text-white shadow-md'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {t('common.no')}
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </main>

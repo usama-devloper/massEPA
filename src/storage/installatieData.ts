@@ -17,6 +17,8 @@ export interface InstallatieData {
   // Ventilation
   ventilationType: 'natural' | 'mechanical' | null;
   ventilationCo2: boolean | null;
+  ventilationOpwekker: string;
+  otherVentilationOpwekker: string;
   ventilatieSensors: string[];
   /** Per-floor sensor locations (standard + Anders). */
   ventilatieSensorsByFloor?: Record<string, string[]>;
@@ -60,6 +62,8 @@ const defaultData: InstallatieData = {
   // Ventilation
   ventilationType: null,
   ventilationCo2: null,
+  ventilationOpwekker: '',
+  otherVentilationOpwekker: '',
   ventilatieSensors: [],
   otherVentilatieText: '',
   

@@ -24,6 +24,7 @@ interface HomePageProps {
   onLogoClick?: () => void;
   userName: string;
   selectedRole: UserRole;
+  profilePhoto?: string;
 }
 
 export function HomePage({
@@ -36,6 +37,7 @@ export function HomePage({
   onLogoClick,
   userName,
   selectedRole,
+  profilePhoto,
 }: HomePageProps) {
   const { t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -85,6 +87,7 @@ export function HomePage({
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
         onLogoClick={onLogoClick}
+        profilePhoto={profilePhoto}
       />
 
       <AppSidebar

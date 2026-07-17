@@ -7,6 +7,8 @@ import { OtpPage } from './OtpPage';
 import { SetPasswordPage } from './SetPasswordPage';
 import { ForgotPasswordPage } from './ForgotPasswordPage';
 import Algemeen from './AlgemeenPage';
+import { BackOfficePortal } from './backoffice/BackOfficePortal';
+import { getDevTestUserByEmail } from '../data/devTestUsers';
 
 function App() {
   const [currentStep, setCurrentStep] = useState<Step>(Step.LOGIN);
@@ -46,17 +48,30 @@ function App() {
   const [wijk, setWijk] = useState('');
   const [gemeente, setGemeente] = useState('');
   const [gebouwhoogte, setGebouwhoogte] = useState('');
-  const [hasFloorPlans, setHasFloorPlans] = useState<boolean | null>(null);
+  const [hasFloorPlans, setHasFloorPlans] = useState<boolean | null>(true);
 
-  const handleLogin = (_email?: string) => {
+  const handleLogin = (email?: string) => {
     setIsLoggedIn(true);
-    setLoggedInUser(formData.fullName || 'User');
+    let role = UserRole.CLIENT;
+    let displayName = formData.fullName || 'User';
+
+    if (email) {
+      const devUser = getDevTestUserByEmail(email);
+      if (devUser) {
+        role = devUser.role;
+        displayName = devUser.displayName;
+      }
+    }
+
+    setSelectedRole(role);
+    setLoggedInUser(displayName);
     setCurrentStep(Step.DASHBOARD);
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setLoggedInUser('');
+    setSelectedRole(UserRole.CLIENT);
     setCurrentStep(Step.LOGIN);
   };
 
@@ -76,7 +91,16 @@ function App() {
     setCurrentStep(step);
   };
 
-  // Render appropriate page based on currentStep
+  // Render appropriate page based on currentStep or user role
+  if (isLoggedIn && selectedRole === UserRole.BACK_OFFICE) {
+    return (
+      <BackOfficePortal 
+        onLogout={handleLogout}
+        userName={loggedInUser}
+      />
+    );
+  }
+
   switch (currentStep) {
     case Step.LOGIN:
       return (

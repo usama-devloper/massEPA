@@ -16,24 +16,28 @@ interface TopBarProps {
   onManageProfile?: () => void;
   onLogout?: () => void;
   rightButton?: React.ReactNode;
+  leftContent?: React.ReactNode;
   onLogoClick?: () => void;
   onOpenSettings?: () => void;
   onSidebarToggle?: () => void;      // ← ADD THIS
   isSidebarOpen?: boolean;           // ← ADD THIS
+  profilePhoto?: string;
 }
 
-export const TopBar = ({ 
-  onMenuClick, 
-  showMenu = false, 
+export const TopBar = ({
+  onMenuClick,
+  showMenu = false,
   showUserMenu = false,
   userName = 'User',
   onManageProfile,
   onLogout,
   rightButton,
+  leftContent,
   onLogoClick,
   onOpenSettings,
   onSidebarToggle,      // ← ADD THIS
   isSidebarOpen = true, // ← ADD THIS
+  profilePhoto,
 }: TopBarProps) => {
   const headerRef = useRef<HTMLElement>(null);
 
@@ -64,19 +68,19 @@ export const TopBar = ({
             <Menu size={24} />
           </button>
         )}
-        
+
         {/* Desktop sidebar toggle button */}
         {showMenu && onSidebarToggle && (
-          <button 
-            type="button" 
-            onClick={onSidebarToggle} 
+          <button
+            type="button"
+            onClick={onSidebarToggle}
             className="hidden md:block p-2 hover:bg-gray-100 rounded-lg transition-all"
             title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
           >
             {isSidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
           </button>
         )}
-        
+
         {/* Logo */}
         <button
           type="button"
@@ -84,25 +88,32 @@ export const TopBar = ({
           className="cursor-pointer focus:outline-none"
           title="BuildingID"
         >
-          <img 
-            src="/logo.png" 
-            alt="BuildingID" 
-            className="h-10 w-auto" 
+          <img
+            src="/logo.png"
+            alt="BuildingID"
+            className="h-10 w-auto"
             onError={(e) => {
               (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=B';
-            }} 
+            }}
           />
         </button>
+
+        {leftContent && (
+          <div className="ml-4 flex items-center">
+            {leftContent}
+          </div>
+        )}
       </div>
-      
+
       <div className="flex items-center gap-4">
         {rightButton && <div>{rightButton}</div>}
         {showUserMenu && (
-          <UserMenu 
+          <UserMenu
             userName={userName}
-            onManageProfile={onManageProfile || (() => {})}
-            onLogout={onLogout || (() => {})}
+            onManageProfile={onManageProfile || (() => { })}
+            onLogout={onLogout || (() => { })}
             onOpenSettings={onOpenSettings}
+            profilePhoto={profilePhoto}
           />
         )}
       </div>

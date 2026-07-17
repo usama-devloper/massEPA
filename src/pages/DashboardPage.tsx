@@ -24,6 +24,8 @@ interface DashboardPageProps {
   userName: string;
   selectedRole: UserRole;
   onLogoClick?: () => void;
+  profilePhoto?: string;
+  onOpenSettings?: () => void;
 }
 
 interface CategoryProgress {
@@ -123,6 +125,8 @@ export function DashboardPage({
   userName,
   selectedRole,
   onLogoClick,
+  profilePhoto,
+  onOpenSettings,
 }: DashboardPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { toast, setToast, showToast } = useToast();
@@ -344,6 +348,8 @@ export function DashboardPage({
         onManageProfile={onManageProfile}
         onLogout={onLogout}
         onLogoClick={onLogoClick}
+        profilePhoto={profilePhoto}
+        onOpenSettings={onOpenSettings}
       />
 
       <AppSidebar
@@ -371,14 +377,14 @@ export function DashboardPage({
           {/* Header */}
           <header className="app-page-title text-center mb-6">
             <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-black text-on-surface tracking-tighter">
-            DASHBOARD
+              {t('dashboard.title')}
             </h1>
           </header>
 
           {/* Progress Cards */}
           <div className="space-y-2">
             {progressData.map((category, idx) => (
-              <ProgressRow 
+              <ProgressRow
                 key={idx}
                 category={category}
                 completeLabel={t('dashboard.progressComplete')}

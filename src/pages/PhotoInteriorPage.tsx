@@ -25,6 +25,7 @@ interface PhotoInteriorPageProps {
   onLogoClick?: () => void;
   userName: string;
   selectedRole: UserRole;
+  profilePhoto?: string;
 }
 
 type InteriorPhotos = Record<string, string[]>;
@@ -59,6 +60,7 @@ export function PhotoInteriorPage({
   onLogoClick,
   userName,
   selectedRole,
+  profilePhoto,
 }: PhotoInteriorPageProps) {
   const { t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -178,6 +180,7 @@ export function PhotoInteriorPage({
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
         onLogoClick={onLogoClick}
+        profilePhoto={profilePhoto}
       />
 
       <AppSidebar

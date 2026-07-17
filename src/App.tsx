@@ -24,6 +24,7 @@ import { FinalReviewPage } from './pages/FinalReviewPage';
 import { CompletePage } from './pages/CompletePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ClientsPage } from './pages/ClientsPage';
+import BackOfficePortal from './pages/backoffice/BackOfficePortal';
 
 
 function App() {
@@ -33,6 +34,52 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState('');
   const [lastLoginEmail, setLastLoginEmail] = useState('');
+
+  // Global event listeners to prevent negative values in number inputs
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'number') {
+        if (e.key === '-' || e.key === 'e' || e.key === '+' || e.key === 'E') {
+          e.preventDefault();
+        }
+      }
+    };
+    
+    const handleInput = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      if (target && target.tagName === 'INPUT' && target.type === 'number') {
+        if (target.value && parseFloat(target.value) < 0) {
+          target.value = '0';
+        }
+      }
+    };
+
+    const handlePaste = (e: ClipboardEvent) => {
+      const target = e.target as HTMLInputElement;
+      if (target && target.tagName === 'INPUT' && target.type === 'number') {
+        const text = e.clipboardData?.getData('text') || '';
+        if (text.includes('-') || text.includes('e') || text.includes('+') || text.includes('E')) {
+          e.preventDefault();
+          // Filter out disallowed characters and paste positive value
+          const cleanedText = text.replace(/[^0-9.]/g, '');
+          if (cleanedText) {
+            target.value = cleanedText;
+            target.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('input', handleInput, true);
+    window.addEventListener('paste', handlePaste, true);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('input', handleInput, true);
+      window.removeEventListener('paste', handlePaste, true);
+    };
+  }, []);
 
   // Form Data State
   const [formData, setFormData] = useState<FormData>({
@@ -56,7 +103,7 @@ function App() {
   const [wijk, setWijk] = useState('');
   const [gemeente, setGemeente] = useState('');
   const [gebouwhoogte, setGebouwhoogte] = useState('');
-  const [hasFloorPlans, setHasFloorPlans] = useState<boolean | null>(null);
+  const [hasFloorPlans, setHasFloorPlans] = useState<boolean | null>(true);
 
   const hydrateSeq = useRef(0);
 
@@ -264,6 +311,7 @@ function App() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setLoggedInUser('');
+    setSelectedRole(UserRole.CLIENT);
     setCurrentStep(Step.LOGIN);
   };
 
@@ -359,6 +407,7 @@ function App() {
     userName: loggedInUser || formData.fullName || 'User',
     selectedRole,
     onLogoClick: handleLogoNavigation,
+    profilePhoto: formData.profilePhoto,
   };
 
   if (!idbReady) {
@@ -369,7 +418,16 @@ function App() {
     );
   }
 
-  // Render appropriate page based on currentStep
+  // Render appropriate page based on currentStep or user role
+  if (isLoggedIn && selectedRole === UserRole.BACK_OFFICE) {
+    return (
+      <BackOfficePortal 
+        onLogout={handleLogout}
+        userName={loggedInUser}
+      />
+    );
+  }
+
   switch (currentStep) {
     case Step.LOGIN:
       return (
@@ -541,6 +599,7 @@ function App() {
           selectedRole={selectedRole}
           editorEmail={lastLoginEmail || formData.email || loggedInUser || 'editor'}
           onOpenClientDossier={handleOpenClientDossier}
+          profilePhoto={formData.profilePhoto}
         />
       );
     

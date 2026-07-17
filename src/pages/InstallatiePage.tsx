@@ -1,7 +1,7 @@
 // src/pages/InstallatiePage.tsx
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Check, ChevronDown, ChevronUp, X, Home } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, ChevronUp, X, Home, AlertTriangle } from 'lucide-react';
 import { AppSelect } from '../components/common/AppSelect';
 import { InstallatieSectionIcon } from '../components/common/InstallatieSectionIcon';
 import { TopBar } from '../components/common/TopBar';
@@ -201,9 +201,10 @@ interface InstallatiePageProps {
   onLogoClick?: () => void;
   userName: string;
   selectedRole: UserRole;
+  profilePhoto?: string;
 }
 
-const HEATING_TYPES = ['HR ketel', 'CV ketel', 'warmtepomp', 'stadsverwarming', 'Lucht'] as const;
+const HEATING_TYPES = ['HR ketel', 'CV ketel', 'warmtepomp', 'stadsverwarming', 'Lucht', 'gas-fired boiler'] as const;
 
 const LEGACY_HEATING_TYPE: Record<string, (typeof HEATING_TYPES)[number]> = {
   Warmtepomp: 'warmtepomp',
@@ -244,6 +245,27 @@ function toLocationSelectOptions(locations: string[]): { value: string; label: s
     { value: ROOM_ANDERS, label: ROOM_ANDERS },
   ];
 }
+const VENTILATION_OPWEKKER_OPTIONS = [
+  'ClimaRad Classic Solution',
+  'ORCON MVS-15RH CO2B',
+  'BUVA BOXSTREAM 2',
+  'ZEHNDER Comfofan Silent R',
+  'STORK CMF E P RFZ',
+  'ITHO CVE ECOFAN 2 PE',
+  'Duco RoofFan',
+  'Zehnder MX110',
+  'ORCON MVS-10RH CO2',
+  'ORCON MVS 15P',
+  'ClimaRad Maxibox',
+  'STORK RPV 17',
+  'STORK RPM 19/24 P',
+  'ORCON MVS 7 14',
+  'ORCON MVP 3W',
+  'ORCON MVS 15 RHB CO2',
+  'Zehnder MXD 210 D ZMV',
+  'Anders',
+];
+
 const EMISSION_TYPES = ['Radiatoren', 'Luchtverwarming', 'Vloerverwarming'] as const;
 const CONTROL_TYPES = ['Regeling in hoofdvertrek', 'Centrale regeling met naregeling per vertrek', 'Individuele regeling per vertrek', 'Overige regeling'] as const;
 const GENERATOR_TYPES = [
@@ -276,6 +298,7 @@ export const InstallatiePage = ({
   onLogoClick,
   userName,
   selectedRole,
+  profilePhoto,
 }: InstallatiePageProps) => {
   const { t } = useLanguage();
   const { toast, setToast, showToast } = useToast();
@@ -317,6 +340,12 @@ export const InstallatiePage = ({
     savedData.ventilationType ?? null,
   );
   const [ventilationCo2, setVentilationCo2] = useState<boolean | null>(savedData.ventilationCo2);
+  const [ventilationOpwekker, setVentilationOpwekker] = useState<string>(
+    savedData.ventilationOpwekker ?? '',
+  );
+  const [otherVentilationOpwekker, setOtherVentilationOpwekker] = useState<string>(
+    savedData.otherVentilationOpwekker ?? '',
+  );
   const [ventSensorsByFloor, setVentSensorsByFloor] = useState<Record<string, string[]>>(
     () => initialVentSensorsByFloor,
   );
@@ -447,6 +476,8 @@ export const InstallatiePage = ({
       case 'ventilation':
         setVentilationType(null);
         setVentilationCo2(null);
+        setVentilationOpwekker('');
+        setOtherVentilationOpwekker('');
         clearVentilationSensors();
         break;
       case 'heating':
@@ -572,6 +603,8 @@ export const InstallatiePage = ({
       selectedSections,
       ventilationType,
       ventilationCo2,
+      ventilationOpwekker,
+      otherVentilationOpwekker,
       ventilatieSensors: ventilatieSensorsFlat,
       ventilatieSensorsByFloor: ventSensorsByFloor,
       otherVentilatieText,
@@ -600,6 +633,8 @@ export const InstallatiePage = ({
     selectedSections,
     ventilationType,
     ventilationCo2,
+    ventilationOpwekker,
+    otherVentilationOpwekker,
     ventilatieSensorsFlat,
     ventSensorsByFloor,
     otherVentilatieText,
@@ -631,6 +666,8 @@ export const InstallatiePage = ({
       selectedSections,
       ventilationType,
       ventilationCo2,
+      ventilationOpwekker,
+      otherVentilationOpwekker,
       ventilatieSensors: ventilatieSensorsFlat,
       ventilatieSensorsByFloor: ventSensorsByFloor,
       otherVentilatieText,
@@ -660,6 +697,67 @@ export const InstallatiePage = ({
 
   const isBackOfficeOrInspector = selectedRole === UserRole.BACK_OFFICE || selectedRole === UserRole.INSPECTOR;
 
+  const isInstallatieSectionComplete = (sectionId: InstallatieSectionId): boolean => {
+    switch (sectionId) {
+      case 'ventilation':
+        if (!ventilationType) return false;
+        if (ventilationType === 'mechanical') {
+          if (!ventilationOpwekker) return false;
+          if (ventilationOpwekker === 'Anders' && !otherVentilationOpwekker.trim()) return false;
+          if (ventilationCo2 === null) return false;
+        }
+        return true;
+      case 'heating':
+        if (!heatingSystemType || !heatingLocation) return false;
+        if (heatingLocation === 'Anders' && !otherHeatingLocation.trim()) return false;
+        if (selectedRole !== UserRole.CLIENT) {
+          if (!emissionSystemType || !controlType) return false;
+        }
+        return true;
+      case 'tapwater':
+        if (heatingSameAsWater === null) return false;
+        if (heatingSameAsWater === false) {
+          if (!tapWaterGenerator || !tapWaterLocation) return false;
+          if (tapWaterLocation === 'Anders' && !tapWaterCustomLocation.trim()) return false;
+          if (selectedRole !== UserRole.CLIENT) {
+            if (!tapWaterDevice) return false;
+          }
+        }
+        return true;
+      case 'solar':
+        if (solarPanels === null) return false;
+        if (solarPanels === true) {
+          if (!solarPanelCount.trim()) return false;
+          if (selectedRole !== UserRole.CLIENT) {
+            if (!solarTiltAngle.trim() || !solarIntegration) return false;
+          }
+        }
+        return true;
+      case 'cooling':
+        if (activeCooling === null) return false;
+        if (activeCooling === true) {
+          if (coolingRoomsFlat.length === 0) return false;
+          if (selectedRole !== UserRole.CLIENT) {
+            if (!coolingGeneratorType || !coolingEmissionSystem) return false;
+          }
+        }
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  const [didAutoExpand, setDidAutoExpand] = useState(false);
+  useEffect(() => {
+    if (selectedSections.length === 0 || didAutoExpand) return;
+
+    const toExpand = selectedSections.filter((s) => !isInstallatieSectionComplete(s));
+    if (toExpand.length > 0) {
+      setExpandedSections(toExpand);
+    }
+    setDidAutoExpand(true);
+  }, [selectedSections, didAutoExpand]);
+
 
 
   return (
@@ -673,6 +771,7 @@ export const InstallatiePage = ({
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
         onLogoClick={onLogoClick}
+        profilePhoto={profilePhoto}
       />
 
       <AppSidebar 
@@ -706,597 +805,657 @@ export const InstallatiePage = ({
 
           <div className="space-y-4">
             {/* Ventilation Section */}
-            <div
-              className={`${isSectionSelected('ventilation') && isExpanded('ventilation') ? 'bg-[#e2e3dd]' : 'bg-white'} rounded-2xl shadow-sm border border-outline-variant/10 transition-all overflow-hidden`}
-            >
-              <div className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-          <button 
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTickClick('ventilation');
-                      }}
-                      className={`w-6 h-6 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${
-                        isSectionSelected('ventilation')
-                          ? 'bg-primary text-white'
-                          : 'border-2 border-gray-300 bg-white'
-                      }`}
-                      title={t('installatie.selectSection')}
-                    >
-                      {isSectionSelected('ventilation') && <Check size={14} strokeWidth={3} />}
-          </button>
-                    <InstallatieSectionIcon
-                      section="ventilation"
-                      selected={isSectionSelected('ventilation')}
-                    />
-                    <div
-                      className={`flex-1 min-w-0 ${isSectionSelected('ventilation') ? 'cursor-pointer' : ''}`}
-                      onClick={() => isSectionSelected('ventilation') && toggleSection('ventilation')}
-                    >
-                      <h2 className="font-display font-black text-lg text-primary">{t('installatie.ventilation')}</h2>
-                      {isSectionSelected('ventilation') && ventilationType && (
-                        <p className="text-[10px] font-black uppercase tracking-wider text-primary mt-0.5">
-                          {ventilationType === 'natural'
-                            ? t('installatie.ventilationTypes.natural')
-                            : `${t('installatie.ventilationTypes.mechanical')}${
-                                ventilationCo2 !== null
+            {(() => {
+              const isVentComplete = !isSectionSelected('ventilation') || isInstallatieSectionComplete('ventilation');
+              return (
+                <div
+                  className={`${isSectionSelected('ventilation') && isExpanded('ventilation') ? 'bg-[#e2e3dd]' : 'bg-white'} rounded-2xl shadow-sm border transition-all overflow-hidden ${
+                    !isVentComplete ? 'border-amber-500/30' : 'border-outline-variant/10'
+                  }`}
+                  style={!isVentComplete ? { background: 'rgba(245, 158, 11, 0.05)' } : undefined}
+                >
+                  <div className="p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTickClick('ventilation');
+                          }}
+                          className={`w-6 h-6 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${
+                            isSectionSelected('ventilation')
+                              ? 'bg-primary text-white'
+                              : 'border-2 border-gray-300 bg-white'
+                          }`}
+                          title={t('installatie.selectSection')}
+                        >
+                          {isSectionSelected('ventilation') && <Check size={14} strokeWidth={3} />}
+                        </button>
+                        <InstallatieSectionIcon
+                          section="ventilation"
+                          selected={isSectionSelected('ventilation')}
+                        />
+                        <div
+                          className={`flex-1 min-w-0 ${isSectionSelected('ventilation') ? 'cursor-pointer' : ''}`}
+                          onClick={() => isSectionSelected('ventilation') && toggleSection('ventilation')}
+                        >
+                          <div className="flex items-center gap-2">
+                            <h2 className="font-display font-black text-lg text-primary">{t('installatie.ventilation')}</h2>
+                            {!isVentComplete && (
+                              <AlertTriangle size={16} className="text-amber-500 flex-shrink-0 animate-pulse" />
+                            )}
+                          </div>
+                          {isSectionSelected('ventilation') && ventilationType && (
+                            <p className="text-[10px] font-black uppercase tracking-wider text-primary mt-0.5">
+                              {(() => {
+                                if (ventilationType === 'natural') {
+                                  return t('installatie.ventilationTypes.natural');
+                                }
+                                const opwekker = ventilationOpwekker === 'Anders' ? otherVentilationOpwekker : ventilationOpwekker;
+                                const co2Text = ventilationCo2 !== null
                                   ? ` • ${ventilationCo2 ? 'CO2 sensor present' : 'No CO2 sensor'}`
-                                  : ''
-                              }`}
-                        </p>
+                                  : '';
+                                return `${t('installatie.ventilationTypes.mechanical')}${opwekker ? ` • ${opwekker}` : ''}${co2Text}`;
+                              })()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {isSectionSelected('ventilation') && (
+                        <button
+                          type="button"
+                          className="text-gray-400 flex-shrink-0 ml-2"
+                          onClick={() => toggleSection('ventilation')}
+                        >
+                          {isExpanded('ventilation') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </button>
                       )}
                     </div>
                   </div>
-                  {isSectionSelected('ventilation') && (
-                    <button
-                      type="button"
-                      className="text-gray-400 flex-shrink-0 ml-2"
-                      onClick={() => toggleSection('ventilation')}
-                    >
-                      {isExpanded('ventilation') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </button>
-                  )}
-                </div>
-              </div>
 
-              <AnimatePresence>
-                {isSectionSelected('ventilation') && isExpanded('ventilation') && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-5 pb-5 pt-0 border-t border-gray-100 bg-white rounded-b-2xl space-y-4">
-                      <div className="pt-4">
-                        <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.ventilationType')}</p>
-                        <div className="flex gap-3">
-                          <button
-                            type="button"
-                            onClick={() => handleVentilationTypeClick('natural')}
-                            className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                              ventilationType === 'natural'
-                                ? 'bg-primary text-white shadow-md'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            {t('installatie.ventilationTypes.natural')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleVentilationTypeClick('mechanical')}
-                            className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                              ventilationType === 'mechanical'
-                                ? 'bg-primary text-white shadow-md'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            {t('installatie.ventilationTypes.mechanical')}
-                          </button>
+                  <AnimatePresence>
+                    {isSectionSelected('ventilation') && isExpanded('ventilation') && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-5 pb-5 pt-0 border-t border-gray-100 bg-white rounded-b-2xl space-y-4">
+                          <div className="pt-4">
+                            <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.ventilationType')}</p>
+                            <div className="flex gap-3">
+                              <button
+                                type="button"
+                                onClick={() => handleVentilationTypeClick('natural')}
+                                className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                                  ventilationType === 'natural'
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                {t('installatie.ventilationTypes.natural')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleVentilationTypeClick('mechanical')}
+                                className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                                  ventilationType === 'mechanical'
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                {t('installatie.ventilationTypes.mechanical')}
+                              </button>
+                            </div>
+                          </div>
+
+                          {ventilationType === 'mechanical' && (
+                            <div className="space-y-4 pt-4 border-t border-gray-100">
+                              {ventilationOpwekker !== 'Anders' ? (
+                                <AppSelect
+                                  label={t('installatie.ventilationOpwekker')}
+                                  value={ventilationOpwekker}
+                                  onChange={setVentilationOpwekker}
+                                  placeholder={t('installatie.selectVentilationOpwekker')}
+                                  options={VENTILATION_OPWEKKER_OPTIONS.map((val) => ({
+                                    value: val,
+                                    label: val === 'Anders' ? t('common.other') || 'Anders' : val,
+                                  }))}
+                                />
+                              ) : (
+                                <div>
+                                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
+                                    {t('installatie.ventilationOpwekker')}
+                                  </label>
+                                  <div className="relative">
+                                    <input
+                                      type="text"
+                                      value={otherVentilationOpwekker}
+                                      onChange={(e) => setOtherVentilationOpwekker(e.target.value)}
+                                      placeholder={t('installatie.enterVentilationOpwekker')}
+                                      className="w-full rounded-xl border border-gray-200 bg-white p-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                      autoFocus
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setVentilationOpwekker('');
+                                        setOtherVentilationOpwekker('');
+                                      }}
+                                      className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-primary"
+                                    >
+                                      <ChevronDown size={18} />
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                              <div className="pt-4 border-t border-gray-100">
+                                <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.ventilationCo2')}</p>
+                                <div className="flex gap-3">
+                                  <button 
+                                    type="button"
+                                    onClick={() => handleVentilationCo2Click(true)}
+                                    className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                                      ventilationCo2 === true
+                                        ? 'bg-primary text-white shadow-md'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    {t('common.yes')}
+                                  </button>
+                                  <button 
+                                    type="button"
+                                    onClick={() => handleVentilationCo2Click(false)}
+                                    className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                                      ventilationCo2 === false
+                                        ? 'bg-primary text-white shadow-md'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    {t('common.no')}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {ventilationCo2 === true && (
+                                <div className="space-y-4 pt-4 border-t border-gray-100">
+                                  <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-2">
+                                      {t('installatie.sensorLocation')}
+                                    </label>
+                                    <div className="space-y-3">
+                                      {uploadRoomsByFloor.map(({ floorId, rooms }) => (
+                                        <div key={floorId}>
+                                          <p className="text-[10px] font-black uppercase tracking-wider text-primary/80 mb-1.5">
+                                            {interiorFloorLabel(floorId, t)}
+                                          </p>
+                                          <div className="flex flex-wrap gap-2">
+                                            {rooms.map((loc) => (
+                                              <button
+                                                key={`${floorId}-${loc}`}
+                                                type="button"
+                                                onClick={() => {
+                                                  setVentSensorsByFloor((prev) => toggleFloorRoom(prev, floorId, loc));
+                                                }}
+                                                className={`px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
+                                                  (ventSensorsByFloor[floorId] ?? []).includes(loc)
+                                                    ? 'bg-primary text-white shadow-md'
+                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                }`}
+                                              >
+                                                {translateUploadRoom(loc, t)}
+                                              </button>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <div className="pt-3">
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditRoomsModalOpen(true)}
+                                        className="px-4 py-2 border border-primary/20 text-primary hover:bg-primary/5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
+                                      >
+                                        <Home size={12} />
+                                        {t('upload.editRoomsButton') || 'Edit House Design Rooms'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })()}
+
+            {/* Heating Section */}
+            {(() => {
+              const isHeatingComplete = !isSectionSelected('heating') || isInstallatieSectionComplete('heating');
+              return (
+                <div
+                  className={`${isSectionSelected('heating') && isExpanded('heating') ? 'bg-[#e2e3dd]' : 'bg-white'} rounded-2xl shadow-sm border transition-all overflow-hidden ${
+                    !isHeatingComplete ? 'border-amber-500/30' : 'border-outline-variant/10'
+                  }`}
+                  style={!isHeatingComplete ? { background: 'rgba(245, 158, 11, 0.05)' } : undefined}
+                >
+                  <div className="p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTickClick('heating');
+                          }}
+                          className={`w-6 h-6 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${
+                            isSectionSelected('heating')
+                              ? 'bg-primary text-white'
+                              : 'border-2 border-gray-300 bg-white'
+                          }`}
+                          title={t('installatie.selectSection')}
+                        >
+                          {isSectionSelected('heating') && <Check size={14} strokeWidth={3} />}
+                        </button>
+                        <InstallatieSectionIcon section="heating" selected={isSectionSelected('heating')} />
+                        <div
+                          className={`flex-1 min-w-0 ${isSectionSelected('heating') ? 'cursor-pointer' : ''}`}
+                          onClick={() => isSectionSelected('heating') && toggleSection('heating')}
+                        >
+                          <div className="flex items-center gap-2">
+                            <h2 className="font-display font-black text-lg text-primary">{t('installatie.heating')}</h2>
+                            {!isHeatingComplete && (
+                              <AlertTriangle size={16} className="text-amber-500 flex-shrink-0 animate-pulse" />
+                            )}
+                          </div>
+                          {isSectionSelected('heating') && heatingLocation && (
+                            <p className="text-[10px] font-black uppercase tracking-wider text-primary mt-0.5">
+                              {translateHeatingType(heatingSystemType, t)} • {heatingLocation === 'Anders' ? otherHeatingLocation : heatingLocation}
+                            </p>
+                          )}
+                      </div>
+                      </div>
+                      {isSectionSelected('heating') && (
+                        <button
+                          type="button"
+                          className="text-gray-400 flex-shrink-0 ml-2"
+                          onClick={() => toggleSection('heating')}
+                        >
+                          {isExpanded('heating') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <AnimatePresence>
+                    {isSectionSelected('heating') && isExpanded('heating') && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-5 pb-5 pt-0 border-t border-gray-100 bg-white rounded-b-2xl space-y-4">
+                          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <AppSelect
+                              label={t('installatie.heatingType')}
+                              value={heatingSystemType}
+                              onChange={setHeatingSystemType}
+                              placeholder={t('installatie.selectHeatingType')}
+                              options={HEATING_TYPES.map((type) => ({
+                                value: type,
+                                label: translateHeatingType(type, t),
+                              }))}
+                            />
+                            
+                            {/* Heating Location with Anders pattern */}
+                            <div>
+                              <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
+                                {t('installatie.location')}
+                              </label>
+                              {heatingLocation !== 'Anders' ? (
+                                <AppSelect
+                                  value={heatingLocation}
+                                  onChange={setHeatingLocation}
+                                  placeholder={t('installatie.selectLocation')}
+                                  options={locationSelectOptions}
+                                  searchable={true}
+                                />
+                              ) : (
+                                <div className="relative">
+                                  <input
+                                    type="text"
+                                    value={otherHeatingLocation}
+                                    onChange={(e) => setOtherHeatingLocation(e.target.value)}
+                                    placeholder={t('installatie.enterLocation')}
+                                    className="w-full rounded-xl border border-gray-200 bg-white p-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                    autoFocus
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setHeatingLocation('');
+                                      setOtherHeatingLocation('');
+                                    }}
+                                    className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-primary"
+                                  >
+                                    <ChevronDown size={18} />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {isBackOfficeOrInspector && (
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 pt-4 border-t border-gray-100">
+                              <AppSelect
+                                label={t('installatie.emissionType')}
+                                value={emissionSystemType}
+                                onChange={setEmissionSystemType}
+                                placeholder={t('installatie.selectEmissionType')}
+                                options={EMISSION_TYPES.map((type) => ({ value: type, label: type }))}
+                              />
+                              <AppSelect
+                                label={t('installatie.controlType')}
+                                value={controlType}
+                                onChange={setControlType}
+                                placeholder={t('installatie.selectControlType')}
+                                options={CONTROL_TYPES.map((type) => ({ value: type, label: type }))}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })()}
+
+            {/* Tap Water Section */}
+            {(() => {
+              const isTapwaterComplete = !isSectionSelected('tapwater') || isInstallatieSectionComplete('tapwater');
+              return (
+                <div
+                  className={`${isSectionSelected('tapwater') && isExpanded('tapwater') ? 'bg-[#e2e3dd]' : 'bg-white'} rounded-2xl shadow-sm border transition-all overflow-hidden ${
+                    !isTapwaterComplete ? 'border-amber-500/30' : 'border-outline-variant/10'
+                  }`}
+                  style={!isTapwaterComplete ? { background: 'rgba(245, 158, 11, 0.05)' } : undefined}
+                >
+                  <div className="p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTickClick('tapwater');
+                          }}
+                          className={`w-6 h-6 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${
+                            isSectionSelected('tapwater')
+                              ? 'bg-primary text-white'
+                              : 'border-2 border-gray-300 bg-white'
+                          }`}
+                          title={t('installatie.selectSection')}
+                        >
+                          {isSectionSelected('tapwater') && <Check size={14} strokeWidth={3} />}
+                        </button>
+                        <InstallatieSectionIcon section="tapwater" selected={isSectionSelected('tapwater')} />
+                        <div
+                          className={`flex-1 min-w-0 ${isSectionSelected('tapwater') ? 'cursor-pointer' : ''}`}
+                          onClick={() => isSectionSelected('tapwater') && toggleSection('tapwater')}
+                        >
+                          <div className="flex items-center gap-2">
+                            <h2 className="font-display font-black text-lg text-primary">{t('installatie.tapwater')}</h2>
+                            {!isTapwaterComplete && (
+                              <AlertTriangle size={16} className="text-amber-500 flex-shrink-0 animate-pulse" />
+                            )}
+                          </div>
+                          {isSectionSelected('tapwater') && heatingSameAsWater !== null && (
+                            <p className="text-[10px] font-black uppercase tracking-wider text-primary mt-0.5">
+                              {heatingSameAsWater ? 'Same as heating' : 'Separate system'}
+                            </p>
+                          )}
                         </div>
                       </div>
+                      {isSectionSelected('tapwater') && (
+                        <button
+                          type="button"
+                          className="text-gray-400 flex-shrink-0 ml-2"
+                          onClick={() => toggleSection('tapwater')}
+                        >
+                          {isExpanded('tapwater') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
-                      {ventilationType === 'mechanical' && (
-                        <div className="space-y-4 pt-4 border-t border-gray-100">
+                  <AnimatePresence>
+                    {isSectionSelected('tapwater') && isExpanded('tapwater') && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-5 pb-5 pt-0 border-t border-gray-100 bg-white rounded-b-2xl space-y-4">
                           <div>
-                            <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.ventilationCo2')}</p>
-                <div className="flex gap-3">
-                  <button 
-                                type="button"
-                                onClick={() => handleVentilationCo2Click(true)}
+                            <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.tapwaterSame')}</p>
+                            <div className="flex gap-3">
+                              <button 
+                                onClick={() => handleHeatingSameAsWaterClick(true)}
                                 className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                                  ventilationCo2 === true
+                                  heatingSameAsWater === true
                                     ? 'bg-primary text-white shadow-md'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                               >
                                 {t('common.yes')}
-                  </button>
-                  <button 
-                                type="button"
-                                onClick={() => handleVentilationCo2Click(false)}
+                              </button>
+                              <button 
+                                onClick={() => handleHeatingSameAsWaterClick(false)}
                                 className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                                  ventilationCo2 === false
+                                  heatingSameAsWater === false
                                     ? 'bg-primary text-white shadow-md'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                               >
                                 {t('common.no')}
-                  </button>
-                </div>
-              </div>
+                              </button>
+                            </div>
+                          </div>
 
-                          {ventilationCo2 === true && (
+                          {heatingSameAsWater === false && (
                             <div className="space-y-4 pt-4 border-t border-gray-100">
+                              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <AppSelect
+                                  label={t('installatie.generatorType')}
+                                  value={tapWaterGenerator}
+                                  onChange={setTapWaterGenerator}
+                                  placeholder={t('installatie.selectGeneratorType')}
+                                  options={TAP_WATER_GENERATORS.map((type) => ({
+                                    value: type,
+                                    label: type,
+                                  }))}
+                                />
+                                {isBackOfficeOrInspector && (
+                                  <AppSelect
+                                    label={t('installatie.deviceType')}
+                                    value={tapWaterDevice}
+                                    onChange={setTapWaterDevice}
+                                    placeholder={t('installatie.selectDeviceType')}
+                                    options={TAP_WATER_DEVICES.map((type) => ({
+                                      value: type,
+                                      label: type,
+                                    }))}
+                                  />
+                                )}
+                              </div>
+                              
+                              {/* Tap Water Location with Anders pattern */}
                               <div>
-                                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-2">
-                                  {t('installatie.sensorLocation')}
+                                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
+                                  {t('installatie.location')}
                                 </label>
-                                <div className="space-y-3">
-                                  {uploadRoomsByFloor.map(({ floorId, rooms }) => (
-                                    <div key={floorId}>
-                                      <p className="text-[10px] font-black uppercase tracking-wider text-primary/80 mb-1.5">
-                                        {interiorFloorLabel(floorId, t)}
-                                      </p>
-                                      <div className="flex flex-wrap gap-2">
-                                        {rooms.map((loc) => (
-                                          <button
-                                            key={`${floorId}-${loc}`}
-                                            type="button"
-                                            onClick={() => {
-                                              setVentSensorsByFloor((prev) => toggleFloorRoom(prev, floorId, loc));
-                                            }}
-                                            className={`px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
-                                              (ventSensorsByFloor[floorId] ?? []).includes(loc)
-                                                ? 'bg-primary text-white shadow-md'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                            }`}
-                                          >
-                                            {translateUploadRoom(loc, t)}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                                <div className="pt-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditRoomsModalOpen(true)}
-                                    className="px-4 py-2 border border-primary/20 text-primary hover:bg-primary/5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
-                                  >
-                                    <Home size={12} />
-                                    {t('upload.editRoomsButton') || 'Edit House Design Rooms'}
-                                  </button>
-                                </div>
+                                {tapWaterLocation !== 'Anders' ? (
+                                  <AppSelect
+                                    value={tapWaterLocation}
+                                    onChange={setTapWaterLocation}
+                                    placeholder={t('installatie.selectLocation')}
+                                    options={locationSelectOptions}
+                                    searchable={true}
+                                  />
+                                ) : (
+                                  <div className="relative">
+                                    <input
+                                      type="text"
+                                      value={tapWaterCustomLocation}
+                                      onChange={(e) => setTapWaterCustomLocation(e.target.value)}
+                                      placeholder="Enter custom location name..."
+                                      className="w-full rounded-xl border border-gray-200 bg-white p-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                      autoFocus
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setTapWaterLocation('');
+                                        setTapWaterCustomLocation('');
+                                      }}
+                                      className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-primary"
+                                    >
+                                      <ChevronDown size={18} />
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           )}
                         </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Heating Section */}
-            <div
-              className={`${isSectionSelected('heating') && isExpanded('heating') ? 'bg-[#e2e3dd]' : 'bg-white'} rounded-2xl shadow-sm border border-outline-variant/10 transition-all overflow-hidden`}
-            >
-              <div className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTickClick('heating');
-                      }}
-                      className={`w-6 h-6 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${
-                        isSectionSelected('heating')
-                          ? 'bg-primary text-white'
-                          : 'border-2 border-gray-300 bg-white'
-                      }`}
-                      title={t('installatie.selectSection')}
-                    >
-                      {isSectionSelected('heating') && <Check size={14} strokeWidth={3} />}
-                    </button>
-                    <InstallatieSectionIcon section="heating" selected={isSectionSelected('heating')} />
-                    <div
-                      className={`flex-1 min-w-0 ${isSectionSelected('heating') ? 'cursor-pointer' : ''}`}
-                      onClick={() => isSectionSelected('heating') && toggleSection('heating')}
-                    >
-                      <h2 className="font-display font-black text-lg text-primary">{t('installatie.heating')}</h2>
-                      {isSectionSelected('heating') && heatingLocation && (
-                        <p className="text-[10px] font-black uppercase tracking-wider text-primary mt-0.5">
-                          {translateHeatingType(heatingSystemType, t)} • {heatingLocation === 'Anders' ? otherHeatingLocation : heatingLocation}
-                        </p>
-                      )}
-                  </div>
-                  </div>
-                  {isSectionSelected('heating') && (
-                    <button
-                      type="button"
-                      className="text-gray-400 flex-shrink-0 ml-2"
-                      onClick={() => toggleSection('heating')}
-                    >
-                      {isExpanded('heating') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </button>
-                  )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </div>
-
-              <AnimatePresence>
-                {isSectionSelected('heating') && isExpanded('heating') && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-5 pb-5 pt-0 border-t border-gray-100 bg-white rounded-b-2xl space-y-4">
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <AppSelect
-                          label={t('installatie.heatingType')}
-                          value={heatingSystemType}
-                          onChange={setHeatingSystemType}
-                          placeholder={t('installatie.selectHeatingType')}
-                          options={HEATING_TYPES.map((type) => ({
-                            value: type,
-                            label: translateHeatingType(type, t),
-                          }))}
-                        />
-                        
-                        {/* Heating Location with Anders pattern */}
-                  <div>
-                          <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
-                            {t('installatie.location')}
-                          </label>
-                          {heatingLocation !== 'Anders' ? (
-                            <AppSelect
-                              value={heatingLocation}
-                              onChange={setHeatingLocation}
-                              placeholder={t('installatie.selectLocation')}
-                              options={locationSelectOptions}
-                              searchable={true}
-                            />
-                          ) : (
-                            <div className="relative">
-                              <input
-                                type="text"
-                                value={otherHeatingLocation}
-                                onChange={(e) => setOtherHeatingLocation(e.target.value)}
-                                placeholder={t('installatie.enterLocation')}
-                                className="w-full rounded-xl border border-gray-200 bg-white p-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                autoFocus
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setHeatingLocation('');
-                                  setOtherHeatingLocation('');
-                                }}
-                                className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-primary"
-                              >
-                                <ChevronDown size={18} />
-                              </button>
-                  </div>
-                          )}
-                </div>
-              </div>
-
-                      {isBackOfficeOrInspector && (
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 pt-4 border-t border-gray-100">
-                          <AppSelect
-                            label={t('installatie.emissionType')}
-                            value={emissionSystemType}
-                            onChange={setEmissionSystemType}
-                            placeholder={t('installatie.selectEmissionType')}
-                            options={EMISSION_TYPES.map((type) => ({ value: type, label: type }))}
-                          />
-                          <AppSelect
-                            label={t('installatie.controlType')}
-                            value={controlType}
-                            onChange={setControlType}
-                            placeholder={t('installatie.selectControlType')}
-                            options={CONTROL_TYPES.map((type) => ({ value: type, label: type }))}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Tap Water Section */}
-            <div
-              className={`${isSectionSelected('tapwater') && isExpanded('tapwater') ? 'bg-[#e2e3dd]' : 'bg-white'} rounded-2xl shadow-sm border border-outline-variant/10 transition-all overflow-hidden`}
-            >
-              <div className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTickClick('tapwater');
-                      }}
-                      className={`w-6 h-6 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${
-                        isSectionSelected('tapwater')
-                          ? 'bg-primary text-white'
-                          : 'border-2 border-gray-300 bg-white'
-                      }`}
-                      title={t('installatie.selectSection')}
-                    >
-                      {isSectionSelected('tapwater') && <Check size={14} strokeWidth={3} />}
-                    </button>
-                    <InstallatieSectionIcon section="tapwater" selected={isSectionSelected('tapwater')} />
-                    <div
-                      className={`flex-1 min-w-0 ${isSectionSelected('tapwater') ? 'cursor-pointer' : ''}`}
-                      onClick={() => isSectionSelected('tapwater') && toggleSection('tapwater')}
-                    >
-                      <h2 className="font-display font-black text-lg text-primary">{t('installatie.tapwater')}</h2>
-                      {isSectionSelected('tapwater') && heatingSameAsWater !== null && (
-                        <p className="text-[10px] font-black uppercase tracking-wider text-primary mt-0.5">
-                          {heatingSameAsWater ? 'Same as heating' : 'Separate system'}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  {isSectionSelected('tapwater') && (
-                    <button
-                      type="button"
-                      className="text-gray-400 flex-shrink-0 ml-2"
-                      onClick={() => toggleSection('tapwater')}
-                    >
-                      {isExpanded('tapwater') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {isSectionSelected('tapwater') && isExpanded('tapwater') && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-5 pb-5 pt-0 border-t border-gray-100 bg-white rounded-b-2xl space-y-4">
-                      <div>
-                        <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.tapwaterSame')}</p>
-                <div className="flex gap-3">
-                  <button 
-                            onClick={() => handleHeatingSameAsWaterClick(true)}
-                            className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                              heatingSameAsWater === true
-                                ? 'bg-primary text-white shadow-md'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            {t('common.yes')}
-                  </button>
-                  <button 
-                            onClick={() => handleHeatingSameAsWaterClick(false)}
-                            className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                              heatingSameAsWater === false
-                                ? 'bg-primary text-white shadow-md'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            {t('common.no')}
-                  </button>
-                </div>
-              </div>
-
-                      {heatingSameAsWater === false && (
-                        <div className="space-y-4 pt-4 border-t border-gray-100">
-                          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <AppSelect
-                              label={t('installatie.generatorType')}
-                              value={tapWaterGenerator}
-                              onChange={setTapWaterGenerator}
-                              placeholder={t('installatie.selectGeneratorType')}
-                              options={TAP_WATER_GENERATORS.map((type) => ({
-                                value: type,
-                                label: type,
-                              }))}
-                            />
-                            {isBackOfficeOrInspector && (
-                              <AppSelect
-                                label={t('installatie.deviceType')}
-                                value={tapWaterDevice}
-                                onChange={setTapWaterDevice}
-                                placeholder={t('installatie.selectDeviceType')}
-                                options={TAP_WATER_DEVICES.map((type) => ({
-                                  value: type,
-                                  label: type,
-                                }))}
-                              />
-                            )}
-                          </div>
-                          
-                          {/* Tap Water Location with Anders pattern */}
-                          <div>
-                            <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
-                              {t('installatie.location')}
-                            </label>
-                            {tapWaterLocation !== 'Anders' ? (
-                              <AppSelect
-                                value={tapWaterLocation}
-                                onChange={setTapWaterLocation}
-                                placeholder={t('installatie.selectLocation')}
-                                options={locationSelectOptions}
-                                searchable={true}
-                              />
-                            ) : (
-                              <div className="relative">
-                                <input
-                                  type="text"
-                                  value={tapWaterCustomLocation}
-                                  onChange={(e) => setTapWaterCustomLocation(e.target.value)}
-                                  placeholder="Enter custom location name..."
-                                  className="w-full rounded-xl border border-gray-200 bg-white p-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                  autoFocus
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setTapWaterLocation('');
-                                    setTapWaterCustomLocation('');
-                                  }}
-                                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-primary"
-                                >
-                                  <ChevronDown size={18} />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+              );
+            })()}
 
             {/* Solar Panels Section */}
-            <div
-              className={`${isSectionSelected('solar') && isExpanded('solar') ? 'bg-[#e2e3dd]' : 'bg-white'} rounded-2xl shadow-sm border border-outline-variant/10 transition-all overflow-hidden`}
-            >
-              <div className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTickClick('solar');
-                      }}
-                      className={`w-6 h-6 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${
-                        isSectionSelected('solar')
-                          ? 'bg-primary text-white'
-                          : 'border-2 border-gray-300 bg-white'
-                      }`}
-                      title={t('installatie.selectSection')}
-                    >
-                      {isSectionSelected('solar') && <Check size={14} strokeWidth={3} />}
-                    </button>
-                    <InstallatieSectionIcon section="solar" selected={isSectionSelected('solar')} />
-                    <div
-                      className={`flex-1 min-w-0 ${isSectionSelected('solar') ? 'cursor-pointer' : ''}`}
-                      onClick={() => isSectionSelected('solar') && toggleSection('solar')}
-                    >
-                      <h2 className="font-display font-black text-lg text-primary">{t('installatie.solar')}</h2>
-                      {isSectionSelected('solar') && solarPanels !== null && (
-                        <p className="text-[10px] font-black uppercase tracking-wider text-primary mt-0.5">
-                          {solarPanels ? `${solarPanelCount || '?'} panels installed` : 'No solar panels'}
-                        </p>
+            {(() => {
+              const isSolarComplete = !isSectionSelected('solar') || isInstallatieSectionComplete('solar');
+              return (
+                <div
+                  className={`${isSectionSelected('solar') && isExpanded('solar') ? 'bg-[#e2e3dd]' : 'bg-white'} rounded-2xl shadow-sm border transition-all overflow-hidden ${
+                    !isSolarComplete ? 'border-amber-500/30' : 'border-outline-variant/10'
+                  }`}
+                  style={!isSolarComplete ? { background: 'rgba(245, 158, 11, 0.05)' } : undefined}
+                >
+                  <div className="p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTickClick('solar');
+                          }}
+                          className={`w-6 h-6 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${
+                            isSectionSelected('solar')
+                              ? 'bg-primary text-white'
+                              : 'border-2 border-gray-300 bg-white'
+                          }`}
+                          title={t('installatie.selectSection')}
+                        >
+                          {isSectionSelected('solar') && <Check size={14} strokeWidth={3} />}
+                        </button>
+                        <InstallatieSectionIcon section="solar" selected={isSectionSelected('solar')} />
+                        <div
+                          className={`flex-1 min-w-0 ${isSectionSelected('solar') ? 'cursor-pointer' : ''}`}
+                          onClick={() => isSectionSelected('solar') && toggleSection('solar')}
+                        >
+                          <div className="flex items-center gap-2">
+                            <h2 className="font-display font-black text-lg text-primary">{t('installatie.solar')}</h2>
+                            {!isSolarComplete && (
+                              <AlertTriangle size={16} className="text-amber-500 flex-shrink-0 animate-pulse" />
+                            )}
+                          </div>
+                          {isSectionSelected('solar') && solarPanels !== null && (
+                            <p className="text-[10px] font-black uppercase tracking-wider text-primary mt-0.5">
+                              {solarPanels ? `${solarPanelCount || '?'} panels installed` : 'No solar panels'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {isSectionSelected('solar') && (
+                        <button
+                          type="button"
+                          className="text-gray-400 flex-shrink-0 ml-2"
+                          onClick={() => toggleSection('solar')}
+                        >
+                          {isExpanded('solar') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </button>
                       )}
                     </div>
                   </div>
-                  {isSectionSelected('solar') && (
-                    <button
-                      type="button"
-                      className="text-gray-400 flex-shrink-0 ml-2"
-                      onClick={() => toggleSection('solar')}
-                    >
-                      {isExpanded('solar') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </button>
-                  )}
-                </div>
-              </div>
 
-              <AnimatePresence>
-                {isSectionSelected('solar') && isExpanded('solar') && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-5 pb-5 pt-0 border-t border-gray-100 bg-white rounded-b-2xl space-y-4">
-                      <div>
-                        <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.solarInstalled')}</p>
-                <div className="flex gap-3">
-                  <button 
-                            onClick={() => handleSolarPanelsClick(true)}
-                            className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                              solarPanels === true
-                                ? 'bg-primary text-white shadow-md'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            {t('common.yes')}
-                  </button>
-                  <button 
-                            onClick={() => handleSolarPanelsClick(false)}
-                            className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                              solarPanels === false
-                                ? 'bg-primary text-white shadow-md'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            {t('common.no')}
-                  </button>
-                </div>
-                      </div>
+                  <AnimatePresence>
+                    {isSectionSelected('solar') && isExpanded('solar') && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-5 pb-5 pt-0 border-t border-gray-100 bg-white rounded-b-2xl space-y-4">
+                          <div>
+                            <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.solarInstalled')}</p>
+                            <div className="flex gap-3">
+                              <button 
+                                onClick={() => handleSolarPanelsClick(true)}
+                                className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                                  solarPanels === true
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                {t('common.yes')}
+                              </button>
+                              <button 
+                                onClick={() => handleSolarPanelsClick(false)}
+                                className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                                  solarPanels === false
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                {t('common.no')}
+                              </button>
+                            </div>
+                          </div>
 
-                {solarPanels === true && (
-                        <div className="space-y-4 pt-4 border-t border-gray-100">
-                          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            {/* Number of Panels - No limit (max removed) */}
-                    <div>
-                              <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
-                                {t('installatie.panelCount')}
-                              </label>
-                              <input
-                                type="number"
-                                min="0"
-                                step="1"
-                                value={solarPanelCount}
-                                onChange={(e) => {
-                                  const value = parseInt(e.target.value, 10);
-                                  if (e.target.value === '') {
-                                    setSolarPanelCount('');
-                                  } else if (!isNaN(value) && value >= 0) {
-                                    setSolarPanelCount(e.target.value);
-                                  }
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === '-' || e.key === 'e' || e.key === 'E') {
-                                    e.preventDefault();
-                                  }
-                                }}
-                                placeholder="8"
-                                className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                              />
-                    </div>
-                            
-                            {/* Tilt Angle */}
-                            {isBackOfficeOrInspector && (
-                    <div>
-                                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
-                                  {t('installatie.tiltAngle')}
-                                </label>
-                                <div className="flex items-center">
+                          {solarPanels === true && (
+                            <div className="space-y-4 pt-4 border-t border-gray-100">
+                              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                {/* Number of Panels - No limit (max removed) */}
+                                <div>
+                                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
+                                    {t('installatie.panelCount')}
+                                  </label>
                                   <input
                                     type="number"
                                     min="0"
-                                    max="90"
                                     step="1"
-                                    value={solarTiltAngle}
+                                    value={solarPanelCount}
                                     onChange={(e) => {
                                       const value = parseInt(e.target.value, 10);
                                       if (e.target.value === '') {
-                                        setSolarTiltAngle('');
-                                      } else if (!isNaN(value) && value >= 0 && value <= 90) {
-                                        setSolarTiltAngle(e.target.value);
+                                        setSolarPanelCount('');
+                                      } else if (!isNaN(value) && value >= 0) {
+                                        setSolarPanelCount(e.target.value);
                                       }
                                     }}
                                     onKeyDown={(e) => {
@@ -1304,218 +1463,264 @@ export const InstallatiePage = ({
                                         e.preventDefault();
                                       }
                                     }}
-                                    placeholder="35°"
+                                    placeholder="8"
                                     className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                                   />
-                                  <span className="ml-2 text-sm text-gray-500">°</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-                          
-                          {/* Building Integration */}
-                          {isBackOfficeOrInspector && (
-                            <AppSelect
-                              label={t('installatie.buildingIntegration')}
-                              value={solarIntegration}
-                              onChange={setSolarIntegration}
-                              placeholder={t('installatie.selectIntegrationType')}
-                              options={SOLAR_INTEGRATIONS.map((type) => ({
-                                value: type,
-                                label: type,
-                              }))}
-                            />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                                </div>
 
-            {/* Cooling Section */}
-            <div
-              className={`${isSectionSelected('cooling') && isExpanded('cooling') ? 'bg-[#e2e3dd]' : 'bg-white'} rounded-2xl shadow-sm border border-outline-variant/10 transition-all overflow-hidden`}
-            >
-              <div className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <button 
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTickClick('cooling');
-                      }}
-                      className={`w-6 h-6 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${
-                        isSectionSelected('cooling')
-                          ? 'bg-primary text-white'
-                          : 'border-2 border-gray-300 bg-white'
-                      }`}
-                      title={t('installatie.selectSection')}
-                    >
-                      {isSectionSelected('cooling') && <Check size={14} strokeWidth={3} />}
-                  </button>
-                    <InstallatieSectionIcon section="cooling" selected={isSectionSelected('cooling')} />
-                    <div
-                      className={`flex-1 min-w-0 ${isSectionSelected('cooling') ? 'cursor-pointer' : ''}`}
-                      onClick={() => isSectionSelected('cooling') && toggleSection('cooling')}
-                    >
-                      <h2 className="font-display font-black text-lg text-primary">{t('installatie.cooling')}</h2>
-                      {isSectionSelected('cooling') && activeCooling !== null && (
-                        <p className="text-[10px] font-black uppercase tracking-wider text-primary mt-0.5">
-                          {activeCooling
-                            ? `${countRoomsByFloor(coolRoomsByFloor)} room(s) have cooling`
-                            : 'No active cooling'}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  {isSectionSelected('cooling') && (
-                  <button 
-                      type="button"
-                      className="text-gray-400 flex-shrink-0 ml-2"
-                      onClick={() => toggleSection('cooling')}
-                  >
-                      {isExpanded('cooling') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                  </button>
-                  )}
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {isSectionSelected('cooling') && isExpanded('cooling') && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-5 pb-5 pt-0 border-t border-gray-100 bg-white rounded-b-2xl space-y-4">
-                      <div>
-                        <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.activeCooling')}</p>
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => handleActiveCoolingClick(true)}
-                            className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                              activeCooling === true
-                                ? 'bg-primary text-white shadow-md'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            {t('common.yes')}
-                          </button>
-                          <button
-                            onClick={() => handleActiveCoolingClick(false)}
-                            className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                              activeCooling === false
-                                ? 'bg-primary text-white shadow-md'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            {t('common.no')}
-                          </button>
-              </div>
-            </div>
-
-                      {activeCooling === true && (
-                        <div className="space-y-4 pt-4 border-t border-gray-100">
-                          <div>
-                            <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-2">
-                              {t('installatie.coolingRooms')}
-                            </label>
-                            <div className="space-y-3">
-                              {(() => {
-                                const allowedBases = ['WOONKAMER', 'SLAAPKAMER', 'KEUKEN', 'EETKAMER'];
-                                const filteredFloors = uploadRoomsByFloor
-                                  .map(({ floorId, rooms }) => ({
-                                    floorId,
-                                    rooms: rooms.filter((room) => {
-                                      const base = room.replace(/\s+\d+$/, '').toUpperCase();
-                                      return allowedBases.includes(base);
-                                    }),
-                                  }))
-                                  .filter(({ rooms }) => rooms.length > 0);
-
-                                if (filteredFloors.length === 0) {
-                                  return (
-                                    <p className="text-xs text-gray-500 italic">
-                                      {t('installatie.noCoolingRoomsAvailable')}
-                                    </p>
-                                  );
-                                }
-
-                                return filteredFloors.map(({ floorId, rooms }) => (
-                                  <div key={floorId}>
-                                    <p className="text-[10px] font-black uppercase tracking-wider text-primary/80 mb-1.5">
-                                      {interiorFloorLabel(floorId, t)}
-                                    </p>
-                                    <div className="flex flex-wrap gap-2">
-                                      {rooms.map((room) => (
-                                        <button
-                                          key={`${floorId}-${room}`}
-                                          type="button"
-                                          onClick={() => {
-                                            setCoolRoomsByFloor((prev) => toggleFloorRoom(prev, floorId, room));
-                                          }}
-                                          className={`px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
-                                            (coolRoomsByFloor[floorId] ?? []).includes(room)
-                                              ? 'bg-primary text-white shadow-md'
-                                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                          }`}
-                                        >
-                                          {translateUploadRoom(room, t)}
-                                        </button>
-                                      ))}
+                                {/* Tilt Angle */}
+                                {isBackOfficeOrInspector && (
+                                  <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
+                                      {t('installatie.tiltAngle')}
+                                    </label>
+                                    <div className="flex items-center">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="90"
+                                        step="1"
+                                        value={solarTiltAngle}
+                                        onChange={(e) => {
+                                          const value = parseInt(e.target.value, 10);
+                                          if (e.target.value === '') {
+                                            setSolarTiltAngle('');
+                                          } else if (!isNaN(value) && value >= 0 && value <= 90) {
+                                            setSolarTiltAngle(e.target.value);
+                                          }
+                                        }}
+                                        onKeyDown={(e) => {
+                                          if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+                                            e.preventDefault();
+                                          }
+                                        }}
+                                        placeholder="35°"
+                                        className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                      />
+                                      <span className="ml-2 text-sm text-gray-500">°</span>
                                     </div>
                                   </div>
-                                ));
-                              })()}
-                            </div>
-                            <div className="pt-3">
-                              <button
-                                type="button"
-                                onClick={() => setEditRoomsModalOpen(true)}
-                                className="px-4 py-2 border border-primary/20 text-primary hover:bg-primary/5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
-                              >
-                                <Home size={12} />
-                                {t('upload.editRoomsButton') || 'Edit House Design Rooms'}
-                              </button>
-                            </div>
-                          </div>
+                                )}
+                              </div>
 
-                          {isBackOfficeOrInspector && (
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 pt-4">
-                              <AppSelect
-                                label={t('installatie.generatorType')}
-                                value={coolingGeneratorType}
-                                onChange={setCoolingGeneratorType}
-                                placeholder={t('installatie.selectGeneratorType')}
-                                options={GENERATOR_TYPES.map((type) => ({
-                                  value: type,
-                                  label: type,
-                                }))}
-                                searchable={true}
-                              />
-                              <AppSelect
-                                label={t('installatie.emissionSystem')}
-                                value={coolingEmissionSystem}
-                                onChange={setCoolingEmissionSystem}
-                                placeholder={t('installatie.selectEmissionSystem')}
-                                options={EMISSION_SYSTEMS.map((type) => ({
-                                  value: type,
-                                  label: type,
-                                }))}
-                              />
+                              {/* Building Integration */}
+                              {isBackOfficeOrInspector && (
+                                <AppSelect
+                                  label={t('installatie.buildingIntegration')}
+                                  value={solarIntegration}
+                                  onChange={setSolarIntegration}
+                                  placeholder={t('installatie.selectIntegrationType')}
+                                  options={SOLAR_INTEGRATIONS.map((type) => ({
+                                    value: type,
+                                    label: type,
+                                  }))}
+                                />
+                              )}
                             </div>
                           )}
                         </div>
-                      )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })()}
+
+            {/* Cooling Section */}
+                {(() => {
+                  const isCoolingComplete = !isSectionSelected('cooling') || isInstallatieSectionComplete('cooling');
+                  return (
+                    <div
+                      className={`${isSectionSelected('cooling') && isExpanded('cooling') ? 'bg-[#e2e3dd]' : 'bg-white'} rounded-2xl shadow-sm border transition-all overflow-hidden ${
+                        !isCoolingComplete ? 'border-amber-500/30' : 'border-outline-variant/10'
+                      }`}
+                      style={!isCoolingComplete ? { background: 'rgba(245, 158, 11, 0.05)' } : undefined}
+                    >
+                      <div className="p-5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <button 
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleTickClick('cooling');
+                              }}
+                              className={`w-6 h-6 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${
+                                isSectionSelected('cooling')
+                                  ? 'bg-primary text-white'
+                                  : 'border-2 border-gray-300 bg-white'
+                              }`}
+                              title={t('installatie.selectSection')}
+                            >
+                              {isSectionSelected('cooling') && <Check size={14} strokeWidth={3} />}
+                            </button>
+                            <InstallatieSectionIcon section="cooling" selected={isSectionSelected('cooling')} />
+                            <div
+                              className={`flex-1 min-w-0 ${isSectionSelected('cooling') ? 'cursor-pointer' : ''}`}
+                              onClick={() => isSectionSelected('cooling') && toggleSection('cooling')}
+                            >
+                              <div className="flex items-center gap-2">
+                                <h2 className="font-display font-black text-lg text-primary">{t('installatie.cooling')}</h2>
+                                {!isCoolingComplete && (
+                                  <AlertTriangle size={16} className="text-amber-500 flex-shrink-0 animate-pulse" />
+                                )}
+                              </div>
+                              {isSectionSelected('cooling') && activeCooling !== null && (
+                                <p className="text-[10px] font-black uppercase tracking-wider text-primary mt-0.5">
+                                  {activeCooling
+                                    ? `${countRoomsByFloor(coolRoomsByFloor)} room(s) have cooling`
+                                    : 'No active cooling'}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {isSectionSelected('cooling') && (
+                            <button 
+                              type="button"
+                              className="text-gray-400 flex-shrink-0 ml-2"
+                              onClick={() => toggleSection('cooling')}
+                            >
+                              {isExpanded('cooling') ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <AnimatePresence>
+                        {isSectionSelected('cooling') && isExpanded('cooling') && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="px-5 pb-5 pt-0 border-t border-gray-100 bg-white rounded-b-2xl space-y-4">
+                              <div>
+                                <p className="text-sm font-bold text-gray-700 mb-3">{t('installatie.activeCooling')}</p>
+                                <div className="flex gap-3">
+                                  <button
+                                    onClick={() => handleActiveCoolingClick(true)}
+                                    className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                                      activeCooling === true
+                                        ? 'bg-primary text-white shadow-md'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    {t('common.yes')}
+                                  </button>
+                                  <button
+                                    onClick={() => handleActiveCoolingClick(false)}
+                                    className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                                      activeCooling === false
+                                        ? 'bg-primary text-white shadow-md'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    {t('common.no')}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {activeCooling === true && (
+                                <div className="space-y-4 pt-4 border-t border-gray-100">
+                                  <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-2">
+                                      {t('installatie.coolingRooms')}
+                                    </label>
+                                    <div className="space-y-3">
+                                      {(() => {
+                                        const allowedBases = ['WOONKAMER', 'SLAAPKAMER', 'KEUKEN', 'EETKAMER'];
+                                        const filteredFloors = uploadRoomsByFloor
+                                          .map(({ floorId, rooms }) => ({
+                                            floorId,
+                                            rooms: rooms.filter((room) => {
+                                              const base = room.replace(/\s+\d+$/, '').toUpperCase();
+                                              return allowedBases.includes(base);
+                                            }),
+                                          }))
+                                          .filter(({ rooms }) => rooms.length > 0);
+
+                                        if (filteredFloors.length === 0) {
+                                          return (
+                                            <p className="text-xs text-gray-500 italic">
+                                              {t('installatie.noCoolingRoomsAvailable')}
+                                            </p>
+                                          );
+                                        }
+
+                                        return filteredFloors.map(({ floorId, rooms }) => (
+                                          <div key={floorId}>
+                                            <p className="text-[10px] font-black uppercase tracking-wider text-primary/80 mb-1.5">
+                                              {interiorFloorLabel(floorId, t)}
+                                            </p>
+                                            <div className="flex flex-wrap gap-2">
+                                              {rooms.map((room) => (
+                                                <button
+                                                  key={`${floorId}-${room}`}
+                                                  type="button"
+                                                  onClick={() => {
+                                                    setCoolRoomsByFloor((prev) => toggleFloorRoom(prev, floorId, room));
+                                                  }}
+                                                  className={`px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
+                                                    (coolRoomsByFloor[floorId] ?? []).includes(room)
+                                                      ? 'bg-primary text-white shadow-md'
+                                                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                  }`}
+                                                >
+                                                  {translateUploadRoom(room, t)}
+                                                </button>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        ));
+                                      })()}
+                                    </div>
+                                    <div className="pt-3">
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditRoomsModalOpen(true)}
+                                        className="px-4 py-2 border border-primary/20 text-primary hover:bg-primary/5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
+                                      >
+                                        <Home size={12} />
+                                        {t('upload.editRoomsButton') || 'Edit House Design Rooms'}
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {isBackOfficeOrInspector && (
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 pt-4">
+                                      <AppSelect
+                                        label={t('installatie.generatorType')}
+                                        value={coolingGeneratorType}
+                                        onChange={setCoolingGeneratorType}
+                                        placeholder={t('installatie.selectGeneratorType')}
+                                        options={GENERATOR_TYPES.map((type) => ({
+                                          value: type,
+                                          label: type,
+                                        }))}
+                                        searchable={true}
+                                      />
+                                      <AppSelect
+                                        label={t('installatie.emissionSystem')}
+                                        value={coolingEmissionSystem}
+                                        onChange={setCoolingEmissionSystem}
+                                        placeholder={t('installatie.selectEmissionSystem')}
+                                        options={EMISSION_SYSTEMS.map((type) => ({
+                                          value: type,
+                                          label: type,
+                                        }))}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                  );
+                })()}
           </div>
         </div>
       </main>

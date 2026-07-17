@@ -2,15 +2,17 @@
 import { useState, useRef, useEffect } from 'react';
 import { User, LogOut, ChevronDown, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { isIllustrationId, getAvatarSvgMarkup } from '../../utils/avatarIllustrations';
 
 interface UserMenuProps {
   userName: string;
   onManageProfile: () => void;
   onLogout: () => void;
   onOpenSettings?: () => void;
+  profilePhoto?: string;
 }
 
-export const UserMenu = ({ userName, onManageProfile, onLogout, onOpenSettings }: UserMenuProps) => {
+export const UserMenu = ({ userName, onManageProfile, onLogout, onOpenSettings, profilePhoto }: UserMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -33,14 +35,29 @@ export const UserMenu = ({ userName, onManageProfile, onLogout, onOpenSettings }
       .slice(0, 2);
   };
 
+  const renderAvatar = (photoValue: string | undefined, initials: string) => {
+    if (!photoValue) {
+      return <span className="text-white font-bold text-sm">{initials}</span>;
+    }
+    if (isIllustrationId(photoValue)) {
+      const svgMarkup = getAvatarSvgMarkup(photoValue);
+      if (svgMarkup) {
+        return (
+          <div className="w-full h-full p-1 flex items-center justify-center bg-white/80" dangerouslySetInnerHTML={{ __html: svgMarkup }} />
+        );
+      }
+    }
+    return <img src={photoValue} alt="Profile" className="w-full h-full object-cover animate-fade-in" />;
+  };
+
   return (
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-all"
       >
-        <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
-          {getInitials(userName)}
+        <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden border border-gray-100">
+          {renderAvatar(profilePhoto, getInitials(userName))}
         </div>
         <ChevronDown size={16} className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -57,7 +74,7 @@ export const UserMenu = ({ userName, onManageProfile, onLogout, onOpenSettings }
               <p className="text-sm font-semibold text-gray-900">{userName}</p>
               <p className="text-xs text-gray-500">BuildingID User</p>
             </div>
-            
+
             <button
               onClick={() => {
                 setIsOpen(false);
@@ -81,7 +98,7 @@ export const UserMenu = ({ userName, onManageProfile, onLogout, onOpenSettings }
                 <span>Settings & appearance</span>
               </button>
             )}
-            
+
             <button
               onClick={() => {
                 setIsOpen(false);

@@ -70,6 +70,7 @@ interface KozijnGlasPageProps {
   onLogoClick?: () => void;
   userName: string;
   selectedRole: UserRole;
+  profilePhoto?: string;
 }
 
 // Options for dropdowns
@@ -85,6 +86,7 @@ export const KozijnGlasPage = ({
   onLogoClick,
   userName,
   selectedRole,
+  profilePhoto,
 }: KozijnGlasPageProps) => {
   const { t } = useLanguage();
   const { toast, setToast, showToast } = useToast();
@@ -478,6 +480,7 @@ export const KozijnGlasPage = ({
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
         onLogoClick={onLogoClick}
+        profilePhoto={profilePhoto}
       />
 
       <AppSidebar 

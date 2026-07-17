@@ -20,6 +20,7 @@ interface CompletePageProps {
   onLogoClick?: () => void;
   userName: string;
   selectedRole: UserRole;
+  profilePhoto?: string;
 }
 
 export function CompletePage({
@@ -31,6 +32,7 @@ export function CompletePage({
   onLogoClick,
   userName,
   selectedRole,
+  profilePhoto,
 }: CompletePageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -56,6 +58,7 @@ export function CompletePage({
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
         onLogoClick={onLogoClick}
+        profilePhoto={profilePhoto}
       />
 
       <AppSidebar 

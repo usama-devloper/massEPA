@@ -73,7 +73,7 @@ function defaultBuilding(): AppSnapshotV1['building'] {
     wijk: '',
     gemeente: '',
     gebouwhoogte: '',
-    hasFloorPlans: null,
+    hasFloorPlans: true,
   };
 }
 
@@ -123,6 +123,7 @@ function reviveSnapshot(raw: unknown): AppSnapshotV1 | null {
       companyName: typeof profile.companyName === 'string' ? profile.companyName : undefined,
       advisorName: typeof profile.advisorName === 'string' ? profile.advisorName : undefined,
       certificaathouder: typeof profile.certificaathouder === 'string' ? profile.certificaathouder : undefined,
+      profilePhoto: typeof profile.profilePhoto === 'string' ? profile.profilePhoto : undefined,
     },
     building: {
       renovationStatus: typeof building.renovationStatus === 'string' ? building.renovationStatus : base.building.renovationStatus,

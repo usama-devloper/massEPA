@@ -45,6 +45,7 @@ const INTERIOR_EXAMPLE_FILES: Record<string, string> = {
   'BADKAMER|Heating system': 'Badkamer_Heating system.jpg',
   'HAL|Doors': 'Hal_Doors.jpg',
   'HAL|Window': 'Hal_Window.jpg',
+  'HAL|Crawl space': 'Hal_Kruipruimte.jpg',
   'MK|Heating system - merk & type': 'MK_Heating systeem.jpg',
   'MK|PV system - merk & type': 'MK_PV systeem.jpg',
   'WC|Window': 'WC_Window.jpg',

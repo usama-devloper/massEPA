@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>massEPA — User Profile Avatar Preview</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Outfit Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet" />
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            primary: '#2d5a3d',
+            'primary-dark': '#1e3d29',
+            background: '#f8faf8',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Premium glassmorphism overlay styles */
+    .glass-modal {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    }
+  </style>
+</head>
+<body class="bg-[#eceee8] text-gray-900 min-h-screen p-4 md:p-8 flex flex-col items-center justify-center">
+
+  <!-- Header -->
+  <header class="w-full max-w-xl text-center mb-6">
+    <h1 class="text-2xl md:text-3xl font-black text-primary tracking-tight">Profile Photo Selector Preview</h1>
+    <p class="text-gray-600 mt-2 text-xs md:text-sm max-w-md mx-auto">
+      Interactive showcase of the new Change Profile Picture dialog. Double-click this file to run it locally in any browser.
+    </p>
+  </header>
+
+  <!-- Main Simulator Container (Phone simulator) -->
+  <div class="relative w-[365px] h-[660px] bg-slate-950 rounded-[48px] shadow-2xl border-[12px] border-slate-900 overflow-hidden flex flex-col">
+    <!-- Phone Notch -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-6 bg-slate-900 rounded-b-2xl z-50 flex items-center justify-center">
+      <div class="w-3 h-3 rounded-full bg-slate-800 mr-2"></div>
+      <div class="w-12 h-1 bg-slate-800 rounded-full"></div>
+    </div>
+
+    <!-- Simulator Screen Inside -->
+    <div class="flex-1 bg-gray-50 p-4 pt-10 overflow-y-auto flex flex-col relative" id="phone-screen">
+      <!-- Back Link -->
+      <div class="flex items-center text-primary font-bold text-xs mb-4 cursor-pointer">
+        <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Terug naar overzicht
+      </div>
+
+      <!-- Title -->
+      <div class="text-center mb-6">
+        <h2 class="text-xl font-black text-gray-900 tracking-tight">Profiel</h2>
+        <p class="text-xs text-gray-500 mt-1">Jouw profielgegevens</p>
+      </div>
+
+      <!-- Profile Card -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+        <!-- Avatar Section -->
+        <div class="bg-gradient-to-r from-primary/10 to-primary/5 p-6 text-center">
+          <div class="relative w-24 h-24 mx-auto mb-3">
+            <div id="avatar-container" class="w-full h-full bg-primary rounded-full flex items-center justify-center overflow-hidden shadow-lg border-2 border-white transition-all">
+              <span id="avatar-initials" class="text-white font-display font-black text-3xl">JD</span>
+            </div>
+            <!-- Edit Button -->
+            <button
+              type="button"
+              id="open-modal-btn"
+              class="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full shadow-md hover:bg-primary-dark active:scale-95 transition-all flex items-center justify-center"
+              title="Profielfoto wijzigen"
+            >
+              <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+          <h3 class="font-bold text-gray-800 text-sm">Jan de Dev</h3>
+          <p class="text-[10px] text-gray-500 mt-0.5">Lid sinds 2026</p>
+        </div>
+
+        <!-- Info Fields -->
+        <div class="p-4 space-y-3.5 text-xs">
+          <div class="border-b border-gray-50 pb-2">
+            <label class="text-[9px] font-black uppercase text-gray-400 block mb-0.5">Volledige naam</label>
+            <div class="font-bold text-gray-800">Jan de Dev</div>
+          </div>
+          <div class="border-b border-gray-50 pb-2">
+            <label class="text-[9px] font-black uppercase text-gray-400 block mb-0.5">Telefoonnummer</label>
+            <div class="font-bold text-gray-800">+31 6 12345678</div>
+          </div>
+          <div>
+            <label class="text-[9px] font-black uppercase text-gray-400 block mb-0.5">E-mailadres</label>
+            <div class="font-bold text-gray-800">jan.dedev@example.nl</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button class="w-full bg-primary text-white font-bold py-3 rounded-xl shadow-md hover:bg-primary-dark active:scale-[0.98] transition-all text-xs uppercase tracking-wider">
+        Opslaan
+      </button>
+
+      <!-- SIMULATED DIALOG / MODAL (Initially hidden) -->
+      <div id="avatar-modal" class="hidden absolute inset-0 bg-black/40 z-40 flex items-center justify-center p-4 transition-opacity duration-300">
+        <!-- Backdrop Close Click Trigger -->
+        <div id="modal-backdrop" class="absolute inset-0"></div>
+
+        <!-- Modal Panel -->
+        <div class="glass-modal w-full max-w-sm rounded-[32px] p-6 z-50 transform scale-95 opacity-0 transition-all duration-300 max-h-[90%] flex flex-col gap-4">
+          
+          <!-- Header (Fixed at top) -->
+          <div class="flex items-center justify-between pb-2 border-b border-white/40 flex-shrink-0">
+            <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider">Profielfoto wijzigen</h3>
+            <button id="close-modal-btn" class="p-1.5 hover:bg-white/50 rounded-full transition-colors">
+              <i data-lucide="x" class="w-4 h-4 text-gray-600"></i>
+            </button>
+          </div>
+
+          <!-- Scrollable Body -->
+          <div class="flex-1 overflow-y-auto pr-1 custom-scroll space-y-4 max-h-[260px]">
+            <!-- Preview & Delete Panel -->
+            <div class="flex items-center gap-4 bg-white/40 p-3 rounded-2xl border border-white/50">
+              <div id="modal-preview-container" class="w-16 h-16 bg-primary rounded-full flex items-center justify-center overflow-hidden shadow-inner border border-white flex-shrink-0">
+                <span id="modal-preview-initials" class="text-white font-black text-xl">JD</span>
+              </div>
+              <div class="flex-1">
+                <h4 class="text-xs font-bold text-gray-800">Profielfoto Preview</h4>
+                <p class="text-[10px] text-gray-500">Kies hieronder een optie</p>
+              </div>
+              <button id="delete-photo-btn" class="hidden px-2.5 py-1.5 text-[9px] font-bold text-red-600 hover:bg-red-50 rounded-lg uppercase tracking-wider transition-all flex items-center gap-1">
+                <i data-lucide="trash-2" class="w-3 h-3"></i> Wis foto
+              </button>
+            </div>
+
+            <!-- Predefined Illustrations Grid -->
+            <div>
+              <label class="text-[9px] font-black uppercase text-gray-500 tracking-wider block mb-2">Browse Illustrations</label>
+              <div class="grid grid-cols-4 gap-2" id="illustrations-grid">
+                <!-- Grid items will be injected via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Sticky Footer (Fixed at bottom) -->
+          <div class="pt-2 border-t border-white/40 flex flex-col gap-3 flex-shrink-0">
+            <!-- Custom Photo Actions -->
+            <div class="grid grid-cols-2 gap-3">
+              <!-- Upload from Device -->
+              <button id="upload-device-btn" class="flex flex-col items-center justify-center p-2.5 border-2 border-dashed border-primary/20 hover:border-primary/40 bg-white/40 hover:bg-white/60 rounded-2xl transition-all cursor-pointer">
+                <i data-lucide="upload" class="w-4 h-4 text-primary mb-0.5"></i>
+                <span class="text-[9px] font-bold text-primary">Apparaat</span>
+              </button>
+              <!-- Take a picture -->
+              <button id="take-picture-btn" class="flex flex-col items-center justify-center p-2.5 border-2 border-dashed border-primary/20 hover:border-primary/40 bg-white/40 hover:bg-white/60 rounded-2xl transition-all cursor-pointer">
+                <i data-lucide="camera" class="w-4 h-4 text-primary mb-0.5"></i>
+                <span class="text-[9px] font-bold text-primary">Camera</span>
+              </button>
+            </div>
+
+            <!-- Hidden Input Elements -->
+            <input type="file" id="device-file-input" class="hidden" accept="image/*" />
+            <input type="file" id="camera-file-input" class="hidden" accept="image/*" capture="user" />
+
+            <!-- Modal Action Buttons -->
+            <div class="flex gap-3">
+              <button id="save-photo-btn" class="flex-1 bg-primary text-white font-bold py-2.5 rounded-xl shadow-md hover:bg-primary-dark transition-all text-xs uppercase tracking-wider">
+                Opslaan
+              </button>
+              <button id="cancel-modal-btn" class="flex-1 bg-white/60 text-gray-700 hover:bg-white border border-gray-200 font-bold py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider">
+                Annuleren
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JS Logic -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+    
+    // Illustration vectors map
+    // Illustration vectors map
+    const ILLUSTRATIONS = [
+      {
+        id: 'prof_male_1',
+        name: 'Professional Male 1',
+        svg: `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><defs><linearGradient id="bgMale1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FDEDEC"/><stop offset="100%" stop-color="#FADBD8"/></linearGradient></defs><rect width="100" height="100" rx="50" fill="url(#bgMale1)"/><rect x="46" y="62" width="8" height="12" fill="#E8A77A"/><path d="M 30 85 L 70 85 Q 65 70 50 70 Q 35 70 30 85 Z" fill="#2E4053"/><polygon points="45,70 55,70 50,82" fill="#FFFFFF"/><polygon points="48,74 52,74 50,85" fill="#C0392B"/><circle cx="50" cy="44" r="20" fill="#F5CBA7"/><circle cx="43" cy="42" r="2" fill="#2C3E50"/><circle cx="57" cy="42" r="2" fill="#2C3E50"/><rect x="36" y="38" width="12" height="8" rx="1.5" stroke="#2C3E50" stroke-width="1.5" fill="none"/><rect x="52" y="38" width="12" height="8" rx="1.5" stroke="#2C3E50" stroke-width="1.5" fill="none"/><line x1="48" y1="42" x2="52" y2="42" stroke="#2C3E50" stroke-width="1.5"/><path d="M 46 52 Q 50 56 54 52" stroke="#2C3E50" stroke-width="1.5" stroke-linecap="round"/><path d="M 30 40 C 30 20 42 16 50 18 C 58 16 70 20 70 40 C 70 42 66 32 62 30 C 56 28 50 32 44 28 C 36 30 30 32 30 40 Z" fill="#3E2723"/></svg>`
+      },
+      {
+        id: 'prof_female_1',
+        name: 'Professional Female 1',
+        svg: `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><defs><linearGradient id="bgFemale1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E0F2F1"/><stop offset="100%" stop-color="#B2DFDB"/></linearGradient></defs><rect width="100" height="100" rx="50" fill="url(#bgFemale1)"/><circle cx="50" cy="18" r="9" fill="#1A0F0A"/><rect x="46" y="62" width="8" height="12" fill="#ECA992"/><path d="M 38 74 L 62 74 Q 60 85 50 85 Q 40 85 38 74 Z" fill="#FFFFFF"/><path d="M 30 85 L 70 85 L 66 70 Q 50 72 34 70 Z" fill="#00796B"/><path d="M 34 70 L 46 85 M 66 70 L 54 85" stroke="#FFFFFF" stroke-width="1.5"/><circle cx="50" cy="44" r="20" fill="#FADBD8"/><circle cx="43" cy="43" r="2" fill="#1A0F0A"/><circle cx="57" cy="43" r="2" fill="#1A0F0A"/><path d="M 46 53 Q 50 57 54 53" stroke="#1A0F0A" stroke-width="1.5" stroke-linecap="round"/><path d="M 30 42 C 30 24 70 24 70 42 C 70 26 62 25 50 28 C 38 25 30 26 30 42 Z" fill="#1A0F0A"/><path d="M 30 38 Q 38 32 45 40 M 70 38 Q 62 32 55 40" stroke="#1A0F0A" stroke-width="2.5" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: 'prof_male_2',
+        name: 'Professional Male 2',
+        svg: `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><defs><linearGradient id="bgMale2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E8F8F5"/><stop offset="100%" stop-color="#D1F2EB"/></linearGradient></defs><rect width="100" height="100" rx="50" fill="url(#bgMale2)"/><rect x="46" y="62" width="8" height="12" fill="#ECA992"/><path d="M 30 85 L 70 85 Q 65 70 50 70 Q 35 70 30 85 Z" fill="#546E7A"/><polygon points="45,70 55,70 50,82" fill="#FFFFFF"/><polygon points="48,74 52,74 50,85" fill="#2980B9"/><circle cx="50" cy="44" r="20" fill="#FDF2E9"/><circle cx="43" cy="42" r="2" fill="#2C3E50"/><circle cx="57" cy="42" r="2" fill="#2C3E50"/><path d="M 46 52 Q 50 56 54 52" stroke="#2C3E50" stroke-width="1.5" stroke-linecap="round"/><path d="M 30 38 C 30 20 44 14 54 18 C 64 16 70 24 70 38 C 70 40 66 32 60 30 C 54 28 46 32 40 28 C 34 30 30 32 30 38 Z" fill="#D35400"/></svg>`
+      },
+      {
+        id: 'prof_female_2',
+        name: 'Professional Female 2',
+        svg: `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><defs><linearGradient id="bgFemale2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FCF3CF"/><stop offset="100%" stop-color="#F9E79F"/></linearGradient></defs><rect width="100" height="100" rx="50" fill="url(#bgFemale2)"/><path d="M 24 45 C 20 55 24 85 30 90 L 70 90 C 76 85 78 55 74 44 Z" fill="#3E2723"/><rect x="46" y="62" width="8" height="12" fill="#ECA992"/><path d="M 38 74 L 62 74 Q 60 85 50 85 Q 40 85 38 74 Z" fill="#2C3E50"/><path d="M 30 85 L 70 85 L 66 70 Q 50 72 34 70 Z" fill="#C0392B"/><circle cx="50" cy="44" r="20" fill="#FADBD8"/><circle cx="43" cy="43" r="2" fill="#3E2723"/><circle cx="57" cy="43" r="2" fill="#3E2723"/><path d="M 46 53 Q 50 57 54 53" stroke="#3E2723" stroke-width="1.5" stroke-linecap="round"/><path d="M 30 42 C 30 24 70 24 70 42 C 70 26 62 25 50 28 C 38 25 30 26 30 42 Z" fill="#3E2723"/><path d="M 28 42 L 32 65 M 72 42 L 68 65" stroke="#3E2723" stroke-width="3" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: 'prof_male_3',
+        name: 'Professional Male 3',
+        svg: `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><defs><linearGradient id="bgMale3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#EAF2F8"/><stop offset="100%" stop-color="#D4E6F1"/></linearGradient></defs><rect width="100" height="100" rx="50" fill="url(#bgMale3)"/><rect x="46" y="62" width="8" height="12" fill="#D39E82"/><path d="M 30 85 L 70 85 Q 65 70 50 70 Q 35 70 30 85 Z" fill="#D35400"/><polygon points="45,70 55,70 50,78" fill="#F1C40F"/><rect x="35" y="76" width="30" height="3" fill="#FFFFFF"/><circle cx="50" cy="44" r="20" fill="#E5A988"/><circle cx="43" cy="42" r="2" fill="#2C3E50"/><circle cx="57" cy="42" r="2" fill="#2C3E50"/><path d="M 46 52 Q 50 56 54 52" stroke="#2C3E50" stroke-width="1.5" stroke-linecap="round"/><path d="M 32 38 Q 50 30 68 38 Q 66 32 50 32 Q 34 32 32 38 Z" fill="#2C3E50"/></svg>`
+      },
+      {
+        id: 'prof_female_3',
+        name: 'Professional Female 3',
+        svg: `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><defs><linearGradient id="bgFemale3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F5EEF8"/><stop offset="100%" stop-color="#EBDEF0"/></linearGradient></defs><rect width="100" height="100" rx="50" fill="url(#bgFemale3)"/><circle cx="32" cy="40" r="7" fill="#1C2833"/><circle cx="68" cy="40" r="7" fill="#1C2833"/><circle cx="34" cy="48" r="6" fill="#1C2833"/><circle cx="66" cy="48" r="6" fill="#1C2833"/><rect x="46" y="62" width="8" height="12" fill="#ECA992"/><path d="M 38 74 L 62 74 Q 60 85 50 85 Q 40 85 38 74 Z" fill="#FFFFFF"/><path d="M 30 85 L 70 85 L 66 70 Q 50 72 34 70 Z" fill="#1F3A60"/><circle cx="50" cy="44" r="20" fill="#FADBD8"/><circle cx="42" cy="43" r="2" fill="#1C2833"/><circle cx="58" cy="43" r="2" fill="#1C2833"/><circle cx="42" cy="43" r="6" stroke="#1C2833" stroke-width="1.5" fill="none"/><circle cx="58" cy="43" r="6" stroke="#1C2833" stroke-width="1.5" fill="none"/><line x1="48" y1="43" x2="52" y2="43" stroke="#1C2833" stroke-width="1.5"/><path d="M 46 53 Q 50 57 54 53" stroke="#1C2833" stroke-width="1.5" stroke-linecap="round"/><circle cx="40" cy="28" r="7" fill="#1C2833"/><circle cx="50" cy="26" r="8" fill="#1C2833"/><circle cx="60" cy="28" r="7" fill="#1C2833"/></svg>`
+      }
+    ];
+
+    // DOM Elements
+    const openModalBtn = document.getElementById('open-modal-btn');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const cancelModalBtn = document.getElementById('cancel-modal-btn');
+    const savePhotoBtn = document.getElementById('save-photo-btn');
+    const deletePhotoBtn = document.getElementById('delete-photo-btn');
+    const avatarModal = document.getElementById('avatar-modal');
+    const modalContent = avatarModal.querySelector('.glass-modal');
+    
+    const avatarContainer = document.getElementById('avatar-container');
+    const avatarInitials = document.getElementById('avatar-initials');
+    const modalPreviewContainer = document.getElementById('modal-preview-container');
+    const modalPreviewInitials = document.getElementById('modal-preview-initials');
+
+    const uploadDeviceBtn = document.getElementById('upload-device-btn');
+    const takePictureBtn = document.getElementById('take-picture-btn');
+    const deviceFileInput = document.getElementById('device-file-input');
+    const cameraFileInput = document.getElementById('camera-file-input');
+    const illustrationsGrid = document.getElementById('illustrations-grid');
+
+    // States
+    let currentPhotoValue = null; // null (initials), SVG string, or 'data:image...' (base64)
+    let selectedPhotoPreview = null; // temp value before saving
+
+    // Render Illustrations Grid
+    ILLUSTRATIONS.forEach(ill => {
+      const gridItem = document.createElement('button');
+      gridItem.className = "w-full aspect-square bg-white/40 hover:bg-white/80 rounded-xl border border-white/50 active:scale-95 transition-all flex items-center justify-center overflow-hidden cursor-pointer p-1.5";
+      gridItem.innerHTML = ill.svg;
+      gridItem.title = ill.name;
+      gridItem.addEventListener('click', () => {
+        setPreviewValue(ill.svg);
+      });
+      illustrationsGrid.appendChild(gridItem);
+    });
+
+    // Helper to set preview
+    function setPreviewValue(val) {
+      selectedPhotoPreview = val;
+      if (val) {
+        modalPreviewContainer.innerHTML = val.startsWith('<svg') 
+          ? `<div class="w-full h-full p-2 flex items-center justify-center bg-white/80">${val}</div>`
+          : `<img src="${val}" class="w-full h-full object-cover" />`;
+        deletePhotoBtn.classList.remove('hidden');
+      } else {
+        modalPreviewContainer.innerHTML = `<span id="modal-preview-initials" class="text-white font-black text-xl">JD</span>`;
+        deletePhotoBtn.classList.add('hidden');
+      }
+    }
+
+    // Modal control
+    function openModal() {
+      selectedPhotoPreview = currentPhotoValue;
+      setPreviewValue(currentPhotoValue);
+      avatarModal.classList.remove('hidden');
+      setTimeout(() => {
+        modalContent.style.transform = 'scale(1)';
+        modalContent.style.opacity = '1';
+      }, 10);
+    }
+
+    function closeModal() {
+      modalContent.style.transform = 'scale(0.95)';
+      modalContent.style.opacity = '0';
+      setTimeout(() => {
+        avatarModal.classList.add('hidden');
+      }, 300);
+    }
+
+    openModalBtn.addEventListener('click', openModal);
+    closeModalBtn.addEventListener('click', closeModal);
+    cancelModalBtn.addEventListener('click', closeModal);
+    document.getElementById('modal-backdrop').addEventListener('click', closeModal);
+
+    // Save
+    savePhotoBtn.addEventListener('click', () => {
+      currentPhotoValue = selectedPhotoPreview;
+      if (currentPhotoValue) {
+        avatarContainer.innerHTML = currentPhotoValue.startsWith('<svg') 
+          ? `<div class="w-full h-full p-2 flex items-center justify-center bg-white/80">${currentPhotoValue}</div>`
+          : `<img src="${currentPhotoValue}" class="w-full h-full object-cover" />`;
+      } else {
+        avatarContainer.innerHTML = `<span id="avatar-initials" class="text-white font-display font-black text-3xl">JD</span>`;
+      }
+      closeModal();
+    });
+
+    // Delete / Clear
+    deletePhotoBtn.addEventListener('click', () => {
+      setPreviewValue(null);
+    });
+
+    // File Input Helper
+    function handleFile(file) {
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setPreviewValue(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    uploadDeviceBtn.addEventListener('click', () => deviceFileInput.click());
+    takePictureBtn.addEventListener('click', () => cameraFileInput.click());
+
+    deviceFileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+    cameraFileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+  </script>
+</body>
+</html>

@@ -57,6 +57,7 @@ const UPLOAD_ROOMS: Record<string, string> = {
   WASRUIMTE: 'upload.rooms.wasruimte',
   EETKAMER: 'upload.rooms.eetkamer',
   OVERLUIP: 'upload.rooms.overluip',
+  BALKON: 'upload.rooms.balcony',
 };
 
 const UPLOAD_FLOORS: Record<string, string> = {
@@ -117,6 +118,8 @@ const HEATING_TYPES: Record<string, string> = {
   Lucht: 'installatie.heatingTypes.lucht',
   Warmtepomp: 'installatie.heatingTypes.warmtepomp',
   Stadsverwarming: 'installatie.heatingTypes.stadsverwarming',
+  'gas-fired boiler': 'installatie.heatingTypes.gasFiredBoiler',
+  'Gas-fired boiler': 'installatie.heatingTypes.gasFiredBoiler',
 };
 
 export function translateHeatingType(value: string, t: TranslateFn): string {
@@ -207,17 +210,41 @@ export function translatePhotoCategory(
     'Full room view': 'photos.categories.fullRoomView',
     'Heating control panel': 'photos.categories.heatingControlPanel',
     'Ventilation panel': 'photos.categories.ventilationPanel',
+    'Ventilation grill': 'photos.categories.ventilationGrill',
     'Heating system': 'photos.categories.heatingSystem',
     'CO₂ sensor': 'photos.categories.co2Sensor',
     'Heating system - merk & type': 'photos.categories.heatingSystemBrandType',
     'PV system - merk & type': 'photos.categories.pvSystemBrandType',
     'Tapwater system - brand & type': 'photos.categories.tapwaterSystemBrandType',
     'General View': 'photos.categories.generalView',
+    'Crawl space': 'photos.categories.crawlSpace',
   };
 
   const key = categoryKeys[base];
   if (!key) return category;
 
   return t(key);
+}
+
+const OVERSTEK_OPTIONS: Record<string, string> = {
+  'Automatisch': 'overstek.options.automatisch',
+  'Minimale belemmering': 'overstek.options.minimaleBelemmering',
+  'Overstek': 'overstek.options.overstek',
+  'Volledige belemmering': 'overstek.options.volledigeBelemmering',
+  'Constante belemmering': 'overstek.options.constanteBelemmering',
+  'Zijbelemmering': 'overstek.options.zijbelemmering',
+  'Overstek + (Zij)belemmering': 'overstek.options.overstekZijbelemmering',
+  'Geen zonwering': 'overstek.options.geenZonwering',
+  'Vaste zonwering': 'overstek.options.vasteZonwering',
+  'Uitvalscherm': 'overstek.options.uitvalscherm',
+  'Knikarmscherm': 'overstek.options.knikarmscherm',
+  'Screens (buiten)': 'overstek.options.screens',
+  'Jaloezieen': 'overstek.options.jaloezieen',
+  'Gemetalliseerde weefsels': 'overstek.options.gemetalliseerdeWeefsels',
+  'Rolluiken': 'overstek.options.rolluiken'
+};
+
+export function translateOverstekOption(value: string, t: TranslateFn): string {
+  return pick(value, OVERSTEK_OPTIONS, t);
 }
 

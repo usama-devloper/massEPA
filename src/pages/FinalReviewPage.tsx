@@ -37,6 +37,7 @@ interface FinalReviewPageProps {
   gboT: string;
   leidingdoorvoeren: string;
   avr: string;
+  profilePhoto?: string;
 }
 
 export function FinalReviewPage({
@@ -58,6 +59,7 @@ export function FinalReviewPage({
   gboT,
   leidingdoorvoeren,
   avr,
+  profilePhoto,
 }: FinalReviewPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -150,6 +152,7 @@ export function FinalReviewPage({
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
         onLogoClick={onLogoClick}
+        profilePhoto={profilePhoto}
       />
 
       <AppSidebar

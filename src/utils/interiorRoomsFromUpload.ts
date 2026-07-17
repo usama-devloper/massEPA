@@ -90,6 +90,7 @@ const STANDARD_INTERIOR_ROOM_IDS = new Set([
   'DAKKAPEL',
   'WASRUIMTE',
   'EETKAMER',
+  'BALKON',
 ]);
 
 /** Standard House design room chip ids (incl. numbered bedrooms). */

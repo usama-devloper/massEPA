@@ -1,7 +1,7 @@
 // src/pages/InsulationDetailsPage.tsx
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Upload, Camera, Check, X, Plus, Trash2, FileText, ChevronDown, ChevronUp, CloudUpload } from 'lucide-react';
+import { Check, X, Plus, Trash2, FileText, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { AppSelect } from '../components/common/AppSelect';
 import { TopBar } from '../components/common/TopBar';
 import { AppSidebar } from '../components/common/AppSidebar';
@@ -57,9 +57,8 @@ function InsulationCategoryIcon({
   const Icon = INSULATION_CATEGORY_ICONS[category];
   return (
     <span
-      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
-        selected ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-400'
-      }`}
+      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${selected ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-400'
+        }`}
       aria-hidden
     >
       <Icon size={20} strokeWidth={2} />
@@ -120,6 +119,7 @@ interface InsulationDetailsPageProps {
   onLogoClick?: () => void;
   userName: string;
   selectedRole: UserRole;
+  profilePhoto?: string;
 }
 
 export const InsulationDetailsPage = ({
@@ -131,6 +131,7 @@ export const InsulationDetailsPage = ({
   onLogoClick,
   userName,
   selectedRole,
+  profilePhoto,
 }: InsulationDetailsPageProps) => {
   const { t } = useLanguage();
   const savedOnMount = loadInsulationFromStorage();
@@ -246,7 +247,7 @@ export const InsulationDetailsPage = ({
 
   const toggleExpand = (category: string) => {
     // Only one section can be expanded at a time (accordion behavior)
-    setExpandedInsulation(prev => 
+    setExpandedInsulation(prev =>
       prev.includes(category) ? [] : [category]
     );
   };
@@ -367,22 +368,22 @@ export const InsulationDetailsPage = ({
   // Handle tick mark click
   const handleTickClick = (category: string) => {
     const isSelected = selectedCategories.includes(category);
-    
+
     if (isSelected) {
       // Already selected → unselect AND remove all photos
       toggleCategorySelection(category);
-      
+
       // Remove all images for this category
       const imagesToDelete = insulationImages[category] || [];
       imagesToDelete.forEach(file => {
         revokeFileUrlIfBlob(file.url);
       });
-      
+
       setInsulationImages(prev => ({
         ...prev,
         [category]: []
       }));
-      
+
       setExpandedInsulation((prev) => (prev.includes(category) ? [] : prev));
       showToast(`${insulationCategoryLabel(category as InsulationCategoryId, t)} deselected and photos removed`, 'success');
     } else {
@@ -449,7 +450,7 @@ export const InsulationDetailsPage = ({
     }
 
     const updatedImages = insulationImages[category].filter((_, i) => i !== index);
-    
+
     setInsulationImages(prev => ({
       ...prev,
       [category]: updatedImages
@@ -472,11 +473,11 @@ export const InsulationDetailsPage = ({
   const updateMaterial = (category: string, material: string) => {
     setInsulationSpecs(prev => ({
       ...prev,
-      [category]: { 
-        ...prev[category], 
-        material, 
+      [category]: {
+        ...prev[category],
+        material,
         // Clear customMaterial when not Anders
-        customMaterial: material === 'Anders' ? prev[category].customMaterial : '' 
+        customMaterial: material === 'Anders' ? prev[category].customMaterial : ''
       }
     }));
   };
@@ -512,6 +513,31 @@ export const InsulationDetailsPage = ({
 
   const showMaterialSpecs = selectedRole !== UserRole.CLIENT;
 
+  const isInsulationCategoryComplete = (category: string): boolean => {
+    if (selectedRole === UserRole.CLIENT) return true;
+    const spec = insulationSpecs[category];
+    const hasMaterial =
+      spec &&
+      (spec.material === 'Anders'
+        ? (spec.customMaterial || '').trim() !== ''
+        : (spec.material || '').trim() !== '');
+    const hasThickness = spec && (spec.thickness || '').trim() !== '';
+    const hasYearBuilt = spec && (spec.yearBuilt || '').trim() !== '';
+
+    return !!(hasMaterial && hasThickness && hasYearBuilt);
+  };
+
+  const [didAutoExpand, setDidAutoExpand] = useState(false);
+  useEffect(() => {
+    if (hasNewInsulation !== true || selectedCategories.length === 0 || didAutoExpand) return;
+
+    const toExpand = selectedCategories.filter((cat) => !isInsulationCategoryComplete(cat));
+    if (toExpand.length > 0) {
+      setExpandedInsulation(toExpand);
+    }
+    setDidAutoExpand(true);
+  }, [hasNewInsulation, selectedCategories, insulationSpecs, selectedRole, didAutoExpand]);
+
   // Continue on No, or Yes only when at least one category is ticked — photos/specs optional.
   const isFormComplete = (): boolean => {
     if (hasNewInsulation === false) return true;
@@ -532,6 +558,7 @@ export const InsulationDetailsPage = ({
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
         onLogoClick={onLogoClick}
+        profilePhoto={profilePhoto}
       />
 
       <AppSidebar
@@ -571,21 +598,19 @@ export const InsulationDetailsPage = ({
               <div className="flex gap-3">
                 <button
                   onClick={() => handleNewInsulationClick(true)}
-                  className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                    hasNewInsulation === true
-                      ? 'bg-primary text-white shadow-md'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                  className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${hasNewInsulation === true
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
                 >
                   {t('common.yes')}
                 </button>
                 <button
                   onClick={() => handleNewInsulationClick(false)}
-                  className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                    hasNewInsulation === false
-                      ? 'bg-primary text-white shadow-md'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                  className={`px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${hasNewInsulation === false
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
                 >
                   {t('common.no')}
                 </button>
@@ -612,10 +637,17 @@ export const InsulationDetailsPage = ({
                   const fileInputId = `file-input-${category}`;
                   const cameraInputId = `camera-input-${category}`;
 
+                  const isCatComplete = !isSelected || isInsulationCategoryComplete(category);
+
                   return (
                     <div
                       key={category}
-                      className={`${isExpanded ? 'bg-[#e2e3dd]' : 'bg-white'} rounded-2xl shadow-sm border border-outline-variant/10 transition-all overflow-hidden`}
+                      className={`${isExpanded ? 'bg-[#e2e3dd]' : 'bg-white'} rounded-2xl shadow-sm border transition-all overflow-hidden ${
+                        !isCatComplete
+                          ? 'border-amber-500/30'
+                          : 'border-outline-variant/10'
+                      }`}
+                      style={!isCatComplete ? { background: 'rgba(245, 158, 11, 0.05)' } : undefined}
                     >
                       {/* Header */}
                       <div className="p-5">
@@ -627,11 +659,10 @@ export const InsulationDetailsPage = ({
                                 e.stopPropagation();
                                 handleTickClick(category);
                               }}
-                              className={`w-6 h-6 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${
-                                isSelected
-                                  ? 'bg-primary text-white'
-                                  : 'border-2 border-gray-300 bg-white'
-                              }`}
+                              className={`w-6 h-6 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${isSelected
+                                ? 'bg-primary text-white'
+                                : 'border-2 border-gray-300 bg-white'
+                                }`}
                               title={t('insulation.selectCategory')}
                             >
                               {isSelected && <Check size={14} strokeWidth={3} />}
@@ -648,9 +679,14 @@ export const InsulationDetailsPage = ({
                               onClick={() => toggleExpand(category)}
                             >
                               <div className="flex flex-col min-w-0">
-                                <h3 className="font-display font-black text-base text-on-surface truncate">
-                                  {insulationCategoryLabel(category as InsulationCategoryId, t)}
-                                </h3>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <h3 className="font-display font-black text-base text-on-surface truncate">
+                                    {insulationCategoryLabel(category as InsulationCategoryId, t)}
+                                  </h3>
+                                  {!isCatComplete && (
+                                    <AlertTriangle size={14} className="text-amber-500 flex-shrink-0 animate-pulse" />
+                                  )}
+                                </div>
                                 {images.length > 0 && (
                                   <p className="text-[10px] font-black uppercase tracking-wider text-primary mt-0.5 truncate">
                                     {t('photo Added', { count: images.length })}
@@ -673,44 +709,7 @@ export const InsulationDetailsPage = ({
                           </div>
 
                           <div className="flex items-center gap-2">
-                             {showUpload && category === 'Vloer isolatie' && (
-                               <>
-                                 <input
-                                   ref={el => {
-                                     fileInputRefs.current[fileInputId] = el;
-                                   }}
-                                   type="file"
-                                   className="hidden"
-                                   accept=".pdf,.jpg,.jpeg,.png"
-                                   multiple
-                                   onChange={(e) => handleFileUpload(e, category)}
-                                 />
-                                 <input
-                                   ref={el => {
-                                     cameraInputRefs.current[cameraInputId] = el;
-                                   }}
-                                   type="file"
-                                   className="hidden"
-                                   accept="image/*"
-                                   capture="environment"
-                                   multiple
-                                   onChange={(e) => handleCameraCapture(e, category)}
-                                 />
-
-                                 <button
-                                   type="button"
-                                   className="p-2 rounded-lg transition-all bg-primary/10 text-primary hover:bg-primary hover:text-white flex items-center justify-center"
-                                   onClick={(e) => {
-                                     e.stopPropagation();
-                                     openMediaGuide(category, 'upload');
-                                   }}
-                                   title={t('upload.floorPlansTitle')}
-                                 >
-                                   <CloudUpload size={20} />
-                                 </button>
-                               </>
-                             )}
-                           </div>
+                          </div>
                         </div>
 
                         {/* Thumbnail strip in collapsed view */}
@@ -868,37 +867,50 @@ export const InsulationDetailsPage = ({
             )}
 
             {/* Door Isolated Question - Only for BACK_OFFICE and INSPECTOR (Not mandatory, with deselect) */}
-            {(selectedRole === UserRole.BACK_OFFICE || selectedRole === UserRole.INSPECTOR) && (
-              <section className="mt-8 flex flex-row items-center justify-between gap-3 rounded-xl border border-outline-variant/10 bg-white p-4 shadow-sm">
-                <p className="flex-1 text-[11px] font-black uppercase tracking-wider text-on-surface-variant/70 leading-tight">
-                  {t('insulation.doorIsolated')}
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleDoorIsolatedClick(true)}
-                    className={`rounded-lg px-5 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all ${
-                      doorIsolated === true
+            {(selectedRole === UserRole.BACK_OFFICE || selectedRole === UserRole.INSPECTOR) && (() => {
+              const isDoorIsolatedIncomplete = doorIsolated === null;
+              return (
+                <section
+                  className={`mt-8 flex flex-row items-center justify-between gap-3 rounded-xl border p-4 shadow-sm transition-all ${
+                    isDoorIsolatedIncomplete
+                      ? 'border-amber-500/30'
+                      : 'border-outline-variant/10 bg-white'
+                  }`}
+                  style={isDoorIsolatedIncomplete ? { background: 'rgba(245, 158, 11, 0.05)' } : undefined}
+                >
+                  <div className="flex-1 flex items-center gap-2">
+                    <p className="text-[11px] font-black uppercase tracking-wider text-on-surface-variant/70 leading-tight">
+                      {t('insulation.doorIsolated')}
+                    </p>
+                    {isDoorIsolatedIncomplete && (
+                      <AlertTriangle size={14} className="text-amber-500 animate-pulse flex-shrink-0" />
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleDoorIsolatedClick(true)}
+                      className={`rounded-lg px-5 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all ${doorIsolated === true
                         ? 'bg-primary text-white shadow-md'
                         : 'bg-gray-100 text-gray-600 hover:bg-white'
-                    }`}
-                  >
-                    {t('common.yes')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDoorIsolatedClick(false)}
-                    className={`rounded-lg px-5 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all ${
-                      doorIsolated === false
+                        }`}
+                    >
+                      {t('common.yes')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDoorIsolatedClick(false)}
+                      className={`rounded-lg px-5 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all ${doorIsolated === false
                         ? 'bg-primary text-white shadow-md'
                         : 'bg-gray-100 text-gray-600 hover:bg-white'
-                    }`}
-                  >
-                    {t('common.no')}
-                  </button>
-                </div>
-              </section>
-            )}
+                        }`}
+                    >
+                      {t('common.no')}
+                    </button>
+                  </div>
+                </section>
+              );
+            })()}
           </div>
         </div>
       </main>

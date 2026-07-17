@@ -25,20 +25,52 @@ function newId(): string {
   return `cli_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+const MOCK_CLIENTS: ClientRecord[] = [
+  {
+    id: 'cli_mock1',
+    fullName: 'J. de Vries',
+    email: 'j.devries@email.com',
+    phoneNumber: '06-12345678',
+    address: 'Hoofdstraat 123 Amsterdam',
+    createdAt: Date.now() - 5 * 24 * 60 * 60 * 1000,
+    updatedAt: Date.now() - 5 * 24 * 60 * 60 * 1000,
+  },
+  {
+    id: 'cli_mock2',
+    fullName: 'M. Janssen',
+    email: 'm.janssen@example.com',
+    phoneNumber: '06-87654321',
+    address: 'Kerkstraat 45 Utrecht',
+    createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
+    updatedAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
+  },
+  {
+    id: 'cli_mock3',
+    fullName: 'G. Bakhuizen',
+    email: 'g.bakhuizen@planet.nl',
+    phoneNumber: '06-99887766',
+    address: 'Dorpsstraat 8 Haarlem',
+    createdAt: Date.now() - 10 * 24 * 60 * 60 * 1000,
+    updatedAt: Date.now() - 10 * 24 * 60 * 60 * 1000,
+  }
+];
+
 export function createEmptyRegistry(): ClientsRegistryV1 {
-  return { v: 1, updatedAt: Date.now(), clients: [] };
+  return { v: 1, updatedAt: Date.now(), clients: MOCK_CLIENTS };
 }
 
 export async function loadClientsRegistry(): Promise<ClientsRegistryV1> {
   const raw = await idbGet<unknown>(REGISTRY_KEY);
   if (!raw || typeof raw !== 'object' || (raw as ClientsRegistryV1).v !== 1) {
-    return createEmptyRegistry();
+    const seeded = { v: 1 as const, updatedAt: Date.now(), clients: MOCK_CLIENTS };
+    await idbPut(REGISTRY_KEY, seeded);
+    return seeded;
   }
   const doc = raw as ClientsRegistryV1;
   return {
     v: 1,
     updatedAt: typeof doc.updatedAt === 'number' ? doc.updatedAt : Date.now(),
-    clients: Array.isArray(doc.clients) ? doc.clients : [],
+    clients: Array.isArray(doc.clients) && doc.clients.length > 0 ? doc.clients : MOCK_CLIENTS,
   };
 }
 

@@ -1,7 +1,7 @@
 import {
   cleanAddress,
-  geocodeAddress,
   normalizeDutchPostcode,
+  geocodeAddress as fetchGeocodeAddress,
   type GeoCoords,
 } from './addressDisplay';
 
@@ -16,13 +16,34 @@ type OverpassResponse = {
   }>;
 };
 
+// Cache for geocoding
+const geocodeCache = new Map<string, GeoCoords>();
+let lastOverpassRequest = 0;
+const MIN_REQUEST_INTERVAL = 1000; // 1 second
+
+/** Geocode address using the robust geocoder from addressDisplay (with caching) */
+async function geocodeAddress(address: string): Promise<GeoCoords | null> {
+  const trimmed = cleanAddress(address);
+  if (!trimmed) return null;
+
+  // Check cache
+  if (geocodeCache.has(trimmed)) {
+    return geocodeCache.get(trimmed) || null;
+  }
+
+  const coords = await fetchGeocodeAddress(trimmed);
+  if (coords) {
+    geocodeCache.set(trimmed, coords);
+  }
+  return coords;
+}
+
 function computeHeading(from: GeoCoords, to: GeoCoords): number {
   const lat1 = (from.lat * Math.PI) / 180;
   const lat2 = (to.lat * Math.PI) / 180;
   const dLng = ((to.lng - from.lng) * Math.PI) / 180;
   const y = Math.sin(dLng) * Math.cos(lat2);
-  const x =
-    Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
@@ -32,9 +53,7 @@ function haversineMeters(a: GeoCoords, b: GeoCoords): number {
   const dLng = ((b.lng - a.lng) * Math.PI) / 180;
   const lat1 = (a.lat * Math.PI) / 180;
   const lat2 = (b.lat * Math.PI) / 180;
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
   return 2 * r * Math.asin(Math.sqrt(h));
 }
 
@@ -42,9 +61,17 @@ function haversineMeters(a: GeoCoords, b: GeoCoords): number {
 async function estimateStreetCameraPoint(
   building: GeoCoords,
 ): Promise<{ camera: GeoCoords; heading: number } | null> {
+  // Rate limiting
+  const now = Date.now();
+  const waitTime = Math.max(0, MIN_REQUEST_INTERVAL - (now - lastOverpassRequest));
+  if (waitTime > 0) {
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  lastOverpassRequest = Date.now();
+
   const query = `
-    [out:json][timeout:12];
-    way(around:45,${building.lat},${building.lng})["highway"~"^(primary|secondary|tertiary|residential|living_street|unclassified|service)$"];
+    [out:json][timeout:25];
+    way(around:50,${building.lat},${building.lng})["highway"~"^(primary|secondary|tertiary|residential|living_street|unclassified|service|pedestrian)$"];
     out geom;
   `;
 
@@ -54,6 +81,7 @@ async function estimateStreetCameraPoint(
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: `data=${encodeURIComponent(query)}`,
     });
+
     if (!res.ok) return null;
     const data = (await res.json()) as OverpassResponse;
 
@@ -85,10 +113,7 @@ async function estimateStreetCameraPoint(
   }
 }
 
-/**
- * Google Street View embed — no API key (svembed).
- * Same approach as the first homepage version.
- */
+/** Google Street View embed — no API key (svembed). */
 function buildStreetViewEmbedUrl(options: {
   address?: string;
   camera?: GeoCoords;

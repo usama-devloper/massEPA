@@ -1,14 +1,15 @@
 import { canonicalizeRoomInput, getRoomBaseName, normalizeRoomName } from './houseDesignRooms';
+import { loadAlgemeenFromStorage } from '../storage/algemeenData';
 
 /** Photo categories per room type (numbered variants use the same base type). */
 export const PHOTO_CAPTURE_ROOM_CATEGORIES: Record<string, string[]> = {
   WOONKAMER: ['Full room view', 'Windows', 'Heating control panel', 'Ventilation panel'],
   SLAAPKAMER: ['Window', 'Heating system'],
-  KEUKEN: ['Window', 'CO₂ sensor'],
-  BADKAMER: ['Window', 'Heating system'],
+  KEUKEN: ['Window', 'CO₂ sensor', 'Ventilation grill'],
+  BADKAMER: ['Window', 'Heating system', 'Ventilation grill'],
   HAL: ['Doors', 'Window'],
   MK: ['Heating system - merk & type', 'PV system - merk & type', 'Tapwater system - brand & type'],
-  WC: ['Window'],
+  WC: ['Window', 'Ventilation grill'],
   BERGING: ['General View'],
   'TECHNICAL ROOM': ['General View'],
   WASRUIMTE: ['General View'],
@@ -19,6 +20,7 @@ export const PHOTO_CAPTURE_ROOM_CATEGORIES: Record<string, string[]> = {
   SERRE: ['General View'],
   VLOERISOLATIE: ['General View'],
   OVERLUIP: ['General View'],
+  BALKON: ['General View'],
   default: ['General View', 'Doors', 'Window'],
 };
 
@@ -119,7 +121,18 @@ export function buildPhotoCaptureCategoryList(
   interiorPhotos: Record<string, Record<string, string[]>>,
   interiorDetails: Record<string, Record<string, unknown>>,
 ): string[] {
-  const baseCategories = getPhotoCaptureCategories(roomName);
+  const baseCategories = [...getPhotoCaptureCategories(roomName)];
+  const isBgHall = getPhotoCaptureRoomKey(roomName) === 'HAL' && roomId.startsWith('BG_');
+  if (isBgHall) {
+    try {
+      const algemeen = loadAlgemeenFromStorage();
+      if (algemeen.hasKruipruimte === true) {
+        baseCategories.push('Crawl space');
+      }
+    } catch {
+      /* ignore */
+    }
+  }
   const known = new Set<string>([
     ...(extraCategoriesByRoom[roomId] ?? []),
     ...Object.keys(interiorPhotos[roomId] ?? {}),

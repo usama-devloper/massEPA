@@ -36,6 +36,7 @@ export interface FormData {
   companyName?: string;
   advisorName?: string;
   certificaathouder?: string;
+  profilePhoto?: string;
 }
 
 // src/types.ts

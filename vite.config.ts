@@ -18,6 +18,9 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       open: true,
       hmr: process.env.DISABLE_HMR !== 'true',
+      watch: {
+        usePolling: true,
+      },
     },
     build: {
       // Windows may lock Thumbs.db in dist; overwrite assets without clearing the folder.

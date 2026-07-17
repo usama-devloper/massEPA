@@ -4,7 +4,7 @@ import {
 } from '../storage/houseDesignPageData';
 import type { ExteriorPhotos, InteriorPhotos } from '../storage/photoCaptureData';
 import { buildInteriorFloorSections, getSelectedRoomsForFloor } from './interiorRoomsFromUpload';
-import { getPhotoCaptureCategories } from './photoCaptureRooms';
+import { buildPhotoCaptureCategoryList } from './photoCaptureRooms';
 
 const EXTERIOR_IDS = ['voor', 'achter', 'links', 'rechts'] as const;
 
@@ -32,7 +32,7 @@ export function computePhotoCaptureProgress(
   for (const floor of floors) {
     for (const room of getSelectedRoomsForFloor(selection, floor)) {
       const roomId = `${floor}_${room}`;
-      const categories = getPhotoCaptureCategories(room);
+      const categories = buildPhotoCaptureCategoryList(room, roomId, {}, interior, {});
       if (categories.length === 0) continue;
 
       interiorTotal += 1;

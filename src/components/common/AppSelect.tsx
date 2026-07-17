@@ -22,10 +22,13 @@ interface AppSelectProps {
   searchable?: boolean;
   needsConfirmation?: boolean;
   onOpen?: () => void;
+  validationStatus?: 'red' | 'yellow' | 'green' | null;
+  hideLabelHtml?: boolean;
 }
 
 type MenuPlacement = {
-  left: number;
+  left?: number;
+  right?: number;
   width: number;
   maxHeight: number;
   placement: 'below' | 'above';
@@ -46,12 +49,14 @@ export function AppSelect({
   searchable = true,
   needsConfirmation = false,
   onOpen,
+  validationStatus = null,
+  hideLabelHtml = false,
 }: AppSelectProps) {
   const autoId = useId();
   const selectId = id ?? autoId;
-  const isSearchable = searchable && options.length >= 5;
+  const isSearchable = false;
 
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement | HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -83,8 +88,33 @@ export function AppSelect({
   const [isTyping, setIsTyping] = useState(false);
 
   const selected = options.find((opt) => opt.value === value);
-  const displayLabel = selected?.label ?? placeholder ?? '';
-  const showPlaceholder = !selected && !!placeholder;
+  const hasValue = value !== undefined && value !== null && value !== '';
+
+  const getCleanFieldName = () => {
+    if (label) {
+      return label.replace(/\.\.\./g, '').trim();
+    }
+    if (placeholder) {
+      const cleaned = placeholder
+        .replace(/^(Kies|Selecteer|Select|Choose|Kies optie|Select option)\s+/i, '')
+        .replace(/\.\.\./g, '')
+        .trim();
+      if (cleaned.length > 0 && !['optie', 'option', 'selecteer', 'kies', 'select'].includes(cleaned.toLowerCase())) {
+        return cleaned;
+      }
+    }
+    return '';
+  };
+
+  const cleanFieldName = getCleanFieldName();
+  const computedPlaceholder = cleanFieldName
+    ? (locale === 'nl' 
+        ? `Kies ${cleanFieldName}...` 
+        : `Select ${cleanFieldName}...`)
+    : (placeholder ?? (locale === 'nl' ? 'Selecteer...' : 'Select...'));
+
+  const displayLabel = selected?.label ?? (hasValue ? String(value) : computedPlaceholder);
+  const showPlaceholder = !selected && !hasValue;
 
   const close = useCallback(() => {
     setOpen(false);
@@ -114,9 +144,12 @@ export function AppSelect({
 
     maxHeight = Math.max(96, maxHeight);
 
+    const alignRight = rect.left + rect.width / 2 > window.innerWidth / 2;
+
     if (placement === 'below') {
       setMenuPlacement({
-        left: rect.left,
+        left: alignRight ? undefined : rect.left,
+        right: alignRight ? window.innerWidth - rect.right : undefined,
         width: rect.width,
         maxHeight,
         placement,
@@ -124,7 +157,8 @@ export function AppSelect({
       });
     } else {
       setMenuPlacement({
-        left: rect.left,
+        left: alignRight ? undefined : rect.left,
+        right: alignRight ? window.innerWidth - rect.right : undefined,
         width: rect.width,
         maxHeight,
         placement,
@@ -223,8 +257,17 @@ export function AppSelect({
     e.currentTarget.releasePointerCapture(e.pointerId);
   };
 
-  const triggerBg = variant === 'white' ? 'bg-white' : 'bg-gray-50';
+  const triggerBg = variant === 'white' ? 'bg-white' : 'bg-gray-100';
   const showInputTrigger = isSearchable && !isMobile;
+
+  let validationBorder = '';
+  if (validationStatus === 'red') {
+    validationBorder = '!border-red-500 !ring-2 !ring-red-100 !bg-red-50/20';
+  } else if (validationStatus === 'yellow') {
+    validationBorder = '!border-amber-500 !ring-2 !ring-amber-100 !bg-amber-50/20';
+  } else if (validationStatus === 'green') {
+    validationBorder = '!border-green-500 !ring-2 !ring-green-100 !bg-green-50/20';
+  }
 
   const menu =
     open && isMobile && isSearchable
@@ -307,24 +350,7 @@ export function AppSelect({
               {/* Options List */}
               <div className="overflow-y-auto flex-1 min-h-0 py-1">
                 <ul role="listbox" aria-labelledby={selectId}>
-                  {placeholder && (
-                    <li role="presentation">
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={value === ''}
-                        onClick={() => {
-                          onChange('');
-                          close();
-                        }}
-                        className={`w-full px-4 py-3 text-left text-sm text-gray-400 hover:bg-primary/5 transition-colors ${
-                          value === '' ? 'bg-primary/5 font-semibold text-primary' : ''
-                        }`}
-                      >
-                        {placeholder}
-                      </button>
-                    </li>
-                  )}
+
                   {filteredOptions.length === 0 ? (
                     <li className="px-4 py-8 text-center text-sm text-gray-400">
                       {t('common.noResults')}
@@ -363,73 +389,62 @@ export function AppSelect({
               ref={menuRef}
               style={{
                 position: 'fixed',
-                left: menuPlacement.left,
-                width: menuPlacement.width,
-                maxHeight: menuPlacement.maxHeight,
+                left: menuPlacement.left !== undefined ? menuPlacement.left : 'auto',
+                right: menuPlacement.right !== undefined ? menuPlacement.right : 'auto',
+                minWidth: menuPlacement.width,
+                width: 'max-content',
+                maxWidth: 'min(480px, 90vw)',
                 top: menuPlacement.top,
                 bottom: menuPlacement.bottom,
                 zIndex: 9999,
               }}
               className="flex flex-col rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden"
             >
-              <ul
-                role="listbox"
-                aria-labelledby={selectId}
-                className="overflow-y-auto py-1 flex-1"
+              <div
+                style={{ maxHeight: menuPlacement.maxHeight }}
+                className="overflow-y-auto py-1"
               >
-                {placeholder && (
-                  <li role="presentation">
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={value === ''}
-                      onClick={() => {
-                        onChange('');
-                        close();
-                      }}
-                      className={`w-full px-3 py-2.5 text-left text-sm text-gray-400 hover:bg-primary/10 ${
-                        value === '' ? 'bg-primary/5 font-medium' : ''
-                      }`}
-                    >
-                      {placeholder}
-                    </button>
-                  </li>
-                )}
-                {filteredOptions.length === 0 ? (
-                  <li className="px-3 py-4 text-center text-sm text-gray-400">
-                    {t('common.noResults')}
-                  </li>
-                ) : (
-                  filteredOptions.map((opt) => (
-                    <li key={opt.value} role="presentation">
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={value === opt.value}
-                        onClick={() => {
-                          onChange(opt.value);
-                          close();
-                        }}
-                        className={`w-full px-3 py-2.5 text-left text-sm hover:bg-primary/10 ${
-                          value === opt.value
-                            ? 'bg-primary font-semibold text-white hover:bg-primary'
-                            : 'text-gray-900'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
+                <ul
+                  role="listbox"
+                  aria-labelledby={selectId}
+                >
+
+                  {filteredOptions.length === 0 ? (
+                    <li className="px-3 py-4 text-center text-sm text-gray-400">
+                      {t('common.noResults')}
                     </li>
-                  ))
-                )}
-              </ul>
+                  ) : (
+                    filteredOptions.map((opt) => (
+                      <li key={opt.value} role="presentation">
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={value === opt.value}
+                          onClick={() => {
+                            onChange(opt.value);
+                            close();
+                          }}
+                          className={`w-full px-3 py-2.5 text-left text-sm hover:bg-primary/10 whitespace-nowrap ${
+                            value === opt.value
+                              ? 'bg-primary font-semibold text-white hover:bg-primary'
+                              : 'text-gray-900'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
             </div>,
             document.body,
           )
         : null);
 
   return (
-    <div className={className} ref={rootRef}>
-      {label && (
+    <div className={`w-full ${className}`} ref={rootRef}>
+      {label && !hideLabelHtml && (
         <label
           htmlFor={selectId}
           className="mb-1 block text-[10px] font-black uppercase tracking-wider text-gray-500"
@@ -461,12 +476,14 @@ export function AppSelect({
               }
             }}
             placeholder={placeholder}
-            className={`w-full rounded-xl border p-3 pr-10 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60 ${triggerBg} ${
+            className={`w-full min-w-[140px] rounded-xl border px-3 py-2 pr-10 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60 font-semibold ${
               open
                 ? 'border-primary ring-2 ring-primary/20'
-                : needsConfirmation
-                  ? 'border-red-400 ring-2 ring-red-100'
-                  : 'border-gray-200'
+                : validationStatus
+                  ? validationBorder
+                  : needsConfirmation
+                    ? 'border-red-400 ring-2 ring-red-100'
+                    : `border-transparent ${triggerBg}`
             }`}
           />
         ) : (
@@ -489,15 +506,17 @@ export function AppSelect({
                 });
               }
             }}
-            className={`flex w-full items-center justify-between gap-2 rounded-xl border p-3 pr-10 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60 ${triggerBg} ${
+            className={`flex w-full min-w-[140px] items-center justify-between gap-2 rounded-xl border px-3 py-2 pr-10 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60 font-semibold ${
               open
                 ? 'border-primary ring-2 ring-primary/20'
-                : needsConfirmation
-                  ? 'border-red-400 ring-2 ring-red-100'
-                  : 'border-gray-200'
+                : validationStatus
+                  ? validationBorder
+                  : needsConfirmation
+                    ? 'border-red-400 ring-2 ring-red-100'
+                    : `border-transparent ${triggerBg}`
             }`}
           >
-            <span className={showPlaceholder ? 'text-gray-400' : 'text-gray-900'}>
+            <span className={`block truncate whitespace-nowrap ${showPlaceholder ? 'text-gray-400 font-normal' : 'text-gray-900'}`}>
               {displayLabel}
             </span>
           </button>
@@ -534,4 +553,85 @@ export function AppSelect({
     </div>
   );
 }
+
+export interface AppSelectWithOptionsProps {
+  value?: string;
+  onChange?: (e: any) => void;
+  defaultValue?: string;
+  className?: string;
+  disabled?: boolean;
+  id?: string;
+  placeholder?: string;
+  label?: string;
+  children: React.ReactNode;
+  validationStatus?: 'red' | 'yellow' | 'green' | null;
+}
+
+export const AppSelectWithOptions: React.FC<AppSelectWithOptionsProps> = ({ 
+  value, 
+  onChange, 
+  defaultValue, 
+  className, 
+  disabled, 
+  id, 
+  placeholder, 
+  label,
+  children,
+  validationStatus = null
+}) => {
+  const options: { value: string; label: string }[] = [];
+
+  const processChild = (child: React.ReactNode) => {
+    if (!React.isValidElement(child)) return;
+
+    if (child.type === 'option') {
+      const props = child.props as { value?: string; children?: React.ReactNode };
+      options.push({
+        value: String(props.value ?? props.children),
+        label: String(props.children),
+      });
+    } else if (child.type === React.Fragment) {
+      const props = child.props as { children?: React.ReactNode };
+      React.Children.forEach(props.children, processChild);
+    }
+  };
+
+  React.Children.forEach(children, processChild);
+
+  const [localVal, setLocalVal] = useState(value ?? defaultValue ?? '');
+
+  useEffect(() => {
+    if (value !== undefined) {
+      setLocalVal(value);
+    }
+  }, [value]);
+
+  const handleChange = (val: string) => {
+    setLocalVal(val);
+    if (onChange) {
+      onChange({
+        target: {
+          value: val,
+          name: '',
+        }
+      });
+    }
+  };
+
+  return (
+    <AppSelect
+      id={id}
+      value={localVal}
+      onChange={handleChange}
+      options={options}
+      placeholder={placeholder}
+      disabled={disabled}
+      className={className}
+      variant="muted"
+      validationStatus={validationStatus}
+      label={label}
+      hideLabelHtml={true}
+    />
+  );
+};
 

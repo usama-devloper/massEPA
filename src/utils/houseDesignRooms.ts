@@ -55,6 +55,7 @@ export const ROOM_INPUT_ALIASES: Record<string, string> = {
   TOILET: 'WC',
   OVERLOOP: 'OVERLUIP',
   LANDING: 'OVERLUIP',
+  BALCONY: 'BALKON',
 };
 
 function resolveAliasBase(base: string): string {
@@ -128,16 +129,16 @@ export function resolveRoomSearchInput(input: string, allowedRooms?: string[]): 
 const KELDER_DEFAULT_ROOMS = ['KELDER', 'BERGING'] as const;
 
 export const defaultRoomCategories: Record<string, string[]> = {
-  BG: ['HAL', 'MK', 'WC', 'WOONKAMER', 'KEUKEN', 'BADKAMER', 'SLAAPKAMER', 'TECHNICAL ROOM', 'BERGING', 'SERRE', 'WASRUIMTE', 'EETKAMER'],
-  '1e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE'],
-  '2e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE'],
-  '3e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE'],
-  '4e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE'],
-  '5e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE'],
-  '6e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE'],
-  '7e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE'],
-  '8e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE'],
-  '9e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE'],
+  BG: ['HAL', 'MK', 'WC', 'WOONKAMER', 'KEUKEN', 'BADKAMER', 'SLAAPKAMER', 'TECHNICAL ROOM', 'BERGING', 'SERRE', 'WASRUIMTE', 'EETKAMER', 'BALKON'],
+  '1e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE', 'BALKON'],
+  '2e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE', 'BALKON'],
+  '3e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE', 'BALKON'],
+  '4e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE', 'BALKON'],
+  '5e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE', 'BALKON'],
+  '6e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE', 'BALKON'],
+  '7e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE', 'BALKON'],
+  '8e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE', 'BALKON'],
+  '9e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE', 'BALKON'],
 };
 
 /** Start floor: HAL. Other floors: OVERLUIP (overloop) instead of HAL. */
@@ -596,7 +597,8 @@ export const CHAIN_NUMBERED_ROOM_BASES = [
   'WC',
   'BADKAMER',
   'BERGING',
-  'KEUKEN'
+  'KEUKEN',
+  'BALKON'
 ] as const;
 
 export type RoomChipItem = {

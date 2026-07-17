@@ -1,7 +1,7 @@
 // src/pages/HouseDesignPage.tsx
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, HelpCircle, Camera, X, ArrowRight, CloudUpload, Plus, Trash2, ChevronDown, ChevronUp, FileText, Search } from 'lucide-react';
+import { Menu, HelpCircle, Camera, X, ArrowRight, CloudUpload, Plus, Trash2, ChevronDown, ChevronUp, FileText, Search, AlertTriangle } from 'lucide-react';
 import { TopBar } from '../components/common/TopBar';
 import { AppSidebar } from '../components/common/AppSidebar';
 import { MobileSidebar } from '../components/common/MobileSidebar';
@@ -82,6 +82,7 @@ interface HouseDesignPageProps {
   setLeidingdoorvoeren: (v: string) => void;
   avr: string;
   setAvr: (v: string) => void;
+  profilePhoto?: string;
 }
 
 type UploadedFile = HouseDesignFileEntry;
@@ -257,6 +258,7 @@ export const HouseDesignPage = ({
   setLeidingdoorvoeren,
   avr,
   setAvr,
+  profilePhoto,
 }: HouseDesignPageProps) => {
   const { t } = useLanguage();
   const initialUploadRef = useRef<ReturnType<typeof createInitialUploadState> | null>(null);
@@ -294,6 +296,29 @@ export const HouseDesignPage = ({
     () => loadHouseDesignAlgemeenHints().startFloorKey,
   );
   const [expandedFloor, setExpandedFloor] = useState<string | null>(null);
+  const [didAutoExpand, setDidAutoExpand] = useState(false);
+
+  useEffect(() => {
+    if (didAutoExpand) return;
+
+    if (hasKelder === true) {
+      const kelderStandardSelected = (selectedRooms[KELDER_KEY] || []).length;
+      const kelderCustomSelected = (selectedCustomRooms[KELDER_KEY] || []).length;
+      const kelderSelectedRooms = kelderStandardSelected + kelderCustomSelected;
+      if (kelderSelectedRooms === 0) {
+        setExpandedFloor(KELDER_KEY);
+        setDidAutoExpand(true);
+        return;
+      }
+    }
+
+    const totalSelected = Object.values(selectedRooms).flat().length +
+                          Object.values(selectedCustomRooms).flat().length;
+    if (totalSelected === 0) {
+      setExpandedFloor(startFloorKey);
+    }
+    setDidAutoExpand(true);
+  }, [hasKelder, startFloorKey, selectedRooms, selectedCustomRooms, didAutoExpand]);
   const lastSectionKeysRef = useRef<string[]>(
     getDisplaySectionKeys(numberOfFloors, hasKelder, startFloorKey),
   );
@@ -956,8 +981,8 @@ export const HouseDesignPage = ({
 
   // Validation function - check if form is complete
   const isFormComplete = (): boolean => {
-    // Floor plans validation: require at least one file if hasFloorPlans is true or null
-    const requiresDrawings = hasFloorPlans === true || hasFloorPlans === null;
+    // Floor plans validation: optional
+    const requiresDrawings = false;
     if (requiresDrawings && uploadedFiles.length === 0) return false;
     
     // At least one room selected across all floors
@@ -1015,6 +1040,7 @@ export const HouseDesignPage = ({
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
         onLogoClick={onLogoClick}
+        profilePhoto={profilePhoto}
       />
 
       <AppSidebar
@@ -1051,58 +1077,73 @@ export const HouseDesignPage = ({
 
 
             {/* Upload Section */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-outline-variant/10">
-              {hasFloorPlans === false && (
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-[11px] font-black uppercase tracking-widest text-primary">
-                    {t('upload.uploadLabelSkip')}
-                  </span>
-                </div>
-              )}
-
-              {/* Hidden file inputs */}
-              <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={handleFileUpload} />
-              <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" multiple onChange={handleCameraCapture} />
-
-              {/* Floor plans */}
-              {hasFloorPlans === false ? (
-                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                  <p className="text-sm text-gray-700">
-                    {t('upload.noPlansHintPrefix')}
-                    <span className="font-bold">{t('upload.noPlansBold')}</span>
-                    {t('upload.noPlansHintSuffix')}
-                  </p>
-                </div>
-              ) : (
-                uploadedFiles.length === 0 ? (
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                    <button
-                      type="button"
-                      onClick={() => openMediaGuide('upload')}
-                      className="font-display font-black text-sm uppercase text-gray-800 hover:text-primary transition-colors flex items-center gap-2 focus:outline-none"
-                    >
-                      <span>{t('upload.floorPlansTitle')}</span>
-                      <CloudUpload size={16} className="text-gray-400 hover:text-primary transition-colors flex-shrink-0" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-3 rounded-xl bg-gray-50 p-4 border border-gray-200">
-                    <div className="flex justify-between items-center">
-                      <button
-                        type="button"
-                        onClick={() => openMediaGuide('upload')}
-                        className="font-display font-black text-sm uppercase text-gray-800 hover:text-primary transition-colors flex items-center gap-2 focus:outline-none"
-                      >
-                        <span>{t('upload.floorPlansTitle')}</span>
-                        <CloudUpload size={16} className="text-gray-400 hover:text-primary transition-colors flex-shrink-0" />
-                      </button>
+            {(() => {
+              const isUploadIncomplete = false;
+              return (
+                <div
+                  className={`bg-white rounded-2xl p-6 shadow-sm border transition-all ${
+                    isUploadIncomplete ? 'border-amber-500/30' : 'border-outline-variant/10'
+                  }`}
+                  style={isUploadIncomplete ? { background: 'rgba(245, 158, 11, 0.05)' } : undefined}
+                >
+                  {hasFloorPlans === false && (
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-[11px] font-black uppercase tracking-widest text-primary">
+                        {t('upload.uploadLabelSkip')}
+                      </span>
                     </div>
+                  )}
 
-                    {renderFloorPlanThumbnailStrip()}
-                  </div>
-                )
-              )}
-            </div>
+                  {/* Hidden file inputs */}
+                  <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={handleFileUpload} />
+                  <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" multiple onChange={handleCameraCapture} />
+
+                  {/* Floor plans */}
+                  {hasFloorPlans === false ? (
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                      <p className="text-sm text-gray-700">
+                        {t('upload.noPlansHintPrefix')}
+                        <span className="font-bold">{t('upload.noPlansBold')}</span>
+                        {t('upload.noPlansHintSuffix')}
+                      </p>
+                    </div>
+                  ) : (
+                    uploadedFiles.length === 0 ? (
+                      <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <button
+                          type="button"
+                          onClick={() => openMediaGuide('upload')}
+                          className="font-display font-black text-sm uppercase text-gray-800 hover:text-primary transition-colors flex items-center gap-2 focus:outline-none w-full"
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span>{t('upload.floorPlansTitle')}</span>
+                            {isUploadIncomplete && (
+                              <AlertTriangle size={16} className="text-amber-500 flex-shrink-0 animate-pulse" />
+                            )}
+                          </div>
+                          <CloudUpload size={16} className="text-gray-400 hover:text-primary transition-colors flex-shrink-0" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3 rounded-xl bg-gray-50 p-4 border border-gray-200">
+                        <div className="flex justify-between items-center">
+                          <button
+                            type="button"
+                            onClick={() => openMediaGuide('upload')}
+                            className="font-display font-black text-sm uppercase text-gray-800 hover:text-primary transition-colors flex items-center gap-2 focus:outline-none"
+                          >
+                            <span>{t('upload.floorPlansTitle')}</span>
+                            <CloudUpload size={16} className="text-gray-400 hover:text-primary transition-colors flex-shrink-0" />
+                          </button>
+                        </div>
+
+                        {renderFloorPlanThumbnailStrip()}
+                      </div>
+                    )
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Technical Assessment Details */}
             {(selectedRole === UserRole.BACK_OFFICE || selectedRole === UserRole.INSPECTOR) && (
@@ -1194,9 +1235,16 @@ export const HouseDesignPage = ({
                   const selectedForFloor = selectedRooms[section] || [];
                   const selectedCustomForFloor = selectedCustomRooms[section] || [];
                   const isKelder = section === KELDER_KEY;
+                  const isKelderIncomplete = isKelder && hasKelder === true && selectedCount === 0;
 
                   return (
-                    <motion.div key={section} className="border border-gray-100 rounded-xl">
+                    <motion.div
+                      key={section}
+                      className={`border transition-all rounded-xl ${
+                        isKelderIncomplete ? 'border-amber-500/30' : 'border-gray-100'
+                      }`}
+                      style={isKelderIncomplete ? { background: 'rgba(245, 158, 11, 0.05)' } : undefined}
+                    >
                       <div
                         className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
                         onClick={() => toggleFloor(section)}
@@ -1207,6 +1255,9 @@ export const HouseDesignPage = ({
                               <span className="font-display font-black text-base text-gray-800">
                                 {getSectionDisplayName(section)}
                               </span>
+                              {isKelderIncomplete && (
+                                <AlertTriangle size={16} className="text-amber-500 flex-shrink-0 animate-pulse" />
+                              )}
                               {selectedCount > 0 && (
                                 <span className="text-xs text-gray-400">
                                   {t('upload.roomsCount', { count: selectedCount })}

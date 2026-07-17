@@ -93,10 +93,6 @@ export function buildAuditReviewItems(
   generalTotal++;
   if (numberOfFloors !== null && numberOfFloors > 0) generalAnswered++;
 
-  // Floor plans question
-  generalTotal++;
-  if (hasFloorPlans !== null) generalAnswered++;
-
   // Apartment "which floor"
   const isApartment = isApartmentBuildingType(buildingType);
   if (isApartment) {
@@ -160,7 +156,6 @@ export function buildAuditReviewItems(
     if (hasKelder === null) generalMissing.push(t('algemeen.labels.hasBasement'));
     if (hasKruipruimte === null) generalMissing.push(t('algemeen.labels.hasCrawlSpace'));
   }
-  if (hasFloorPlans === null) generalMissing.push(t('algemeen.labels.hasFloorPlans'));
   if (input.selectedRole !== UserRole.CLIENT && !city.trim()) generalMissing.push(t('algemeen.labels.city'));
   if (input.selectedRole !== UserRole.CLIENT && !renovationStatus) generalMissing.push(t('algemeen.labels.renovationStatus'));
   if (input.selectedRole !== UserRole.CLIENT && (renovationStatus === 'Ja' || renovationStatus === 'Yes') && !renovationYear.trim()) {
@@ -194,7 +189,7 @@ export function buildAuditReviewItems(
   let designAnswered = 0;
 
   // Floor plans upload if required
-  const requiresDrawings = hasFloorPlans === true || hasFloorPlans === null;
+  const requiresDrawings = false;
   if (requiresDrawings) {
     designTotal++;
     if (input.uploadedFilesCount > 0) designAnswered++;

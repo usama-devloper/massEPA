@@ -3,7 +3,8 @@ import { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   Camera, Trash2, CheckCircle, X, Plus,
-  DoorClosed, Zap, Sofa, Utensils, Accessibility, SettingsIcon, Bath, Bed, DoorOpen, Home, Package, ChevronDown, ChevronUp
+  DoorClosed, Zap, Sofa, Utensils, Accessibility, SettingsIcon, Bath, Bed, DoorOpen, Home, Package, ChevronDown, ChevronUp,
+  AlertTriangle
 } from 'lucide-react';
 import { Toast } from '../components/common/Toast';
 import { useToast } from '../hooks/useToast';
@@ -52,6 +53,7 @@ import {
 } from '../utils/photoCaptureRooms';
 import { KOZIJN_FRAME_TYPES, KOZIJN_GLASS_TYPES } from '../config/kozijnGlasOptions';
 import { AppSelect } from '../components/common/AppSelect';
+import { HouseDesignRoomsModal } from '../components/common/HouseDesignRoomsModal';
 import { translateKozijnFrameType, translateKozijnGlassType, translatePhotoCategory, translateUploadRoom, translateUploadFloor } from '../i18n/translateOptions';
 import {
   filesToPersistedUrls,
@@ -92,6 +94,7 @@ const ROOM_ICONS: { [key: string]: React.ReactNode } = {
   'SERRE': <Home size={20} />,
   'VLOERISOLATIE': <Home size={20} />,
   'OVERLUIP': <DoorOpen size={20} />,
+  'BALKON': <Home size={20} />,
   'default': <Home size={20} />
 };
 
@@ -128,6 +131,7 @@ interface PhotoCapturePageProps {
   onLogoClick?: () => void;
   userName: string;
   selectedRole: UserRole;
+  profilePhoto?: string;
 }
 
 interface RoomWithUniqueId {
@@ -151,6 +155,7 @@ export function PhotoCapturePage({
   onLogoClick,
   userName,
   selectedRole,
+  profilePhoto,
 }: PhotoCapturePageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { toast, setToast, showToast } = useToast();
@@ -185,6 +190,7 @@ export function PhotoCapturePage({
   const [sectionOrder, setSectionOrder] = useState<PhotoCaptureSection[]>([]);
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [availableFloors, setAvailableFloors] = useState<Set<string>>(new Set());
+  const [editRoomsModalOpen, setEditRoomsModalOpen] = useState(false);
 
   const captureSessionInputRef = useRef<HTMLInputElement>(null);
 
@@ -285,7 +291,7 @@ export function PhotoCapturePage({
   const getExteriorPhotoCount = (sectionId: string): number => exteriorPhotos[sectionId as keyof ExteriorPhotos]?.length || 0;
 
   const getInteriorPhotoCount = (uniqueId: string, roomName: string): number => {
-    const categories = getPhotoCaptureCategories(roomName);
+    const categories = getCategoriesForRoom(uniqueId, roomName);
     let completed = 0;
     categories.forEach(cat => {
       if ((interiorPhotos[uniqueId]?.[cat]?.length || 0) > 0) completed++;
@@ -293,9 +299,60 @@ export function PhotoCapturePage({
     return completed;
   };
 
-  const getTotalCategoriesCount = (roomName: string): number => {
-    return getPhotoCaptureCategories(roomName).length;
+  const getTotalCategoriesCount = (uniqueId: string, roomName: string): number => {
+    return getCategoriesForRoom(uniqueId, roomName).length;
   };
+
+  const isInteriorRoomComplete = (roomId: string, roomName: string): boolean => {
+    const categories = getCategoriesForRoom(roomId, roomName);
+    if (categories.length === 0) return false;
+    for (const cat of categories) {
+      const photos = interiorPhotos[roomId]?.[cat] || [];
+      if (photos.length === 0) return false;
+
+      if (selectedRole !== UserRole.CLIENT) {
+        if (isPhotoCaptureDoorCategory(cat)) {
+          const doorVal = interiorDetails[roomId]?.[cat]?.doorIsolated;
+          if (doorVal !== true && doorVal !== false) return false;
+        }
+        if (isPhotoCaptureWindowCategory(cat)) {
+          const glass = interiorDetails[roomId]?.[cat]?.glassType;
+          const frame = interiorDetails[roomId]?.[cat]?.frameType;
+          if (!glass || !frame) return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  const [didAutoExpand, setDidAutoExpand] = useState(false);
+  useEffect(() => {
+    if (!photosPersistReadyRef.current || floorGroups.length === 0 || didAutoExpand) return;
+
+    const toExpand: string[] = [];
+
+    // Check facades
+    EXTERIOR_SECTIONS.forEach((sect) => {
+      const isFacadeRequired = sect.id === 'voor' || sect.id === 'achter';
+      const photos = exteriorPhotos[sect.id as keyof ExteriorPhotos] || [];
+      if (isFacadeRequired && photos.length === 0) {
+        toExpand.push(sect.id);
+      }
+    });
+
+    // Check floors
+    floorGroups.forEach((group) => {
+      const hasIncompleteRoom = group.rooms.some((roomItem) => !isInteriorRoomComplete(roomItem.uniqueId, roomItem.name));
+      if (hasIncompleteRoom) {
+        toExpand.push(group.floor);
+      }
+    });
+
+    if (toExpand.length > 0) {
+      setExpandedSections(toExpand);
+    }
+    setDidAutoExpand(true);
+  }, [photosPersistReadyRef.current, floorGroups, exteriorPhotos, interiorPhotos, interiorDetails, extraInteriorCategories, selectedRole, didAutoExpand]);
 
   const getRoomIcon = (roomName: string): React.ReactNode =>
     ROOM_ICONS[getPhotoCaptureRoomKey(roomName)] || ROOM_ICONS.default;
@@ -484,8 +541,8 @@ export function PhotoCapturePage({
               type="button"
               onClick={() => toggleDoorIsolated(roomId, category, true)}
               className={`rounded-lg px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all ${detail.doorIsolated === true
-                  ? 'bg-primary text-white shadow-md'
-                  : 'bg-white/50 text-gray-600 hover:bg-white/70'
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-white/50 text-gray-600 hover:bg-white/70'
                 }`}
             >
               {t('common.yes')}
@@ -494,8 +551,8 @@ export function PhotoCapturePage({
               type="button"
               onClick={() => toggleDoorIsolated(roomId, category, false)}
               className={`rounded-lg px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all ${detail.doorIsolated === false
-                  ? 'bg-primary text-white shadow-md'
-                  : 'bg-white/50 text-gray-600 hover:bg-white/70'
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-white/50 text-gray-600 hover:bg-white/70'
                 }`}
             >
               {t('common.no')}
@@ -833,6 +890,7 @@ export function PhotoCapturePage({
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
         onLogoClick={handleLogoClick}
+        profilePhoto={profilePhoto}
       />
 
       <AppSidebar
@@ -921,7 +979,7 @@ export function PhotoCapturePage({
 
           <header className="app-page-title text-center">
             <h1 className="font-display text-2xl sm:text-3xl font-black text-on-surface tracking-tighter">
-              {t('photos.title').toUpperCase()}
+              {t('photos.title')}
             </h1>
 
           </header>
@@ -972,18 +1030,20 @@ export function PhotoCapturePage({
                           <div className="px-5 pb-5 pt-0 space-y-3">
                             {floorGroup.rooms.map((roomItem, roomIdx) => {
                               const photoCount = getInteriorPhotoCount(roomItem.uniqueId, roomItem.name);
-                              const totalCategories = getTotalCategoriesCount(roomItem.name);
+                              const totalCategories = getTotalCategoriesCount(roomItem.uniqueId, roomItem.name);
                               const roomProgress = totalCategories > 0 ? (photoCount / totalCategories) * 100 : 0;
-                              const isComplete = photoCount === totalCategories && totalCategories > 0;
+                              const isComplete = isInteriorRoomComplete(roomItem.uniqueId, roomItem.name);
 
                               return (
                                 <div
                                   key={roomItem.uniqueId}
                                   onClick={() => openInteriorCapture(roomItem.uniqueId, section.id, roomIdx)}
-                                  className="w-full flex items-center p-4 rounded-2xl transition-all cursor-pointer"
+                                  className={`w-full flex items-center p-4 rounded-2xl transition-all cursor-pointer hover:bg-white/30 ${
+                                    !isComplete ? 'border border-amber-500/30 bg-amber-500/5' : ''
+                                  }`}
                                   style={{
-                                    background: 'rgba(255, 255, 255, 0.2)',
-                                    border: '1px solid rgba(255, 255, 255, 0.3)'
+                                    background: !isComplete ? 'rgba(245, 158, 11, 0.05)' : 'rgba(255, 255, 255, 0.2)',
+                                    border: !isComplete ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)'
                                   }}
                                 >
                                   <div className="flex items-center gap-4">
@@ -995,7 +1055,11 @@ export function PhotoCapturePage({
                                         <h4 className="font-bold text-gray-900 text-sm">
                                           {translateUploadRoom(roomItem.name, t)}
                                         </h4>
-                                        {isComplete && <CheckCircle size={12} className="text-emerald-500" />}
+                                        {isComplete ? (
+                                          <CheckCircle size={12} className="text-emerald-500 flex-shrink-0" />
+                                        ) : (
+                                          <AlertTriangle size={12} className="text-amber-500 flex-shrink-0 animate-pulse" />
+                                        )}
                                       </div>
                                       <p className="text-[11px] text-gray-600 font-medium">
                                         {photoCount} / {totalCategories} categories
@@ -1011,6 +1075,17 @@ export function PhotoCapturePage({
                                 </div>
                               );
                             })}
+
+                            <div className="pt-2 flex justify-start">
+                              <button
+                                type="button"
+                                onClick={() => setEditRoomsModalOpen(true)}
+                                className="px-4 py-2 border border-primary/20 text-primary hover:bg-primary/5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
+                              >
+                                <Home size={12} />
+                                {t('upload.editRoomsButton') || 'Edit House Design Rooms'}
+                              </button>
+                            </div>
                           </div>
                         </motion.div>
                       )}
@@ -1024,6 +1099,8 @@ export function PhotoCapturePage({
                 const photoCount = photos.length;
                 const isExpandedSection = isExpanded(section.id);
                 const isEmptyFacade = photoCount === 0;
+                const isFacadeRequired = section.id === 'voor' || section.id === 'achter';
+                const isFacadeIncomplete = isFacadeRequired && isEmptyFacade;
 
                 const handleFacadeHeaderClick = () => {
                   if (isEmptyFacade) {
@@ -1036,13 +1113,14 @@ export function PhotoCapturePage({
                 return (
                   <div
                     key={section.id}
-                    className={`rounded-3xl overflow-hidden shadow-lg transition-all ${isEmptyFacade ? 'cursor-pointer' : ''
-                      }`}
+                    className={`rounded-3xl overflow-hidden shadow-lg transition-all ${isEmptyFacade ? 'cursor-pointer' : ''} ${
+                      isFacadeIncomplete ? 'border-amber-500/30' : ''
+                    }`}
                     style={{
-                      background: 'rgba(255, 255, 255, 0.15)',
+                      background: isFacadeIncomplete ? 'rgba(245, 158, 11, 0.05)' : 'rgba(255, 255, 255, 0.15)',
                       backdropFilter: 'blur(15px) saturate(160%)',
                       WebkitBackdropFilter: 'blur(15px) saturate(160%)',
-                      border: '1px solid rgba(255, 255, 255, 0.3)'
+                      border: isFacadeIncomplete ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)'
                     }}
                     onClick={isEmptyFacade ? () => openCaptureSession({ sectionId: section.id }) : undefined}
                     onKeyDown={
@@ -1072,10 +1150,14 @@ export function PhotoCapturePage({
                         <h2 className="font-bold text-lg text-gray-900">
                           {getExteriorLabel(section.id)}
                         </h2>
-                        {photoCount > 0 && (
+                        {photoCount > 0 ? (
                           <span className="text-xs font-medium bg-white/30 px-2 py-0.5 rounded-full text-gray-700">
                             {photoCount}
                           </span>
+                        ) : (
+                          isFacadeRequired && (
+                            <AlertTriangle size={14} className="text-amber-500 animate-pulse" />
+                          )
                         )}
                       </div>
                       {isEmptyFacade ? (
@@ -1292,7 +1374,21 @@ export function PhotoCapturePage({
 
                       const { category } = row;
                       const photos = interiorPhotos[selectedInteriorRoomId]?.[category] || [];
-                      const isComplete = photos.length > 0;
+                      const isCatPhotosComplete = photos.length > 0;
+                      let isCatQuestionsComplete = true;
+                      if (selectedRole !== UserRole.CLIENT) {
+                        if (isPhotoCaptureDoorCategory(category)) {
+                          const doorVal = getCategoryDetail(selectedInteriorRoomId, category).doorIsolated;
+                          if (doorVal !== true && doorVal !== false) isCatQuestionsComplete = false;
+                        }
+                        if (isPhotoCaptureWindowCategory(category)) {
+                          const glass = getCategoryDetail(selectedInteriorRoomId, category).glassType;
+                          const frame = getCategoryDetail(selectedInteriorRoomId, category).frameType;
+                          if (!glass || !frame) isCatQuestionsComplete = false;
+                        }
+                      }
+                      const isCatComplete = isCatPhotosComplete && isCatQuestionsComplete;
+                      
                       const isExtraInstance = getPhotoCaptureCategoryNumber(category) > 1;
                       const categoryLabel = translatePhotoCategory(category, t, {
                         siblingCount: countPhotoCaptureCategoryInstances(
@@ -1312,16 +1408,22 @@ export function PhotoCapturePage({
                                   category,
                                 })
                               }
-                              className="flex flex-1 items-center gap-2 rounded-xl border border-white/30 bg-white/20 px-3 py-2.5 text-left transition-all hover:bg-white/40 active:scale-[0.99]"
+                              className={`flex flex-1 items-center gap-2 rounded-xl border transition-all hover:bg-white/40 active:scale-[0.99] ${
+                                !isCatComplete
+                                  ? 'border-amber-500/30 bg-amber-500/5 text-amber-900'
+                                  : 'border-white/30 bg-white/20 text-gray-800'
+                              }`}
                             >
                               <span
-                                className="flex-1 truncate font-bold text-sm text-gray-800"
+                                className="flex-1 truncate font-bold text-sm"
                                 title={categoryLabel}
                               >
                                 {categoryLabel}
                               </span>
-                              {isComplete && (
+                              {isCatComplete ? (
                                 <CheckCircle size={12} className="flex-shrink-0 text-emerald-500" />
+                              ) : (
+                                <AlertTriangle size={12} className="flex-shrink-0 text-amber-500 animate-pulse" />
                               )}
                             </button>
                             {isExtraInstance && (
@@ -1400,8 +1502,8 @@ export function PhotoCapturePage({
                             type="button"
                             onClick={() => goToRoomAtIndex(roomIdx)}
                             className={`flex-shrink-0 rounded-xl px-3 py-2 text-[10px] font-bold uppercase tracking-wide transition-all whitespace-nowrap ${isActive
-                                ? 'bg-primary text-white shadow-md'
-                                : 'border border-white/50 bg-white/40 text-gray-700 hover:bg-white/60'
+                              ? 'bg-primary text-white shadow-md'
+                              : 'border border-white/50 bg-white/40 text-gray-700 hover:bg-white/60'
                               }`}
                             title={room.name}
                           >
@@ -1448,11 +1550,11 @@ export function PhotoCapturePage({
               ? getExteriorLabel(captureTargetSection)
               : captureTargetCategory && interiorCaptureRoomName && captureTargetRoomId
                 ? `${translateUploadRoom(interiorCaptureRoomName, t)} — ${translatePhotoCategory(captureTargetCategory, t, {
-                    siblingCount: countPhotoCaptureCategoryInstances(
-                      getCategoriesForRoom(captureTargetRoomId, interiorCaptureRoomName),
-                      getPhotoCaptureCategoryBase(captureTargetCategory),
-                    ),
-                  })}`
+                  siblingCount: countPhotoCaptureCategoryInstances(
+                    getCategoriesForRoom(captureTargetRoomId, interiorCaptureRoomName),
+                    getPhotoCaptureCategoryBase(captureTargetCategory),
+                  ),
+                })}`
                 : captureTargetCategory
                   ? translatePhotoCategory(captureTargetCategory, t)
                   : undefined
@@ -1486,6 +1588,15 @@ export function PhotoCapturePage({
         onNext={() => photoViewer.next(viewerPhotoUrls.length)}
         onImageError={photoViewer.close}
       />
+
+      <AnimatePresence>
+        {editRoomsModalOpen && (
+          <HouseDesignRoomsModal
+            open={editRoomsModalOpen}
+            onClose={() => setEditRoomsModalOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       <StepContinueFooter onClick={handleContinue} label={t('photos.continueReview')} />
 

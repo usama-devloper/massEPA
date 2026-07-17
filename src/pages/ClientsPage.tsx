@@ -68,11 +68,9 @@ function filledBuildingCount(building: AppSnapshotV1['building']): { filled: num
     building.gemeente,
     building.gebouwhoogte,
   ];
-  // hasFloorPlans is boolean|null
-  const total = fields.length + 1;
+  const total = fields.length;
   const filled =
-    fields.filter((v) => typeof v === 'string' ? v.trim().length > 0 : Boolean(v)).length +
-    (building.hasFloorPlans !== null ? 1 : 0);
+    fields.filter((v) => typeof v === 'string' ? v.trim().length > 0 : Boolean(v)).length;
   return { filled, total };
 }
 
@@ -111,6 +109,7 @@ interface ClientsPageProps {
   selectedRole: UserRole;
   editorEmail: string;
   onOpenClientDossier: (profile: FormData, building: AppSnapshotV1['building']) => void;
+  profilePhoto?: string;
 }
 
 export function ClientsPage({
@@ -124,6 +123,7 @@ export function ClientsPage({
   selectedRole,
   editorEmail,
   onOpenClientDossier,
+  profilePhoto,
 }: ClientsPageProps) {
   const { toast, setToast, showToast } = useToast();
   const { locale, t } = useLanguage();
@@ -320,6 +320,7 @@ export function ClientsPage({
           onOpenSettings={onOpenSettings}
           onLogoClick={onLogoClick}
           onMenuClick={() => setMobileMenuOpen(true)}
+          profilePhoto={profilePhoto}
         />
         <main className="app-page-main md:ml-64 pb-8">
           <div className="app-shell-content">
@@ -349,6 +350,7 @@ export function ClientsPage({
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
         onLogoClick={onLogoClick}
+        profilePhoto={profilePhoto}
       />
 
       <AppSidebar

@@ -35,6 +35,7 @@ export interface FormData {
   companyName?: string;
   advisorName?: string;
   certificaathouder?: string;
+  profilePhoto?: string;
 }
 
 export interface AddressSuggestion {

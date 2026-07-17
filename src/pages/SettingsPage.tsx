@@ -25,6 +25,7 @@ interface SettingsPageProps {
   userName: string;
   selectedRole: UserRole;
   onResetUserData?: () => void | Promise<void>;
+  profilePhoto?: string;
 }
 
 export const SettingsPage = ({
@@ -37,6 +38,7 @@ export const SettingsPage = ({
   userName,
   selectedRole,
   onResetUserData,
+  profilePhoto,
 }: SettingsPageProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -74,6 +76,7 @@ export const SettingsPage = ({
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
         onLogoClick={onLogoClick}
+        profilePhoto={profilePhoto}
       />
 
       <AppSidebar
