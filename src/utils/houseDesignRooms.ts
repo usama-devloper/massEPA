@@ -129,7 +129,7 @@ export function resolveRoomSearchInput(input: string, allowedRooms?: string[]): 
 const KELDER_DEFAULT_ROOMS = ['KELDER', 'BERGING'] as const;
 
 export const defaultRoomCategories: Record<string, string[]> = {
-  BG: ['HAL', 'MK', 'WC', 'WOONKAMER', 'KEUKEN', 'BADKAMER', 'SLAAPKAMER', 'TECHNICAL ROOM', 'BERGING', 'SERRE', 'WASRUIMTE', 'EETKAMER', 'BALKON'],
+  BG: ['HAL', 'MK', 'WC', 'WOONKAMER', 'KEUKEN', 'BADKAMER', 'SLAAPKAMER', 'TECHNICAL ROOM', 'BERGING', 'SERRE', 'WASRUIMTE', 'EETKAMER'],
   '1e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE', 'BALKON'],
   '2e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE', 'BALKON'],
   '3e': ['HAL', 'SLAAPKAMER', 'BADKAMER', 'WC','SERRE', 'ZOLDER', 'WASRUIMTE', 'BALKON'],

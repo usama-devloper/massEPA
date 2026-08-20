@@ -58,6 +58,12 @@ const INTERIOR_EXAMPLE_FILES: Record<string, string> = {
   'SERRE|General View': 'Serre_General view.jpg',
   'WASRUIMTE|General View': 'Wasruimte.jpg',
   'OVERLUIP|General View': 'Overloop_General view.jpg',
+  'WOONKAMER|Heating system': 'Slaapkamer_Heating system.jpg',
+  'KEUKEN|Heating system': 'Slaapkamer_Heating system.jpg',
+  'WC|Heating system': 'Slaapkamer_Heating system.jpg',
+  'ZOLDER|Heating system': 'Slaapkamer_Heating system.jpg',
+  'HAL|Heating system': 'Slaapkamer_Heating system.jpg',
+  'EETKAMER|Heating system': 'Slaapkamer_Heating system.jpg',
 };
 
 export function photoInteriorExampleImageUrl(

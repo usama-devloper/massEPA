@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { VerticalFieldGroup } from '../../components/ui/BackOfficeUI';
 import { InspectionData } from './backofficeTypes';
 import {
@@ -15,9 +15,12 @@ import { useLanguage } from '../../context/LanguageContext';
 import { AppSelectWithOptions } from '../../components/common/AppSelect';
 import { translateOverstekOption } from '../../i18n/translateOptions';
 import { PhotoViewerModal } from '../../components/common/PhotoViewerModal';
+import { GlobalPhotoSelectorModal } from '../../components/common/GlobalPhotoSelectorModal';
+import { DataTable } from '../../components/common/DataTable';
 import { slidesFromUrls } from '../../utils/photoViewer';
 import { AppFlagPicker } from '../../components/common/AppFlagPicker';
 import { AppModal } from '../../components/common/AppModal';
+import { BouwkundigEditModal } from '../../components/common/BouwkundigEditModal';
 
 const LocalSelect: React.FC<any> = ({ className, ...props }) => {
   return (
@@ -57,11 +60,31 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
   const [lightboxTitle, setLightboxTitle] = useState<string>('');
   const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
-  const [editingGevelRowIdx, setEditingGevelRowIdx] = useState<number | null>(null);
-  const [editingVloerRowIdx, setEditingVloerRowIdx] = useState<number | null>(null);
-  const [editingDakRowIdx, setEditingDakRowIdx] = useState<number | null>(null);
   const [editingOverstekRowIdx, setEditingOverstekRowIdx] = useState<number | null>(null);
+  const [editingBouwkundigRow, setEditingBouwkundigRow] = useState<any>(null);
+  const [editingBouwkundigIndex, setEditingBouwkundigIndex] = useState<number | null>(null);
+  const [isBouwkundigModalOpen, setIsBouwkundigModalOpen] = useState(false);
   const [tempKozijnLinks, setTempKozijnLinks] = useState<Record<string, boolean>>({});
+  const [globalPhotoModalOpen, setGlobalPhotoModalOpen] = useState(false);
+  const globalFileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [globalUploadContext, setGlobalUploadContext] = useState<{
+    type: 'gevel' | 'vloer' | 'dak' | 'kozijn' | 'direct';
+    idx: number;
+    rowType?: string;
+    constructieId?: string;
+  } | null>(null);
+
+  const handleGlobalUploadAction = (capture: boolean) => {
+    if (globalFileInputRef.current) {
+      if (capture) {
+        globalFileInputRef.current.setAttribute('capture', 'environment');
+      } else {
+        globalFileInputRef.current.removeAttribute('capture');
+      }
+      globalFileInputRef.current.click();
+    }
+  };
 
   const openLightbox = (photos: string[], index: number, title: string) => {
     setLightboxPhotos(photos);
@@ -70,52 +93,7 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
     setLightboxTitle(title);
   };
 
-  const handleDirectUpload = (rowType: string, constructieId: string, idxInTab: number, event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (re) => {
-        const dataUrl = re.target?.result as string;
-        const currentTabRows = bouwkundigRows.filter(row => {
-          if (activeTab === 'bouwkundig-gevel') return row.type === 'Gevel';
-          if (activeTab === 'bouwkundig-vloer') return row.type === 'Vloer';
-          if (activeTab === 'bouwkundig-dak') return row.type === 'Dak';
-          return true;
-        });
-        const rowToUpdate = currentTabRows[idxInTab];
-        if (!rowToUpdate) return;
-        const originalIdx = bouwkundigRows.indexOf(rowToUpdate);
-        if (originalIdx !== -1) {
-          const currentPhotos = rowToUpdate.photos || [];
-          if (rowToUpdate.photoUrl && !currentPhotos.includes(rowToUpdate.photoUrl)) currentPhotos.push(rowToUpdate.photoUrl);
-          const merged = [...currentPhotos, dataUrl];
-          const updatedRow = { ...rowToUpdate, photos: merged, photoUrl: dataUrl };
-          const nextRows = bouwkundigRows.map((r, i) => i === originalIdx ? updatedRow : r);
-          onChange('bouwkundigRows', nextRows);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
-  const handleKozijnUpload = (idx: number, event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (re) => {
-        const dataUrl = re.target?.result as string;
-        const rowToUpdate = kozijnenLibrary[idx];
-        if (!rowToUpdate) return;
-        const currentPhotos = rowToUpdate.photos || [];
-        if (rowToUpdate.photoUrl && !currentPhotos.includes(rowToUpdate.photoUrl)) currentPhotos.push(rowToUpdate.photoUrl);
-        const merged = [...currentPhotos, dataUrl];
-        const updatedRow = { ...rowToUpdate, photos: merged, photoUrl: dataUrl };
-        const nextRows = kozijnenLibrary.map((r, i) => i === idx ? updatedRow : r);
-        onChange('kozijnenLibrary', nextRows);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const [selectedId, setSelectedId] = useState('back-gevel');
   const [activeTabState, setActiveTabState] = useState<'bouwkundig' | 'overstek' | 'library' | 'bouwkundig-gevel' | 'bouwkundig-vloer' | 'bouwkundig-dak'>('bouwkundig');
@@ -147,16 +125,34 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
     });
   };
 
+  const setFieldFlag = (fieldKey: string, next: 'red' | 'yellow' | 'green' | null) => {
+    setFlags(prev => {
+      const updated = { ...prev };
+      if (next === null) {
+        delete updated[fieldKey];
+      } else {
+        updated[fieldKey] = next;
+      }
+      return updated;
+    });
+  };
+
   const activeTab = forcedTab || activeTabState;
   const setActiveTab = (tab: 'bouwkundig' | 'overstek' | 'library' | 'bouwkundig-gevel' | 'bouwkundig-vloer' | 'bouwkundig-dak') => {
     setActiveTabState(tab);
     if (onTabChange) onTabChange(tab);
   };
 
+  const [editingGevelRowIdx, setEditingGevelRowIdx] = useState<number | null>(null);
+  const [editingVloerRowIdx, setEditingVloerRowIdx] = useState<number | null>(null);
+  const [editingDakRowIdx, setEditingDakRowIdx] = useState<number | null>(null);
+
   const constructies = data.constructies || [];
   const kozijnen = data.kozijnen || [];
 
-  const [elements, setElements] = useState([
+  const clientId = data?.clientId || 'default';
+
+  const defaultElementsList = [
     {
       id: 'front-gevel', label: 'Front gevel', area: '28.5', status: 'completed', type: 'Gevel',
       vloer: 'Begane Grondvloer', perimeter: '23.4', vloerIsolatie: 'Ja', platDakIsolatie: 'Niet van toepassing', grenstAanPlatDak: 'Niet van toepassing', areaPlatDak: '0.0',
@@ -199,7 +195,27 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
       isolatie: 'Geisoleerd', orientatie: 'Horizontaal', grenstAan: 'Grond', hellingshoek: '0', kozijnstaat: 'Niet van toepassing',
       gevel: 'Horizontaal', kozijn: 'Nee', belemmering: 'Geen', zonwering: 'Geen', kozijnenCount: '0'
     },
-  ]);
+  ];
+
+  const [elements, setElements] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem(`geometry_elements_${clientId}`);
+      return saved ? JSON.parse(saved) : defaultElementsList;
+    } catch {
+      return defaultElementsList;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(`geometry_elements_${clientId}`, JSON.stringify(elements));
+      if (onChange) {
+        onChange('geometryElements', elements as any);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [elements, clientId, onChange]);
 
   const kozijnenLibrary = data.kozijnenLibrary || [
     { id: 'k1', naam: 'D1', width: '1.33', height: '2.46', area: '1.98', constructie: '1520 + 1920_Deur ongeïsoleerd (U = 3.40)' },
@@ -260,7 +276,7 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
 
   const handleAddGevelRow = () => {
     const newIdx = bouwkundigRows.length;
-    const nextRows = [...bouwkundigRows, {
+    const newRow = {
       kozijnIds: [],
       constructieId: '',
       type: 'Gevel',
@@ -278,15 +294,18 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
       invoer: 'Archiefonderzoek',
       rc: '',
       perimeter: ''
-    }];
-    onChange('bouwkundigRows', nextRows);
-    setTempKozijnLinks({});
-    setEditingGevelRowIdx(newIdx);
+    };
+    setEditingBouwkundigRow({
+      ...newRow,
+      flag: (data.installations as any)?.flags?.[`bouwkundig_${bouwkundigRows.length}`]
+    });
+    setEditingBouwkundigIndex(newIdx);
+    setIsBouwkundigModalOpen(true);
   };
 
   const handleAddVloerRow = () => {
     const newIdx = bouwkundigRows.length;
-    const nextRows = [...bouwkundigRows, {
+    const newRow = {
       kozijnIds: [],
       constructieId: '',
       type: 'Vloer',
@@ -304,14 +323,18 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
       invoer: 'Archiefonderzoek',
       rc: '',
       perimeter: ''
-    }];
-    onChange('bouwkundigRows', nextRows);
-    setEditingVloerRowIdx(newIdx);
+    };
+    setEditingBouwkundigRow({
+      ...newRow,
+      flag: (data.installations as any)?.flags?.[`bouwkundig_${bouwkundigRows.length}`]
+    });
+    setEditingBouwkundigIndex(newIdx);
+    setIsBouwkundigModalOpen(true);
   };
 
   const handleAddDakRow = () => {
     const newIdx = bouwkundigRows.length;
-    const nextRows = [...bouwkundigRows, {
+    const newRow = {
       kozijnIds: [] as string[],
       constructieId: '',
       type: 'Dak',
@@ -329,27 +352,40 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
       invoer: 'Archiefonderzoek',
       rc: '',
       perimeter: ''
-    }];
-    onChange('bouwkundigRows', nextRows);
-    setEditingDakRowIdx(newIdx);
+    };
+    setEditingBouwkundigRow({
+      ...newRow,
+      flag: (data.installations as any)?.flags?.[`bouwkundig_${bouwkundigRows.length}`]
+    });
+    setEditingBouwkundigIndex(newIdx);
+    setIsBouwkundigModalOpen(true);
   };
 
-  const handleEditGevelClick = (idx: number, rowGevel: string) => {
-    const links: Record<string, boolean> = {};
-    const currentKozijnen = data.kozijnen || [];
-    currentKozijnen.forEach(k => {
-      links[k.id] = !!(rowGevel && k.gevel && k.gevel.split(',').map(s => s.trim()).includes(rowGevel));
+  const handleEditGevelClick = (idx: number, rowGevel?: string) => {
+    setEditingBouwkundigRow({
+      ...bouwkundigRows[idx],
+      flag: (data.installations as any)?.flags?.[`bouwkundig_${idx}`]
     });
-    setTempKozijnLinks(links);
-    setEditingGevelRowIdx(idx);
+    setEditingBouwkundigIndex(idx);
+    setIsBouwkundigModalOpen(true);
   };
 
   const handleEditVloerClick = (idx: number) => {
-    setEditingVloerRowIdx(idx);
+    setEditingBouwkundigRow({
+      ...bouwkundigRows[idx],
+      flag: (data.installations as any)?.flags?.[`bouwkundig_${idx}`]
+    });
+    setEditingBouwkundigIndex(idx);
+    setIsBouwkundigModalOpen(true);
   };
 
   const handleEditDakClick = (idx: number) => {
-    setEditingDakRowIdx(idx);
+    setEditingBouwkundigRow({
+      ...bouwkundigRows[idx],
+      flag: (data.installations as any)?.flags?.[`bouwkundig_${idx}`]
+    });
+    setEditingBouwkundigIndex(idx);
+    setIsBouwkundigModalOpen(true);
   };
 
   const handleCopyBouwkundigRow = (idx: number) => {
@@ -466,8 +502,116 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
     return constructies.filter(c => c.type === type);
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0 || !globalUploadContext) return;
+
+    const compressImage = (base64Str: string): Promise<string> => {
+      return new Promise((resolve) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1024;
+          const MAX_HEIGHT = 1024;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
+          } else {
+            resolve(base64Str);
+          }
+        };
+        img.onerror = () => resolve(base64Str);
+        img.src = base64Str;
+      });
+    };
+
+    const filePromises = Array.from(files).map(file => {
+      return new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          let dataUrl = e.target?.result as string;
+          if (file.type.startsWith('image/')) {
+            try {
+              dataUrl = await compressImage(dataUrl);
+            } catch (err) {
+              console.error('Image compression failed:', err);
+            }
+          }
+          resolve(dataUrl);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(filePromises).then(newPhotoUrls => {
+      const { type, idx } = globalUploadContext;
+      
+      if (type === 'kozijn') {
+        const rowToUpdate = kozijnenLibrary[idx];
+        if (!rowToUpdate) return;
+        const currentPhotos = rowToUpdate.photos || (rowToUpdate.photoUrl ? [rowToUpdate.photoUrl] : []);
+        const nextPhotos = [...currentPhotos, ...newPhotoUrls];
+        const updatedRow = { ...rowToUpdate, photos: nextPhotos, photoUrl: nextPhotos[0] || null };
+        const nextRows = kozijnenLibrary.map((r, i) => i === idx ? updatedRow : r);
+        onChange('kozijnenLibrary', nextRows);
+        
+        const list = data.kozijnen || [];
+        const updatedKozijnen = list.map((kItem: any) => {
+          if ((kItem.id && kItem.id === rowToUpdate.id) || (kItem.naam && kItem.naam === rowToUpdate.naam)) {
+            return {
+              ...kItem,
+              photos: nextPhotos,
+              photoUrl: nextPhotos[0] || null
+            };
+          }
+          return kItem;
+        });
+        if (updatedKozijnen.length > 0) {
+          onChange('kozijnen', updatedKozijnen as any);
+        }
+      } else if (type === 'direct') {
+        const rowToUpdate = currentBouwkundigRows[idx];
+        if (!rowToUpdate) return;
+        const originalIdx = bouwkundigRows.indexOf(rowToUpdate);
+        if (originalIdx !== -1) {
+          const currentPhotos = rowToUpdate.photos || (rowToUpdate.photoUrl ? [rowToUpdate.photoUrl] : []);
+          const nextPhotos = [...currentPhotos, ...newPhotoUrls];
+          const updatedRow = { ...rowToUpdate, photos: nextPhotos, photoUrl: nextPhotos[0] || null };
+          const nextRows = bouwkundigRows.map((r, i) => i === originalIdx ? updatedRow : r);
+          onChange('bouwkundigRows', nextRows);
+        }
+      } else if (type === 'gevel' || type === 'vloer' || type === 'dak') {
+        const rowToUpdate = bouwkundigRows[idx];
+        if (!rowToUpdate) return;
+        const currentPhotos = rowToUpdate.photos || (rowToUpdate.photoUrl ? [rowToUpdate.photoUrl] : []);
+        const nextPhotos = [...currentPhotos, ...newPhotoUrls];
+        const updatedRow = { ...rowToUpdate, photos: nextPhotos, photoUrl: nextPhotos[0] || null };
+        const nextRows = bouwkundigRows.map((r, i) => i === idx ? updatedRow : r);
+        onChange('bouwkundigRows', nextRows);
+      }
+    }).catch(err => console.error(err));
+  };
+
   return (
-    <div className="flex flex-col md:flex-row gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[calc(100vh-var(--app-topbar-height))] w-full">
+    <div className="flex flex-col md:flex-row gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full overflow-hidden w-full max-w-7xl">
       {/* 1. Sidebar Navigator */}
       {!isBouwkundigView && activeTab !== 'overstek' && (
         <div className="w-full md:w-52 shrink-0 flex flex-col bg-white border border-outline-variant/10 rounded-2xl shadow-sm overflow-hidden h-fit">
@@ -506,7 +650,7 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
       )}
 
       {/* 2. Main Area */}
-      <div className="flex-1 flex flex-col gap-4 min-w-0">
+      <div className="flex-1 flex flex-col gap-4 min-w-0 h-full">
         {forcedTab === 'overstek' && (
           <div className="pb-2">
             <h1 className="text-3xl font-black text-on-background tracking-tight">{t('nav.overstek')}</h1>
@@ -672,7 +816,7 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
 
           <div className="flex-1 bg-white border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col overflow-hidden w-full">
             {isBouwkundigView && (
-              <div className="flex flex-col w-full">
+              <div className="flex flex-col flex-1 w-full overflow-hidden">
                 <div className="p-4 border-b border-outline-variant/10 flex items-center justify-between bg-gray-50 shrink-0">
                   <div className="flex items-center gap-2">
                     {!forcedTab && (
@@ -709,11 +853,11 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                   </button>
                 </div>
 
-                <div className="overflow-x-auto w-full">
+                <div className="overflow-auto flex-1 w-full">
                   {activeTab === 'bouwkundig-gevel' && (
-                    <table className="w-full min-w-[1000px] text-left border-collapse border-spacing-0">
-                      <thead>
-                        <tr className="bg-gray-50 border-b border-outline-variant/10">
+                    <DataTable minWidth="1000px">
+                      <DataTable.Head>
+                        <DataTable.Row className="bg-gray-50 border-b border-outline-variant/10">
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 bg-gray-50 uppercase tracking-wider">Naam</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 uppercase tracking-wider">{t('kozijn.constructie')}</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 uppercase tracking-wider">{t('structural.facade')}</th>
@@ -726,9 +870,9 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-20 text-center uppercase tracking-wider">{t('structural.photo')}</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-24 text-center uppercase tracking-wider">{t('structural.flagStatus') || 'FLAG / STATUS'}</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-16 text-center uppercase tracking-wider">{t('structural.action')}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-outline-variant/5">
+                        </DataTable.Row>
+                      </DataTable.Head>
+                      <DataTable.Body>
                         {currentBouwkundigRows.map((row, idx) => {
                           const originalIdx = bouwkundigRows.indexOf(row);
                           const linkedConstructie = constructies.find(c => c.id === row.constructieId);
@@ -759,9 +903,15 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                               <td className="px-4 py-3.5 text-right font-semibold text-on-surface-variant">{row.hoogte || '-'}</td>
                               <td className="px-4 py-3.5 text-right font-semibold text-on-surface-variant font-mono">{row.oppervlakte ? `${parseFloat(row.oppervlakte).toFixed(2)} m²` : '0.00 m²'}</td>
                               <td className="px-4 py-3.5 font-semibold text-on-surface-variant">
-                                {row.gevel && kozijnen.filter(k => k.gevel && k.gevel.split(',').map(s => s.trim()).includes(row.gevel)).length > 0
-                                  ? kozijnen.filter(k => k.gevel && k.gevel.split(',').map(s => s.trim()).includes(row.gevel)).map(k => k.naam).filter(Boolean).join(', ')
-                                  : <span className="text-on-surface-variant/30 italic">—</span>}
+                                {(() => {
+                                  const rowTargets = [row.naam, row.gevel, row.id].filter(Boolean).map((s: string) => s.trim().toLowerCase());
+                                  const linked = kozijnen.filter(k => {
+                                    if (!k.gevel) return false;
+                                    const linkedTo = k.gevel.split(',').map((s: string) => s.trim().toLowerCase());
+                                    return rowTargets.some(t => linkedTo.includes(t));
+                                  });
+                                  return linked.length > 0 ? linked.map(k => k.naam).filter(Boolean).join(', ') : <span className="text-on-surface-variant/30 italic">—</span>;
+                                })()}
                               </td>
                               <td className="px-4 py-3.5 text-center bg-white group-hover:bg-primary/5 w-20">
                                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
@@ -792,18 +942,19 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                                         );
                                       }
                                     return (
-                                      <label className="flex flex-col items-center gap-1 cursor-pointer group/upload">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setGlobalUploadContext({ type: 'direct', idx });
+                                          setGlobalPhotoModalOpen(true);
+                                        }}
+                                        className="flex flex-col items-center gap-1 cursor-pointer group/upload"
+                                      >
                                         <Camera size={14} className="text-on-surface-variant/40 group-hover/upload:text-primary transition-colors" />
                                         <span className="text-[8px] font-black uppercase text-on-surface-variant/40 group-hover/upload:text-primary tracking-wider transition-colors">
                                           Upload
                                         </span>
-                                        <input
-                                          type="file"
-                                          className="hidden"
-                                          accept="image/*"
-                                          onChange={(e) => handleDirectUpload(row.type, row.constructieId, idx, e)}
-                                        />
-                                      </label>
+                                      </button>
                                     );
                                   })()}
                                 </div>
@@ -840,16 +991,17 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                             </tr>
                           );
                         })}
-                      </tbody>
-                    </table>
+                      </DataTable.Body>
+                    </DataTable>
                   )}
 
                   {activeTab === 'bouwkundig-vloer' && (
-                    <table className="w-full min-w-[1000px] text-left border-collapse border-spacing-0">
-                      <thead>
-                        <tr className="bg-gray-50 border-b border-outline-variant/10">
+                    <DataTable minWidth="1000px">
+                      <DataTable.Head>
+                        <DataTable.Row className="bg-gray-50 border-b border-outline-variant/10">
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 bg-gray-50 uppercase tracking-wider">Naam</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 uppercase tracking-wider">{t('kozijn.constructie')}</th>
+                          <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 uppercase tracking-wider">Rc Waarde</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 uppercase tracking-wider">{t('geometry.adjacentTo')}</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 text-right uppercase tracking-wider">{t('kozijn.width')}</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 text-right uppercase tracking-wider">{t('kozijn.height')}</th>
@@ -858,9 +1010,9 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-20 text-center uppercase tracking-wider">{t('structural.photo')}</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-24 text-center uppercase tracking-wider">{t('structural.flagStatus') || 'FLAG / STATUS'}</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-16 text-center uppercase tracking-wider">{t('structural.action')}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-outline-variant/5">
+                        </DataTable.Row>
+                      </DataTable.Head>
+                      <DataTable.Body>
                         {currentBouwkundigRows.map((row, idx) => {
                           const originalIdx = bouwkundigRows.indexOf(row);
                           const linkedConstructie = constructies.find(c => c.id === row.constructieId);
@@ -877,6 +1029,9 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                                 {linkedConstructie?.naam || (
                                   <span className="text-on-surface-variant/40 italic font-bold">Geen constructie gekoppeld</span>
                                 )}
+                              </td>
+                              <td className="px-4 py-3.5 font-semibold text-on-surface-variant font-mono">
+                                {row.rc || linkedConstructie?.rc || '-'}
                               </td>
                               <td className="px-4 py-3.5 font-semibold text-on-surface-variant">
                                 {row.grenstAan || '-'}
@@ -916,18 +1071,19 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                                         );
                                       }
                                     return (
-                                      <label className="flex flex-col items-center gap-1 cursor-pointer group/upload">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setGlobalUploadContext({ type: 'direct', idx });
+                                          setGlobalPhotoModalOpen(true);
+                                        }}
+                                        className="flex flex-col items-center gap-1 cursor-pointer group/upload"
+                                      >
                                         <Camera size={14} className="text-on-surface-variant/40 group-hover/upload:text-primary transition-colors" />
                                         <span className="text-[8px] font-black uppercase text-on-surface-variant/40 group-hover/upload:text-primary tracking-wider transition-colors">
                                           Upload
                                         </span>
-                                        <input
-                                          type="file"
-                                          className="hidden"
-                                          accept="image/*"
-                                          onChange={(e) => handleDirectUpload(row.type, row.constructieId, idx, e)}
-                                        />
-                                      </label>
+                                      </button>
                                     );
                                   })()}
                                 </div>
@@ -964,14 +1120,14 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                             </tr>
                           );
                         })}
-                      </tbody>
-                    </table>
+                      </DataTable.Body>
+                    </DataTable>
                   )}
 
                   {activeTab === 'bouwkundig-dak' && (
-                    <table className="w-full min-w-[1000px] text-left border-collapse border-spacing-0">
-                      <thead>
-                        <tr className="bg-gray-50 border-b border-outline-variant/10">
+                    <DataTable minWidth="1000px">
+                      <DataTable.Head>
+                        <DataTable.Row className="bg-gray-50 border-b border-outline-variant/10">
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 bg-gray-50 uppercase tracking-wider">Naam</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 uppercase tracking-wider">{t('kozijn.constructie')}</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 uppercase tracking-wider">{t('structural.orientation')}</th>
@@ -984,9 +1140,9 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-20 text-center uppercase tracking-wider">{t('structural.photo')}</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-24 text-center uppercase tracking-wider">{t('structural.flagStatus') || 'FLAG / STATUS'}</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-16 text-center uppercase tracking-wider">{t('structural.action')}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-outline-variant/5">
+                        </DataTable.Row>
+                      </DataTable.Head>
+                      <DataTable.Body>
                         {currentBouwkundigRows.map((row, idx) => {
                           const originalIdx = bouwkundigRows.indexOf(row);
                           const linkedConstructie = constructies.find(c => c.id === row.constructieId);
@@ -1017,9 +1173,15 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                                 {row.hellingshoek ? `${row.hellingshoek}°` : '0°'}
                               </td>
                               <td className="px-4 py-3.5 font-semibold text-on-surface-variant">
-                                {row.naam && kozijnen.filter(k => k.gevel && k.gevel.split(',').map(s => s.trim()).includes(row.naam)).length > 0
-                                  ? kozijnen.filter(k => k.gevel && k.gevel.split(',').map(s => s.trim()).includes(row.naam)).map(k => k.naam).filter(Boolean).join(', ')
-                                  : <span className="text-on-surface-variant/30 italic">—</span>}
+                                {(() => {
+                                  const rowTargets = [row.naam, row.gevel, row.id].filter(Boolean).map((s: string) => s.trim().toLowerCase());
+                                  const linked = kozijnen.filter(k => {
+                                    if (!k.gevel) return false;
+                                    const linkedTo = k.gevel.split(',').map((s: string) => s.trim().toLowerCase());
+                                    return rowTargets.some(t => linkedTo.includes(t));
+                                  });
+                                  return linked.length > 0 ? linked.map(k => k.naam).filter(Boolean).join(', ') : <span className="text-on-surface-variant/30 italic">—</span>;
+                                })()}
                               </td>
                               <td className="px-4 py-3.5 text-center bg-white group-hover:bg-primary/5 w-20">
                                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
@@ -1050,18 +1212,19 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                                         );
                                       }
                                     return (
-                                      <label className="flex flex-col items-center gap-1 cursor-pointer group/upload">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setGlobalUploadContext({ type: 'direct', idx });
+                                          setGlobalPhotoModalOpen(true);
+                                        }}
+                                        className="flex flex-col items-center gap-1 cursor-pointer group/upload"
+                                      >
                                         <Camera size={14} className="text-on-surface-variant/40 group-hover/upload:text-primary transition-colors" />
                                         <span className="text-[8px] font-black uppercase text-on-surface-variant/40 group-hover/upload:text-primary tracking-wider transition-colors">
                                           Upload
                                         </span>
-                                        <input
-                                          type="file"
-                                          className="hidden"
-                                          accept="image/*"
-                                          onChange={(e) => handleDirectUpload(row.type, row.constructieId, idx, e)}
-                                        />
-                                      </label>
+                                      </button>
                                     );
                                   })()}
                                 </div>
@@ -1098,14 +1261,14 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                             </tr>
                           );
                         })}
-                      </tbody>
-                    </table>
+                      </DataTable.Body>
+                    </DataTable>
                   )}
 
                   {activeTab === 'bouwkundig' && (
-                    <table className="w-full min-w-[1000px] text-left border-collapse border-spacing-0">
-                      <thead>
-                        <tr className="bg-gray-50 border-b border-outline-variant/10">
+                    <DataTable minWidth="1000px">
+                      <DataTable.Head>
+                        <DataTable.Row className="bg-gray-50 border-b border-outline-variant/10">
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 bg-gray-50 uppercase tracking-wider">Naam</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 uppercase tracking-wider">{t('kozijn.constructie')}</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 uppercase tracking-wider">Isolatie</th>
@@ -1115,9 +1278,9 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-20 text-center uppercase tracking-wider">{t('structural.photo')}</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-24 text-center uppercase tracking-wider">{t('structural.flagStatus') || 'FLAG / STATUS'}</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-16 text-center uppercase tracking-wider">{t('structural.action')}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-outline-variant/5">
+                        </DataTable.Row>
+                      </DataTable.Head>
+                      <DataTable.Body>
                         {currentBouwkundigRows.map((row, idx) => {
                           const originalIdx = bouwkundigRows.indexOf(row);
                           const linkedConstructie = constructies.find(c => c.id === row.constructieId);
@@ -1180,18 +1343,19 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                                         );
                                       }
                                     return (
-                                      <label className="flex flex-col items-center gap-1 cursor-pointer group/upload">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setGlobalUploadContext({ type: 'direct', idx });
+                                          setGlobalPhotoModalOpen(true);
+                                        }}
+                                        className="flex flex-col items-center gap-1 cursor-pointer group/upload"
+                                      >
                                         <Camera size={14} className="text-on-surface-variant/40 group-hover/upload:text-primary transition-colors" />
                                         <span className="text-[8px] font-black uppercase text-on-surface-variant/40 group-hover/upload:text-primary tracking-wider transition-colors">
                                           Upload
                                         </span>
-                                        <input
-                                          type="file"
-                                          className="hidden"
-                                          accept="image/*"
-                                          onChange={(e) => handleDirectUpload(row.type, row.constructieId, idx, e)}
-                                        />
-                                      </label>
+                                      </button>
                                     );
                                   })()}
                                 </div>
@@ -1236,15 +1400,15 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                             </tr>
                           );
                         })}
-                      </tbody>
-                    </table>
+                      </DataTable.Body>
+                    </DataTable>
                   )}
                 </div>
               </div>
             )}
 
             {activeTab === 'overstek' && (
-              <div className="flex flex-col w-full overflow-hidden">
+              <div className="flex flex-col flex-1 w-full overflow-hidden">
                 <div className="p-4 flex items-center justify-end bg-white shrink-0">
                   <button
                     type="button"
@@ -1254,10 +1418,10 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                     <Plus size={14} /> {t('overstek.addDetail')}
                   </button>
                 </div>
-                <div className="overflow-x-auto w-full">
-                  <table className="w-full min-w-[1400px] text-left border-collapse border-spacing-0">
-                    <thead>
-                      <tr className="bg-gray-50 border-b border-outline-variant/10">
+                <div className="overflow-auto flex-1 w-full">
+                  <DataTable minWidth="1400px">
+                    <DataTable.Head>
+                      <DataTable.Row className="bg-gray-50 border-b border-outline-variant/10">
                         <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 uppercase tracking-wider bg-gray-50">{t('overstek.selectGevel')}</th>
                         <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 uppercase tracking-wider">{t('overstek.kozijn')}</th>
                         <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 uppercase tracking-wider text-right">{t('overstek.hbDiff')}</th>
@@ -1273,9 +1437,9 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                         <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 uppercase tracking-wider">{t('overstek.zonweringTitle')}</th>
                         <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-24 text-center uppercase tracking-wider">{t('structural.flagStatus') || 'FLAG / STATUS'}</th>
                         <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-16 text-center uppercase tracking-wider bg-white">{t('structural.action')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-outline-variant/5">
+                      </DataTable.Row>
+                    </DataTable.Head>
+                    <DataTable.Body>
                       {overstekRows.map((row, idx) => {
                         const linkedKozijn = kozijnen.find(k => k.id === row.kozijnId);
                         const translatedGevel = row.gevel === 'Voorgevel' ? t('kozijn.options.location.voor') + 'gevel' :
@@ -1325,14 +1489,14 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                           </tr>
                         );
                       })}
-                    </tbody>
-                  </table>
+                    </DataTable.Body>
+                  </DataTable>
                 </div>
               </div>
             )}
 
             {activeTab === 'library' && (
-              <div className="flex flex-col w-full">
+              <div className="flex flex-col flex-1 w-full overflow-hidden">
                 <div className="p-4 border-b border-outline-variant/10 flex items-center justify-between bg-gray-50 shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="text-primary font-black text-xs font-mono bg-primary/10 px-1.5 py-0.5 rounded-md">L.</span>
@@ -1346,11 +1510,11 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                     <Plus size={14} /> Add Kozijn Definition
                   </button>
                 </div>
-                <div className="p-4 overflow-x-auto w-full">
-                  <div className="overflow-hidden border border-outline-variant/10 rounded-2xl overflow-x-auto">
-                    <table className="w-full min-w-[1000px] text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="bg-gray-50 border-b border-outline-variant/10">
+                <div className="p-4 overflow-auto flex-1 w-full">
+                  <div className="border border-outline-variant/10 rounded-2xl overflow-hidden flex flex-col">
+                    <DataTable minWidth="1000px" className="text-xs">
+                      <DataTable.Head>
+                        <DataTable.Row className="bg-gray-50 border-b border-outline-variant/10">
                           <th className="px-4 py-3 text-on-surface-variant/50 font-black uppercase tracking-wider">Naam</th>
                           <th className="px-4 py-3 text-on-surface-variant/50 font-black uppercase tracking-wider">Width (mm)</th>
                           <th className="px-4 py-3 text-on-surface-variant/50 font-black uppercase tracking-wider">Height (mm)</th>
@@ -1359,11 +1523,11 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-20 text-center uppercase tracking-wider">Photo</th>
                           <th className="px-4 py-3 text-[10px] font-black text-on-surface-variant/60 w-24 text-center uppercase tracking-wider">{t('structural.flagStatus') || 'FLAG / STATUS'}</th>
                           <th className="px-4 py-3 text-on-surface-variant/50 font-black uppercase tracking-wider text-right">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-outline-variant/5">
+                        </DataTable.Row>
+                      </DataTable.Head>
+                      <DataTable.Body>
                         {kozijnenLibrary.map((kz, iIdx) => (
-                          <tr key={kz.id} className="hover:bg-primary/5 transition-colors font-semibold text-xs select-none">
+                          <DataTable.Row key={kz.id} className="hover:bg-primary/5 transition-colors font-semibold text-xs select-none">
                             <td className="px-4 py-3">
                               <input
                                 className="w-full bg-transparent border-none focus:ring-0 text-on-surface-variant/80 p-0 font-bold"
@@ -1423,14 +1587,16 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                                 <option>Aluminium</option>
                                 <option>Staal</option>
                                 <option>Onbekend</option>
-                              </select>
+                                  </select>
                             </td>
                             <td className="px-4 py-3 text-center">
                               {(() => {
+                                const linkedItems = (data.kozijnen || []).filter((kItem: any) => (kItem.id && kItem.id === kz.id) || (kItem.naam && kItem.naam === kz.naam));
                                 const allPhotos = [
                                   ...((kz as any).photos || []),
-                                  ...((kz as any).photoUrl ? [(kz as any).photoUrl] : [])
-                                ].filter((p, i, arr) => arr.indexOf(p) === i);
+                                  ...((kz as any).photoUrl ? [(kz as any).photoUrl] : []),
+                                  ...linkedItems.flatMap((kItem: any) => [...(kItem.photos || []), ...(kItem.photoUrl ? [kItem.photoUrl] : [])])
+                                ].filter((p, i, arr) => p && arr.indexOf(p) === i);
 
                                 if (allPhotos.length > 0) {
                                   return (
@@ -1453,18 +1619,19 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                                   );
                                 }
                                 return (
-                                  <label className="flex flex-col items-center justify-center gap-1 cursor-pointer group/upload h-8">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setGlobalUploadContext({ type: 'kozijn', idx: iIdx });
+                                      setGlobalPhotoModalOpen(true);
+                                    }}
+                                    className="flex flex-col items-center justify-center gap-1 cursor-pointer group/upload h-8"
+                                  >
                                     <Camera size={14} className="text-on-surface-variant/40 group-hover/upload:text-primary transition-colors" />
                                     <span className="text-[8px] font-black uppercase text-on-surface-variant/40 group-hover/upload:text-primary tracking-wider transition-colors">
                                       Upload
                                     </span>
-                                    <input
-                                      type="file"
-                                      className="hidden"
-                                      accept="image/*"
-                                      onChange={(e) => handleKozijnUpload(iIdx, e)}
-                                    />
-                                  </label>
+                                  </button>
                                 );
                               })()}
                             </td>
@@ -1486,10 +1653,10 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                                 <Trash2 size={14} />
                               </button>
                             </td>
-                          </tr>
+                          </DataTable.Row>
                         ))}
-                      </tbody>
-                    </table>
+                      </DataTable.Body>
+                    </DataTable>
                   </div>
                 </div>
               </div>
@@ -1498,19 +1665,26 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
         </div>
       </div>
 
+      {false && (
+      <>
       {/* Gevel Row Editing Modal */}
       {editingGevelRowIdx !== null && (() => {
-        const editingRow = bouwkundigRows[editingGevelRowIdx];
+        const editingRow = bouwkundigRows[editingGevelRowIdx as number];
         if (!editingRow) return null;
 
         const updateField = (field: string, value: any) => {
           const nextRows = bouwkundigRows.map((r, i) => {
             if (i !== editingGevelRowIdx) return r;
             let nextRow = { ...r, [field]: value };
-            if (field === 'breedte' || field === 'hoogte') {
+            if (field === 'oppervlakte') {
+              nextRow.breedte = '';
+              nextRow.hoogte = '';
+            } else if (field === 'breedte' || field === 'hoogte') {
               const w = parseFloat(field === 'breedte' ? value : (r.breedte || '0')) || 0;
               const h = parseFloat(field === 'hoogte' ? value : (r.hoogte || '0')) || 0;
-              nextRow.oppervlakte = w > 0 && h > 0 ? (w * h).toFixed(2) : '';
+              if (w > 0 && h > 0) {
+                nextRow.oppervlakte = (w * h).toFixed(2);
+              }
             }
             return nextRow;
           });
@@ -1536,15 +1710,21 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
             const currentKozijnen = data.kozijnen || [];
             const updatedKozijnen = currentKozijnen.map(k => {
               const currentGevels = k.gevel ? k.gevel.split(',').map(s => s.trim()).filter(Boolean) : [];
-              const wasLinked = currentGevels.includes(editingRow.gevel);
+              const targets = [editingRow.naam, editingRow.gevel, editingRow.id].filter(Boolean).map(s => s.trim().toLowerCase());
+              const wasLinked = Boolean(targets.some(t => currentGevels.some(g => g.trim().toLowerCase() === t)));
               const shouldBeLinked = tempKozijnLinks[k.id] !== undefined
                 ? tempKozijnLinks[k.id]
                 : wasLinked;
 
               if (shouldBeLinked && !wasLinked) {
-                return { ...k, gevel: [...currentGevels, editingRow.gevel].join(', ') };
+                const target = editingRow.naam || editingRow.gevel || editingRow.id;
+                if (target && !currentGevels.some(g => g.trim().toLowerCase() === target.trim().toLowerCase())) {
+                  currentGevels.push(target);
+                }
+                return { ...k, gevel: currentGevels.join(', ') };
               } else if (!shouldBeLinked && wasLinked) {
-                return { ...k, gevel: currentGevels.filter(g => g !== editingRow.gevel).join(', ') };
+                let newGevels = currentGevels.filter(g => !targets.includes(g.trim().toLowerCase()));
+                return { ...k, gevel: newGevels.join(', ') };
               }
               return k;
             });
@@ -1679,12 +1859,13 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider text-nowrap overflow-hidden text-ellipsis" title={t('kozijn.areaAutoCalculated') || 'Oppervlakte (m²) — auto berekend'}>{t('kozijn.areaAutoCalculated') || 'Oppervlakte (m²) — auto berekend'}</label>
+                  <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider text-nowrap overflow-hidden text-ellipsis" title={t('kozijn.area') || 'Oppervlakte (m²)'}>{t('kozijn.area') || 'Oppervlakte (m²)'}</label>
                   <input
-                    type="text"
-                    className="input-field bg-gray-50 border border-outline-variant/10 text-on-background font-black font-mono text-center cursor-not-allowed"
+                    type="number"
+                    step="0.01"
+                    className="input-field font-mono font-bold"
                     value={editingRow.oppervlakte || ''}
-                    readOnly
+                    onChange={(e) => updateField('oppervlakte', e.target.value)}
                     placeholder="0.00"
                   />
                 </div>
@@ -1707,7 +1888,9 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                     </span>
                   ) : (
                     kozijnen.map(k => {
-                      const isInitiallyLinked = Boolean(k.gevel === editingRow.gevel || (k.gevel && k.gevel.split(',').map(s => s.trim()).includes(editingRow.gevel)));
+                      const linkedTo = k.gevel ? k.gevel.split(',').map((s: string) => s.trim().toLowerCase()) : [];
+                      const targets = [editingRow.naam, editingRow.gevel, editingRow.id].filter(Boolean).map(s => s.trim().toLowerCase());
+                      const isInitiallyLinked = Boolean(targets.some(t => linkedTo.includes(t)));
                       const isChecked = tempKozijnLinks[k.id] !== undefined ? Boolean(tempKozijnLinks[k.id]) : isInitiallyLinked;
                       return (
                         <label key={k.id} className="flex items-start gap-2.5 text-xs font-bold text-on-surface-variant/80 cursor-pointer p-1 rounded-lg hover:bg-white transition-colors">
@@ -1747,39 +1930,13 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                           {t('structural.photo') || 'Foto'} {allPhotos.length > 0 ? `(${allPhotos.length})` : ''}
                         </label>
                         <div>
-                          <input
-                            type="file"
-                            id="modal-gevel-photo-upload-multi"
-                            className="hidden"
-                            accept="image/*"
-                            multiple
-                            onChange={(e) => {
-                              const files = Array.from(e.target.files || []);
-                              if (files.length === 0) return;
-
-                              let loaded = 0;
-                              const newPhotos: string[] = [];
-                              files.forEach((file) => {
-                                const reader = new FileReader();
-                                reader.onload = (re) => {
-                                  newPhotos.push(re.target?.result as string);
-                                  loaded++;
-                                  if (loaded === files.length) {
-                                    const currentPhotos = editingRow.photos || [];
-                                    if (editingRow.photoUrl && !currentPhotos.includes(editingRow.photoUrl)) currentPhotos.push(editingRow.photoUrl);
-                                    const merged = [...currentPhotos, ...newPhotos];
-                                    updateFields({ photos: merged, photoUrl: merged[0] });
-                                  }
-                                };
-                                reader.readAsDataURL(file);
-                              });
-                              e.target.value = '';
-                            }}
-                          />
                           <button
                             type="button"
                             className="flex items-center gap-1 px-2.5 py-1 bg-white border border-outline-variant/15 hover:border-primary/40 hover:bg-primary/5 text-on-surface-variant/70 hover:text-primary text-[10px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-xs active:scale-[0.98]"
-                            onClick={() => document.getElementById('modal-gevel-photo-upload-multi')?.click()}
+                            onClick={() => {
+                              setGlobalUploadContext({ type: 'gevel', idx: editingGevelRowIdx! });
+                              setGlobalPhotoModalOpen(true);
+                            }}
                           >
                             <Camera size={11} />
                             Voeg foto toe
@@ -1790,7 +1947,10 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                       {allPhotos.length === 0 ? (
                         <div
                           className="border border-dashed border-outline-variant/30 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-gray-50 hover:bg-gray-100/50 transition-colors cursor-pointer"
-                          onClick={() => document.getElementById('modal-gevel-photo-upload-multi')?.click()}
+                          onClick={() => {
+                            setGlobalUploadContext({ type: 'gevel', idx: editingGevelRowIdx! });
+                            setGlobalPhotoModalOpen(true);
+                          }}
                         >
                           <Camera size={22} className="text-on-surface-variant/30 mb-2" />
                           <p className="text-[10px] text-on-surface-variant/50 font-medium">Klik om foto's toe te voegen</p>
@@ -1839,17 +1999,22 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
 
       {/* Vloer Row Editing Modal */}
       {editingVloerRowIdx !== null && (() => {
-        const editingRow = bouwkundigRows[editingVloerRowIdx];
+        const editingRow = bouwkundigRows[editingVloerRowIdx as number];
         if (!editingRow) return null;
 
         const updateField = (field: string, value: any) => {
           const nextRows = bouwkundigRows.map((r, i) => {
             if (i !== editingVloerRowIdx) return r;
             let nextRow = { ...r, [field]: value };
-            if (field === 'breedte' || field === 'hoogte') {
+            if (field === 'oppervlakte') {
+              nextRow.breedte = '';
+              nextRow.hoogte = '';
+            } else if (field === 'breedte' || field === 'hoogte') {
               const w = parseFloat(field === 'breedte' ? value : (r.breedte || '0')) || 0;
               const h = parseFloat(field === 'hoogte' ? value : (r.hoogte || '0')) || 0;
-              nextRow.oppervlakte = w > 0 && h > 0 ? (w * h).toFixed(2) : '';
+              if (w > 0 && h > 0) {
+                nextRow.oppervlakte = (w * h).toFixed(2);
+              }
             }
             return nextRow;
           });
@@ -1983,12 +2148,13 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider text-nowrap overflow-hidden text-ellipsis" title={t('kozijn.areaAutoCalculated') || 'Oppervlakte (m²) — auto berekend'}>{t('kozijn.areaAutoCalculated') || 'Oppervlakte (m²) — auto berekend'}</label>
+                  <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider text-nowrap overflow-hidden text-ellipsis" title={t('kozijn.area') || 'Oppervlakte (m²)'}>{t('kozijn.area') || 'Oppervlakte (m²)'}</label>
                   <input
-                    type="text"
-                    className="input-field bg-gray-50 border border-outline-variant/10 text-on-background font-black font-mono text-center cursor-not-allowed"
+                    type="number"
+                    step="0.01"
+                    className="input-field font-mono font-bold"
                     value={editingRow.oppervlakte || ''}
-                    readOnly
+                    onChange={(e) => updateField('oppervlakte', e.target.value)}
                     placeholder="0.00"
                   />
                 </div>
@@ -2028,39 +2194,13 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                           {t('structural.photo') || 'Foto'} {allPhotos.length > 0 ? `(${allPhotos.length})` : ''}
                         </label>
                         <div>
-                          <input
-                            type="file"
-                            id="modal-vloer-photo-upload-multi"
-                            className="hidden"
-                            accept="image/*"
-                            multiple
-                            onChange={(e) => {
-                              const files = Array.from(e.target.files || []);
-                              if (files.length === 0) return;
-
-                              let loaded = 0;
-                              const newPhotos: string[] = [];
-                              files.forEach((file) => {
-                                const reader = new FileReader();
-                                reader.onload = (re) => {
-                                  newPhotos.push(re.target?.result as string);
-                                  loaded++;
-                                  if (loaded === files.length) {
-                                    const currentPhotos = editingRow.photos || [];
-                                    if (editingRow.photoUrl && !currentPhotos.includes(editingRow.photoUrl)) currentPhotos.push(editingRow.photoUrl);
-                                    const merged = [...currentPhotos, ...newPhotos];
-                                    updateFields({ photos: merged, photoUrl: merged[0] });
-                                  }
-                                };
-                                reader.readAsDataURL(file);
-                              });
-                              e.target.value = '';
-                            }}
-                          />
                           <button
                             type="button"
                             className="flex items-center gap-1 px-2.5 py-1 bg-white border border-outline-variant/15 hover:border-primary/40 hover:bg-primary/5 text-on-surface-variant/70 hover:text-primary text-[10px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-xs active:scale-[0.98]"
-                            onClick={() => document.getElementById('modal-vloer-photo-upload-multi')?.click()}
+                            onClick={() => {
+                              setGlobalUploadContext({ type: 'vloer', idx: editingVloerRowIdx! });
+                              setGlobalPhotoModalOpen(true);
+                            }}
                           >
                             <Camera size={11} />
                             Voeg foto toe
@@ -2071,7 +2211,10 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                       {allPhotos.length === 0 ? (
                         <div
                           className="border border-dashed border-outline-variant/30 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-gray-50 hover:bg-gray-100/50 transition-colors cursor-pointer"
-                          onClick={() => document.getElementById('modal-vloer-photo-upload-multi')?.click()}
+                          onClick={() => {
+                            setGlobalUploadContext({ type: 'vloer', idx: editingVloerRowIdx! });
+                            setGlobalPhotoModalOpen(true);
+                          }}
                         >
                           <Camera size={22} className="text-on-surface-variant/30 mb-2" />
                           <p className="text-[10px] text-on-surface-variant/50 font-medium">Klik om foto's toe te voegen</p>
@@ -2120,17 +2263,22 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
 
       {/* Dak Row Editing Modal */}
       {editingDakRowIdx !== null && (() => {
-        const editingRow = bouwkundigRows[editingDakRowIdx];
+        const editingRow = bouwkundigRows[editingDakRowIdx as number];
         if (!editingRow) return null;
 
         const updateField = (field: string, value: any) => {
           const nextRows = bouwkundigRows.map((r, i) => {
             if (i !== editingDakRowIdx) return r;
             let nextRow = { ...r, [field]: value };
-            if (field === 'breedte' || field === 'hoogte') {
+            if (field === 'oppervlakte') {
+              nextRow.breedte = '';
+              nextRow.hoogte = '';
+            } else if (field === 'breedte' || field === 'hoogte') {
               const w = parseFloat(field === 'breedte' ? value : (r.breedte || '0')) || 0;
               const h = parseFloat(field === 'hoogte' ? value : (r.hoogte || '0')) || 0;
-              nextRow.oppervlakte = w > 0 && h > 0 ? (w * h).toFixed(2) : '';
+              if (w > 0 && h > 0) {
+                nextRow.oppervlakte = (w * h).toFixed(2);
+              }
             }
             return nextRow;
           });
@@ -2156,15 +2304,21 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
             const currentKozijnen = data.kozijnen || [];
             const updatedKozijnen = currentKozijnen.map(k => {
               const currentGevels = k.gevel ? k.gevel.split(',').map(s => s.trim()).filter(Boolean) : [];
-              const wasLinked = currentGevels.includes(editingRow.naam);
+              const targets = [editingRow.naam, editingRow.gevel, editingRow.id].filter(Boolean).map(s => s.trim().toLowerCase());
+              const wasLinked = Boolean(targets.some(t => currentGevels.some(g => g.trim().toLowerCase() === t)));
               const shouldBeLinked = tempKozijnLinks[k.id] !== undefined
                 ? tempKozijnLinks[k.id]
                 : wasLinked;
 
               if (shouldBeLinked && !wasLinked) {
-                return { ...k, gevel: [...currentGevels, editingRow.naam].join(', ') };
+                const target = editingRow.naam || editingRow.gevel || editingRow.id;
+                if (target && !currentGevels.some(g => g.trim().toLowerCase() === target.trim().toLowerCase())) {
+                  currentGevels.push(target);
+                }
+                return { ...k, gevel: currentGevels.join(', ') };
               } else if (!shouldBeLinked && wasLinked) {
-                return { ...k, gevel: currentGevels.filter(g => g !== editingRow.naam).join(', ') };
+                let newGevels = currentGevels.filter(g => !targets.includes(g.trim().toLowerCase()));
+                return { ...k, gevel: newGevels.join(', ') };
               }
               return k;
             });
@@ -2287,12 +2441,13 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider text-nowrap overflow-hidden text-ellipsis" title={t('kozijn.areaAutoCalculated') || 'Oppervlakte (m²) — auto berekend'}>{t('kozijn.areaAutoCalculated') || 'Oppervlakte (m²) — auto berekend'}</label>
+                  <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider text-nowrap overflow-hidden text-ellipsis" title={t('kozijn.area') || 'Oppervlakte (m²)'}>{t('kozijn.area') || 'Oppervlakte (m²)'}</label>
                   <input
-                    type="text"
-                    className="input-field bg-gray-50 border border-outline-variant/10 text-on-background font-black font-mono text-center cursor-not-allowed"
+                    type="number"
+                    step="0.01"
+                    className="input-field font-mono font-bold"
                     value={editingRow.oppervlakte || ''}
-                    readOnly
+                    onChange={(e) => updateField('oppervlakte', e.target.value)}
                     placeholder="0.00"
                   />
                 </div>
@@ -2326,7 +2481,9 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                     </span>
                   ) : (
                     kozijnen.map(k => {
-                      const isInitiallyLinked = Boolean(k.gevel === editingRow.naam || (k.gevel && k.gevel.split(',').map(s => s.trim()).includes(editingRow.naam)));
+                      const linkedTo = k.gevel ? k.gevel.split(',').map((s: string) => s.trim().toLowerCase()) : [];
+                      const targets = [editingRow.naam, editingRow.gevel, editingRow.id].filter(Boolean).map(s => s.trim().toLowerCase());
+                      const isInitiallyLinked = Boolean(targets.some(t => linkedTo.includes(t)));
                       const isChecked = tempKozijnLinks[k.id] !== undefined ? Boolean(tempKozijnLinks[k.id]) : isInitiallyLinked;
                       return (
                         <label key={k.id} className="flex items-start gap-2.5 text-xs font-bold text-on-surface-variant/80 cursor-pointer p-1 rounded-lg hover:bg-white transition-colors">
@@ -2366,39 +2523,13 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                           {t('structural.photo') || 'Foto'} {allPhotos.length > 0 ? `(${allPhotos.length})` : ''}
                         </label>
                         <div>
-                          <input
-                            type="file"
-                            id="modal-dak-photo-upload-multi"
-                            className="hidden"
-                            accept="image/*"
-                            multiple
-                            onChange={(e) => {
-                              const files = Array.from(e.target.files || []);
-                              if (files.length === 0) return;
-
-                              let loaded = 0;
-                              const newPhotos: string[] = [];
-                              files.forEach((file) => {
-                                const reader = new FileReader();
-                                reader.onload = (re) => {
-                                  newPhotos.push(re.target?.result as string);
-                                  loaded++;
-                                  if (loaded === files.length) {
-                                    const currentPhotos = editingRow.photos || [];
-                                    if (editingRow.photoUrl && !currentPhotos.includes(editingRow.photoUrl)) currentPhotos.push(editingRow.photoUrl);
-                                    const merged = [...currentPhotos, ...newPhotos];
-                                    updateFields({ photos: merged, photoUrl: merged[0] });
-                                  }
-                                };
-                                reader.readAsDataURL(file);
-                              });
-                              e.target.value = '';
-                            }}
-                          />
                           <button
                             type="button"
                             className="flex items-center gap-1 px-2.5 py-1 bg-white border border-outline-variant/15 hover:border-primary/40 hover:bg-primary/5 text-on-surface-variant/70 hover:text-primary text-[10px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-xs active:scale-[0.98]"
-                            onClick={() => document.getElementById('modal-dak-photo-upload-multi')?.click()}
+                            onClick={() => {
+                              setGlobalUploadContext({ type: 'dak', idx: editingDakRowIdx! });
+                              setGlobalPhotoModalOpen(true);
+                            }}
                           >
                             <Camera size={11} />
                             Voeg foto toe
@@ -2409,7 +2540,10 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                       {allPhotos.length === 0 ? (
                         <div
                           className="border border-dashed border-outline-variant/30 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-gray-50 hover:bg-gray-100/50 transition-colors cursor-pointer"
-                          onClick={() => document.getElementById('modal-dak-photo-upload-multi')?.click()}
+                          onClick={() => {
+                            setGlobalUploadContext({ type: 'dak', idx: editingDakRowIdx! });
+                            setGlobalPhotoModalOpen(true);
+                          }}
                         >
                           <Camera size={22} className="text-on-surface-variant/30 mb-2" />
                           <p className="text-[10px] text-on-surface-variant/50 font-medium">Klik om foto's toe te voegen</p>
@@ -2455,6 +2589,46 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
           </AppModal>
         );
       })()}
+      </>
+      )}
+
+      <BouwkundigEditModal
+        isOpen={isBouwkundigModalOpen}
+        onClose={() => {
+          setIsBouwkundigModalOpen(false);
+          setEditingBouwkundigRow(null);
+          setEditingBouwkundigIndex(null);
+        }}
+        onSave={(updatedRow) => {
+          if (editingBouwkundigIndex !== null) {
+            const nextRows = [...bouwkundigRows];
+            nextRows[editingBouwkundigIndex] = updatedRow;
+            onChange('bouwkundigRows', nextRows);
+            
+            const newFlags = { ...((data.installations as any)?.flags || {}) };
+            const flagKey = `bouwkundig_${editingBouwkundigIndex}`;
+            if (updatedRow.flag) newFlags[flagKey] = updatedRow.flag;
+            else delete newFlags[flagKey];
+            onChange('installations.flags', newFlags);
+          } else {
+            onChange('bouwkundigRows', [...bouwkundigRows, updatedRow]);
+            
+            const newFlags = { ...((data.installations as any)?.flags || {}) };
+            const flagKey = `bouwkundig_${bouwkundigRows.length}`;
+            if (updatedRow.flag) newFlags[flagKey] = updatedRow.flag;
+            else delete newFlags[flagKey];
+            onChange('installations.flags', newFlags);
+          }
+          setIsBouwkundigModalOpen(false);
+          setEditingBouwkundigRow(null);
+          setEditingBouwkundigIndex(null);
+        }}
+        initialRow={editingBouwkundigRow}
+        data={data}
+        onChangeData={onChange}
+        flagKey={editingBouwkundigIndex !== null ? `bouwkundig_${editingBouwkundigIndex}` : undefined}
+        onFlagChange={setFieldFlag}
+      />
 
       {/* Overstek Row Editing Modal */}
       {editingOverstekRowIdx !== null && (() => {
@@ -2708,6 +2882,108 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
         onNext={() => setLightboxIndex(i => (i + 1) % lightboxPhotos.length)}
         zIndexClassName="z-[99999]"
       />
+      
+      <GlobalPhotoSelectorModal
+        isOpen={globalPhotoModalOpen}
+        categoryName={(() => {
+          if (globalUploadContext) {
+            const { type, idx } = globalUploadContext;
+            if (type === 'kozijn') {
+              const row = kozijnenLibrary[idx];
+              if (row?.naam) return row.naam;
+            } else if (type === 'gevel' || type === 'vloer' || type === 'dak' || type === 'direct') {
+              const currentTabRows = bouwkundigRows.filter(row => {
+                if (activeTab === 'bouwkundig-gevel') return row.type === 'Gevel';
+                if (activeTab === 'bouwkundig-vloer') return row.type === 'Vloer';
+                if (activeTab === 'bouwkundig-dak') return row.type === 'Dak';
+                return true;
+              });
+              const row = type === 'direct' ? currentTabRows[idx] : bouwkundigRows[idx];
+              if (row?.naam || row?.gevel) return row.naam || row.gevel;
+            }
+          }
+          const tabStr = activeTab as string;
+          if (tabStr === 'bouwkundig-gevel') return 'Gevel';
+          if (tabStr === 'bouwkundig-vloer') return 'Vloer';
+          if (tabStr === 'bouwkundig-dak') return 'Dak';
+          if (tabStr === 'geometry-kozijn' || tabStr === 'library') return 'Kozijn & Glas';
+          if (tabStr === 'geometry-overstek' || tabStr === 'overstek') return 'Overstek';
+          return 'Bouwkundig';
+        })()}
+        onClose={() => setGlobalPhotoModalOpen(false)}
+        data={data}
+        initialPhotoUrls={(() => {
+          if (!globalUploadContext) return [];
+          const { type, idx } = globalUploadContext;
+          if (type === 'kozijn') {
+            const rowToUpdate = kozijnenLibrary[idx];
+            if (!rowToUpdate) return [];
+            return rowToUpdate.photos || [];
+          } else if (type === 'gevel' || type === 'vloer' || type === 'dak' || type === 'direct') {
+            const currentTabRows = bouwkundigRows.filter(row => {
+              if (activeTab === 'bouwkundig-gevel') return row.type === 'Gevel';
+              if (activeTab === 'bouwkundig-vloer') return row.type === 'Vloer';
+              if (activeTab === 'bouwkundig-dak') return row.type === 'Dak';
+              return true;
+            });
+            const rowToUpdate = type === 'direct' ? currentTabRows[idx] : bouwkundigRows[idx];
+            if (!rowToUpdate) return [];
+            return rowToUpdate.photos || [];
+          }
+          return [];
+        })()}
+        onSelect={(dataUrls) => {
+          if (!globalUploadContext) return;
+          const { type, idx } = globalUploadContext;
+          const newPhotos = dataUrls;
+
+          if (type === 'kozijn') {
+            const rowToUpdate = kozijnenLibrary[idx];
+            if (!rowToUpdate) return;
+            const updatedRow = { ...rowToUpdate, photos: newPhotos, photoUrl: newPhotos[0] || null };
+            const nextRows = kozijnenLibrary.map((r, i) => i === idx ? updatedRow : r);
+            onChange('kozijnenLibrary', nextRows);
+            
+            const list = data.kozijnen || [];
+            const updatedKozijnen = list.map((kItem: any) => {
+              if ((kItem.id && kItem.id === rowToUpdate.id) || (kItem.naam && kItem.naam === rowToUpdate.naam)) {
+                return {
+                  ...kItem,
+                  photos: newPhotos,
+                  photoUrl: newPhotos[0] || null
+                };
+              }
+              return kItem;
+            });
+            if (updatedKozijnen.length > 0) {
+              onChange('kozijnen', updatedKozijnen as any);
+            }
+          } else if (type === 'direct') {
+            const currentTabRows = bouwkundigRows.filter(row => {
+              if (activeTab === 'bouwkundig-gevel') return row.type === 'Gevel';
+              if (activeTab === 'bouwkundig-vloer') return row.type === 'Vloer';
+              if (activeTab === 'bouwkundig-dak') return row.type === 'Dak';
+              return true;
+            });
+            const rowToUpdate = currentTabRows[idx];
+            if (!rowToUpdate) return;
+            const originalIdx = bouwkundigRows.indexOf(rowToUpdate);
+            if (originalIdx !== -1) {
+              const updatedRow = { ...rowToUpdate, photos: newPhotos, photoUrl: newPhotos[0] || null };
+              const nextRows = bouwkundigRows.map((r, i) => i === originalIdx ? updatedRow : r);
+              onChange('bouwkundigRows', nextRows);
+            }
+          } else if (type === 'gevel' || type === 'vloer' || type === 'dak') {
+            const rowToUpdate = bouwkundigRows[idx];
+            if (!rowToUpdate) return;
+            const updatedRow = { ...rowToUpdate, photos: newPhotos, photoUrl: newPhotos[0] || null };
+            const nextRows = bouwkundigRows.map((r, i) => i === idx ? updatedRow : r);
+            onChange('bouwkundigRows', nextRows);
+          }
+        }}
+        onUpload={handleGlobalUploadAction}
+      />
+      <input type="file" multiple accept="image/*" className="hidden" ref={globalFileInputRef} onChange={handleFileUpload} />
     </div>
   );
 };

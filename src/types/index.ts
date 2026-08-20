@@ -33,7 +33,7 @@ export interface FormData {
   email: string;
   address: string;
   companyName?: string;
-  advisorName?: string;
+  inspectorName?: string;
   certificaathouder?: string;
   profilePhoto?: string;
 }

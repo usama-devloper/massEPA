@@ -349,8 +349,8 @@
 
   /* Premium styling for all input tags that use the .input-field class */
   input.input-field {
-    background-color: #ffffff !important;
-    border: 1px solid #e5e7eb !important;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
     border-radius: 0.75rem !important;
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
@@ -444,4 +444,41 @@
 .glass-button:hover {
   transform: translateY(-1px);
   background: rgba(255, 255, 255, 0.5) !important;
+}
+
+@media print {
+  html, body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background-color: white !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  body:has(main.app-page-main),
+  body:has(main.app-main-scroll) {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure page backgrounds and grid backgrounds print exactly as seen */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Prevent orphan headings by keeping them with their content */
+  h1, h2, h3, h4, h5, h6, .print-header-keep, .break-after-avoid {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  /* By default, try to keep cards from breaking */
+  .print-card, .break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
 }

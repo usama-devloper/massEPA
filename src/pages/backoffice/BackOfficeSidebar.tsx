@@ -22,6 +22,7 @@ interface BackOfficeSidebarProps {
   onLogout: () => void;
   userName: string;
   items: SidebarItem[];
+  subtitle?: string;
 }
 
 export const BackOfficeSidebar: React.FC<BackOfficeSidebarProps> = ({
@@ -30,6 +31,7 @@ export const BackOfficeSidebar: React.FC<BackOfficeSidebarProps> = ({
   onLogout,
   userName,
   items,
+  subtitle,
 }) => {
   const { t, locale } = useLanguage();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -71,7 +73,7 @@ export const BackOfficeSidebar: React.FC<BackOfficeSidebarProps> = ({
           {!isCollapsed && (
             <div className="flex flex-col text-left">
               <span className="font-display font-black text-sm tracking-tight text-on-surface leading-none">MassEPA</span>
-              <span className="text-[9px] font-black text-primary uppercase tracking-widest mt-1">BackOffice</span>
+              <span className="text-[9px] font-black text-primary uppercase tracking-widest mt-1">{subtitle || 'BackOffice'}</span>
             </div>
           )}
         </div>
@@ -132,7 +134,7 @@ export const BackOfficeSidebar: React.FC<BackOfficeSidebarProps> = ({
                 <item.icon size={16} />
 
                 {!isCollapsed && (
-                  <span className="text-xs flex-1 text-left uppercase tracking-wider font-display font-bold">
+                  <span className="text-xs flex-1 text-left uppercase tracking-wider font-display font-bold truncate">
                     {itemLabel}
                   </span>
                 )}
@@ -158,7 +160,7 @@ export const BackOfficeSidebar: React.FC<BackOfficeSidebarProps> = ({
                           }`}
                       >
                         <sub.icon size={13} />
-                        <span className="text-xs font-display">{subLabel}</span>
+                        <span className="text-xs font-display flex-1 text-left truncate" title={subLabel}>{subLabel}</span>
                       </button>
                     );
                   })}

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Page - Inspector Assignment & Filter Preview Template</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8faf8;
+    }
+  </style>
+</head>
+<body class="p-6 md:p-10 text-[#1a1c19]">
+  <div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Header Section -->
+    <div class="text-center space-y-1.5 py-2">
+      <h1 class="text-2xl sm:text-3xl font-black text-[#1a1c19] tracking-tight">
+        Welcome back, Demo Back Office
+      </h1>
+      <p class="text-xs text-[#24512c] font-bold bg-[#24512c]/10 inline-block px-3.5 py-1 rounded-full border border-[#24512c]/20">
+        [EXAMPLE TEMPLATE] Inventory Page - Inspecteur Filter & Bevestigingsmodal Voorbeeld
+      </p>
+    </div>
+
+    <!-- Search Bar & Filters -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
+      <!-- Search Input -->
+      <div class="relative flex-1">
+        <input 
+          id="searchInput"
+          type="text" 
+          placeholder="Zoek op adres, plaats, project ID, of eigenaar..." 
+          class="w-full bg-white border border-gray-200 rounded-2xl pl-11 pr-4 py-3.5 text-xs font-semibold text-gray-800 placeholder:text-gray-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-[#24512c]"
+          oninput="applyFilters()"
+        >
+        <svg class="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      </div>
+
+      <!-- Filter Dropdowns -->
+      <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        <!-- City Filter -->
+        <select 
+          id="cityFilter" 
+          onchange="applyFilters()"
+          class="bg-white border border-gray-200 px-3.5 py-3.5 rounded-2xl text-xs font-bold text-gray-700 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#24512c]"
+        >
+          <option value="">Filter op plaats</option>
+          <option value="Amsterdam">Amsterdam</option>
+          <option value="Utrecht">Utrecht</option>
+          <option value="Haarlem">Haarlem</option>
+        </select>
+
+        <!-- Time Filter -->
+        <select 
+          id="timeFilter" 
+          onchange="applyFilters()"
+          class="bg-white border border-gray-200 px-3.5 py-3.5 rounded-2xl text-xs font-bold text-gray-700 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#24512c]"
+        >
+          <option value="all">Alle periodes</option>
+          <option value="week">Afgelopen week</option>
+          <option value="month">Afgelopen maand</option>
+        </select>
+
+        <!-- Inspector Filter -->
+        <select 
+          id="inspectorFilter" 
+          onchange="applyFilters()"
+          class="bg-white border border-gray-200 px-3.5 py-3.5 rounded-2xl text-xs font-bold text-gray-700 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#24512c]"
+        >
+          <option value="">Filter op inspecteur (Alle)</option>
+          <option value="unassigned" class="font-bold text-amber-700">⚠️ Niet toegewezen</option>
+          <option value="Mevrouw S. van Wessum">Mevrouw S. van Wessum</option>
+          <option value="Jan de Vries">Jan de Vries</option>
+          <option value="Sanne Bakker">Sanne Bakker</option>
+          <option value="Peter Peters">Peter Peters</option>
+          <option value="Kees van Dijk">Kees van Dijk</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Active Filters Badge / Clear link -->
+    <div id="clearFilterContainer" class="hidden flex items-center justify-between text-xs text-gray-500 font-semibold px-1">
+      <span>Actieve filters toegepast</span>
+      <button onclick="clearAllFilters()" class="text-[#24512c] hover:underline font-bold cursor-pointer">Wis filters</button>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="hidden bg-white border border-gray-200 rounded-2xl p-12 text-center flex-col items-center justify-center gap-3 shadow-xs">
+      <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mx-auto text-xl">🔍</div>
+      <p class="text-sm font-bold text-gray-600">Geen audits gevonden die voldoen aan de filters.</p>
+      <button onclick="clearAllFilters()" class="text-xs font-bold text-[#24512c] hover:underline cursor-pointer">Reset alle filters</button>
+    </div>
+
+    <!-- Property Cards List -->
+    <div id="cardsList" class="space-y-4">
+
+      <!-- Card 1 -->
+      <div 
+        id="card-1"
+        data-id="1"
+        data-[#24512c]="Hoofdstraat 123 Amsterdam"
+        data-city="Amsterdam"
+        data-owner="J. de Vries"
+        data-project="PRJ-10001"
+        data-inspector="Mevrouw S. van Wessum"
+        class="property-card w-full bg-white border border-gray-200 rounded-2xl p-5 hover:border-[#24512c]/30 hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs"
+      >
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-[#24512c] border border-gray-200 font-bold">
+            🏢
+          </div>
+          <div class="flex flex-col">
+            <span class="text-base font-black text-gray-900 tracking-tight leading-snug">
+              Hoofdstraat 123 Amsterdam
+            </span>
+            <div class="flex items-center gap-3 mt-1 text-[11px] text-gray-500 font-semibold flex-wrap">
+              <span class="bg-gray-100 px-2 py-0.5 rounded-md font-mono text-gray-700 text-[10px]">
+                PRJ-10001
+              </span>
+              <span>📍 Amsterdam</span>
+              <span>•</span>
+              <span>Eigenaar: J. de Vries</span>
+              <span>•</span>
+              <span class="bg-gray-50 px-2 py-0.5 rounded-md text-gray-700 font-bold">
+                📅 18 aug 2026
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 shrink-0 flex-wrap sm:flex-nowrap w-full sm:w-auto justify-end">
+          <div class="flex flex-col min-w-[180px]">
+            <label class="text-[9px] font-black uppercase text-gray-400 tracking-wider mb-1">
+              Toegewezen Inspecteur
+            </label>
+            <select 
+              id="select-1" 
+              onchange="requestInspectorChange('1', 'Hoofdstraat 123 Amsterdam', 'PRJ-10001', this)"
+              class="w-full bg-white border border-gray-300 hover:border-[#24512c] rounded-xl px-3 py-2 text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#24512c] cursor-pointer shadow-xs"
+            >
+              <option value="">-- Selecteer Inspecteur --</option>
+              <option value="Mevrouw S. van Wessum" selected>Mevrouw S. van Wessum</option>
+              <option value="Jan de Vries">Jan de Vries</option>
+              <option value="Sanne Bakker">Sanne Bakker</option>
+              <option value="Peter Peters">Peter Peters</option>
+              <option value="Kees van Dijk">Kees van Dijk</option>
+            </select>
+          </div>
+
+          <button type="button" onclick="alert('Start audit voor Hoofdstraat 123 Amsterdam')" class="px-5 py-2.5 bg-[#24512c] hover:bg-[#1b3d21] text-white text-xs font-black rounded-xl uppercase tracking-wider shrink-0 shadow-xs active:scale-[0.98] cursor-pointer">
+            START AUDIT &gt;
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div 
+        id="card-2"
+        data-id="2"
+        data-[#24512c]="Kerkstraat 45 Utrecht"
+        data-city="Utrecht"
+        data-owner="M. Janssen"
+        data-project="PRJ-10002"
+        data-inspector="Jan de Vries"
+        class="property-card w-full bg-white border border-gray-200 rounded-2xl p-5 hover:border-[#24512c]/30 hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs"
+      >
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-[#24512c] border border-gray-200 font-bold">
+            🏢
+          </div>
+          <div class="flex flex-col">
+            <span class="text-base font-black text-gray-900 tracking-tight leading-snug">
+              Kerkstraat 45 Utrecht
+            </span>
+            <div class="flex items-center gap-3 mt-1 text-[11px] text-gray-500 font-semibold flex-wrap">
+              <span class="bg-gray-100 px-2 py-0.5 rounded-md font-mono text-gray-700 text-[10px]">
+                PRJ-10002
+              </span>
+              <span>📍 Utrecht</span>
+              <span>•</span>
+              <span>Eigenaar: M. Janssen</span>
+              <span>•</span>
+              <span class="bg-gray-50 px-2 py-0.5 rounded-md text-gray-700 font-bold">
+                📅 7 jul 2026
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 shrink-0 flex-wrap sm:flex-nowrap w-full sm:w-auto justify-end">
+          <div class="flex flex-col min-w-[180px]">
+            <label class="text-[9px] font-black uppercase text-gray-400 tracking-wider mb-1">
+              Toegewezen Inspecteur
+            </label>
+            <select 
+              id="select-2" 
+              onchange="requestInspectorChange('2', 'Kerkstraat 45 Utrecht', 'PRJ-10002', this)"
+              class="w-full bg-white border border-gray-300 hover:border-[#24512c] rounded-xl px-3 py-2 text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#24512c] cursor-pointer shadow-xs"
+            >
+              <option value="">-- Selecteer Inspecteur --</option>
+              <option value="Mevrouw S. van Wessum">Mevrouw S. van Wessum</option>
+              <option value="Jan de Vries" selected>Jan de Vries</option>
+              <option value="Sanne Bakker">Sanne Bakker</option>
+              <option value="Peter Peters">Peter Peters</option>
+              <option value="Kees van Dijk">Kees van Dijk</option>
+            </select>
+          </div>
+
+          <button type="button" onclick="alert('Start audit voor Kerkstraat 45 Utrecht')" class="px-5 py-2.5 bg-[#24512c] hover:bg-[#1b3d21] text-white text-xs font-black rounded-xl uppercase tracking-wider shrink-0 shadow-xs active:scale-[0.98] cursor-pointer">
+            START AUDIT &gt;
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div 
+        id="card-3"
+        data-id="3"
+        data-[#24512c]="Dorpsstraat 8 Haarlem"
+        data-city="Haarlem"
+        data-owner="G. Bekhuizen"
+        data-project="PRJ-10003"
+        data-inspector=""
+        class="property-card w-full bg-white border border-gray-200 rounded-2xl p-5 hover:border-[#24512c]/30 hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs"
+      >
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-200 font-bold">
+            🏢
+          </div>
+          <div class="flex flex-col">
+            <div class="flex items-center gap-2">
+              <span class="text-base font-black text-gray-900 tracking-tight leading-snug">
+                Dorpsstraat 8 Haarlem
+              </span>
+              <span class="bg-amber-100 text-amber-800 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                Niet toegewezen
+              </span>
+            </div>
+            <div class="flex items-center gap-3 mt-1 text-[11px] text-gray-500 font-semibold flex-wrap">
+              <span class="bg-gray-100 px-2 py-0.5 rounded-md font-mono text-gray-700 text-[10px]">
+                PRJ-10003
+              </span>
+              <span>📍 Haarlem</span>
+              <span>•</span>
+              <span>Eigenaar: G. Bekhuizen</span>
+              <span>•</span>
+              <span class="bg-gray-50 px-2 py-0.5 rounded-md text-gray-700 font-bold">
+                📅 29 jun 2026
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 shrink-0 flex-wrap sm:flex-nowrap w-full sm:w-auto justify-end">
+          <div class="flex flex-col min-w-[180px]">
+            <label class="text-[9px] font-black uppercase text-amber-600 tracking-wider mb-1">
+              ⚠️ Toegewezen Inspecteur
+            </label>
+            <select 
+              id="select-3" 
+              onchange="requestInspectorChange('3', 'Dorpsstraat 8 Haarlem', 'PRJ-10003', this)"
+              class="w-full bg-amber-50/50 border border-amber-300 hover:border-[#24512c] rounded-xl px-3 py-2 text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#24512c] cursor-pointer shadow-xs"
+            >
+              <option value="" selected>-- Selecteer Inspecteur --</option>
+              <option value="Mevrouw S. van Wessum">Mevrouw S. van Wessum</option>
+              <option value="Jan de Vries">Jan de Vries</option>
+              <option value="Sanne Bakker">Sanne Bakker</option>
+              <option value="Peter Peters">Peter Peters</option>
+              <option value="Kees van Dijk">Kees van Dijk</option>
+            </select>
+          </div>
+
+          <button type="button" onclick="alert('Start audit voor Dorpsstraat 8 Haarlem')" class="px-5 py-2.5 bg-[#24512c] hover:bg-[#1b3d21] text-white text-xs font-black rounded-xl uppercase tracking-wider shrink-0 shadow-xs active:scale-[0.98] cursor-pointer">
+            START AUDIT &gt;
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONFIRMATION POPUP MODAL -->
+  <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50 backdrop-blur-xs transition-opacity duration-200">
+    <div class="bg-white rounded-3xl border border-gray-200 shadow-2xl max-w-md w-full p-6 space-y-5 animate-in zoom-in-95 duration-150">
+      
+      <!-- Modal Header -->
+      <div class="flex items-start gap-4">
+        <div class="w-11 h-11 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 font-bold text-xl">
+          ⚠️
+        </div>
+        <div class="space-y-1">
+          <h3 class="text-base font-black text-gray-900 tracking-tight">Inspecteur Toewijzing Bevestigen</h3>
+          <p class="text-xs text-gray-500 font-semibold leading-relaxed">
+            Weet u zeker dat u de toegewezen inspecteur voor dit project wilt wijzigen? Dit beïnvloedt de inspectieopdrachten.
+          </p>
+        </div>
+      </div>
+
+      <!-- Details Summary Card -->
+      <div class="bg-gray-50 rounded-2xl p-4 border border-gray-200/80 space-y-2.5 text-xs font-semibold">
+        <div class="flex justify-between border-b border-gray-200 pb-2">
+          <span class="text-gray-500">Project / Adres:</span>
+          <span id="modalProjectName" class="font-bold text-gray-900 text-right">--</span>
+        </div>
+        <div class="flex justify-between border-b border-gray-200 pb-2">
+          <span class="text-gray-500">Huidige Inspecteur:</span>
+          <span id="modalPrevInspector" class="font-bold text-gray-700 text-right">--</span>
+        </div>
+        <div class="flex justify-between items-center pt-0.5">
+          <span class="text-gray-500">Nieuwe Inspecteur:</span>
+          <span id="modalNewInspector" class="font-extrabold text-[#24512c] bg-green-100 px-2.5 py-1 rounded-lg text-right">--</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button 
+          type="button" 
+          onclick="cancelInspectorChange()"
+          class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition cursor-pointer"
+        >
+          Annuleren
+        </button>
+        <button 
+          type="button" 
+          onclick="confirmInspectorChange()"
+          class="px-5 py-2.5 bg-[#24512c] hover:bg-[#1b3d21] text-white text-xs font-black rounded-xl transition cursor-pointer shadow-xs uppercase tracking-wider"
+        >
+          Bevestigen & Toewijzen
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SUCCESS TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 hidden items-center gap-3 bg-gray-900 text-white px-5 py-3.5 rounded-2xl shadow-xl border border-gray-800 text-xs font-bold transition-all">
+    <span class="text-green-400 text-base">✓</span>
+    <span id="toastMessage">Inspecteur succesvol toegewezen!</span>
+  </div>
+
+  <!-- INTERACTIVE JAVASCRIPT LOGIC -->
+  <script>
+    let pendingChange = null;
+
+    function requestInspectorChange(cardId, address, projectCode, selectElement) {
+      const card = document.getElementById('card-' + cardId);
+      const prevValue = card.getAttribute('data-inspector') || '';
+      const newValue = selectElement.value;
+
+      // Store pending change data
+      pendingChange = {
+        cardId: cardId,
+        address: address,
+        projectCode: projectCode,
+        selectElement: selectElement,
+        prevValue: prevValue,
+        newValue: newValue
+      };
+
+      // Populate modal content
+      document.getElementById('modalProjectName').innerText = address + ' (' + projectCode + ')';
+      document.getElementById('modalPrevInspector').innerText = prevValue || '⚠️ Niet toegewezen';
+      document.getElementById('modalNewInspector').innerText = newValue || '⚠️ Niet toegewezen (Wissen)';
+
+      // Show modal
+      const modal = document.getElementById('confirmModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function cancelInspectorChange() {
+      if (pendingChange) {
+        // Revert select box back to previous value
+        pendingChange.selectElement.value = pendingChange.prevValue;
+      }
+      closeModal();
+    }
+
+    function confirmInspectorChange() {
+      if (!pendingChange) return;
+
+      const { cardId, address, selectElement, newValue } = pendingChange;
+      const card = document.getElementById('card-' + cardId);
+
+      // Update card data attribute
+      card.setAttribute('data-inspector', newValue);
+
+      // Show toast
+      showToast(newValue ? `Inspecteur "${newValue}" toegewezen aan ${address}` : `Inspecteur toewijzing gewist voor ${address}`);
+
+      closeModal();
+      applyFilters();
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('confirmModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      pendingChange = null;
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMessage').innerText = msg;
+      toast.classList.remove('hidden');
+      toast.classList.add('flex');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+        toast.classList.remove('flex');
+      }, 3500);
+    }
+
+    function applyFilters() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const city = document.getElementById('cityFilter').value;
+      const inspectorFilter = document.getElementById('inspectorFilter').value;
+
+      const cards = document.querySelectorAll('.property-card');
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const text = card.innerText.toLowerCase();
+        const cardCity = card.getAttribute('data-city') || '';
+        const cardInspector = card.getAttribute('data-inspector') || '';
+
+        const matchesSearch = !search || text.includes(search);
+        const matchesCity = !city || cardCity === city;
+
+        let matchesInspector = true;
+        if (inspectorFilter === 'unassigned') {
+          matchesInspector = !cardInspector;
+        } else if (inspectorFilter) {
+          matchesInspector = cardInspector === inspectorFilter;
+        }
+
+        if (matchesSearch && matchesCity && matchesInspector) {
+          card.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+
+      // Show/Hide Clear Filter indicator
+      const hasActiveFilters = Boolean(search || city || inspectorFilter);
+      const clearContainer = document.getElementById('clearFilterContainer');
+      if (hasActiveFilters) {
+        clearContainer.classList.remove('hidden');
+      } else {
+        clearContainer.classList.add('hidden');
+      }
+
+      // Show/Hide Empty State
+      const emptyState = document.getElementById('emptyState');
+      if (visibleCount === 0) {
+        emptyState.classList.remove('hidden');
+        emptyState.classList.add('flex');
+      } else {
+        emptyState.classList.add('hidden');
+        emptyState.classList.remove('flex');
+      }
+    }
+
+    function clearAllFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('cityFilter').value = '';
+      document.getElementById('timeFilter').value = 'all';
+      document.getElementById('inspectorFilter').value = '';
+      applyFilters();
+    }
+  </script>
+</body>
+</html>

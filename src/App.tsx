@@ -25,6 +25,7 @@ import { CompletePage } from './pages/CompletePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ClientsPage } from './pages/ClientsPage';
 import BackOfficePortal from './pages/backoffice/BackOfficePortal';
+import InspectorPortal from './pages/inspector/InspectorPortal';
 
 
 function App() {
@@ -422,6 +423,15 @@ function App() {
   if (isLoggedIn && selectedRole === UserRole.BACK_OFFICE) {
     return (
       <BackOfficePortal 
+        onLogout={handleLogout}
+        userName={loggedInUser}
+      />
+    );
+  }
+
+  if (isLoggedIn && selectedRole === UserRole.INSPECTOR) {
+    return (
+      <InspectorPortal 
         onLogout={handleLogout}
         userName={loggedInUser}
       />

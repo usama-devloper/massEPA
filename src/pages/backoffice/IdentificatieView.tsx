@@ -96,7 +96,7 @@ export const BewonerView: React.FC<IdentificatieViewProps> = ({ data, onChange }
   );
 };
 
-// 2. Advisor (Inspector) View
+// 2. Inspector View
 export const InspectorView: React.FC<IdentificatieViewProps> = ({ data, onChange }) => {
   const { t } = useLanguage();
   const [flags, setFlags] = React.useState<Record<string, 'red' | 'yellow' | 'green' | null>>(() => {
@@ -168,9 +168,9 @@ export const InspectorView: React.FC<IdentificatieViewProps> = ({ data, onChange
         </h1>
       </div>
 
-      <CollapsibleSection title={t('inspector.title') || 'Adviseur / Inspecteur'}>
+      <CollapsibleSection title={t('inspector.title') || 'Inspecteur'}>
         <div className="grid grid-cols-1 gap-y-3.5">
-          <FieldGroup label={t('inspector.adviseur') || 'Naam adviseur'}>
+          <FieldGroup label={t('inspector.inspecteur') || 'Naam inspecteur'}>
             <input
               className="bg-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full border-none transition-all font-semibold"
               value={data.algemeen.inspector.adviseur || ''}
@@ -217,14 +217,14 @@ export const InspectorView: React.FC<IdentificatieViewProps> = ({ data, onChange
             </FieldGroup>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FieldGroup label={t('inspector.certificaathouder') || 'Certificaathouder'}>
+            <FieldGroup label={t('inspector.certificaathouder') || 'Certificaatnummer'}>
               <input
                 className="bg-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full border-none transition-all font-semibold"
                 value={data.algemeen.inspector.certificaathouder || ''}
                 onChange={(e) => onChange('algemeen.inspector.certificaathouder', e.target.value)}
               />
             </FieldGroup>
-            <FieldGroup label={t('inspector.gebruiker') || 'Gebruikersnaam'}>
+            <FieldGroup label={t('inspector.gebruiker') || 'Certificaathouder'}>
               <input
                 className="bg-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full border-none transition-all font-semibold"
                 value={data.algemeen.inspector.gebruiker || ''}

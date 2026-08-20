@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CollapsibleSection, FieldGroup } from '../../components/ui/BackOfficeUI';
 import { InspectionData } from './backofficeTypes';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Copy, Trash2, Edit3, ArrowLeft, ChevronDown, ChevronRight, Check, X, Camera, FileText } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { AppSelect, AppSelectWithOptions } from '../../components/common/AppSelect';
+import { GlobalPhotoSelectorModal } from '../../components/common/GlobalPhotoSelectorModal';
 import { PhotoViewerModal } from '../../components/common/PhotoViewerModal';
 import { slidesFromUrls } from '../../utils/photoViewer';
 import { AppFlaggedLabel } from '../../components/common/AppFlaggedLabel';
@@ -32,7 +33,7 @@ interface InstallatieViewProps {
   onChange: (path: string, value: any) => void;
 }
 
-const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => {
+const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: propsOnChange }) => {
   const { t, locale } = useLanguage();
   const [view, setView] = useState<'overview' | 'detail' | 'table'>('overview');
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
@@ -44,8 +45,16 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
     setSelectedPhoto(photos[index]);
   };
   const [activeInstallatieId, setActiveInstallatieId] = useState<string | null>(() => {
-    return localStorage.getItem('installatie_active_id') || null;
+    return localStorage.getItem('installatie_active_id_current') || localStorage.getItem('installatie_active_id') || null;
   });
+
+  useEffect(() => {
+    if (activeInstallatieId) {
+      localStorage.setItem('installatie_active_id_current', activeInstallatieId);
+    } else {
+      localStorage.removeItem('installatie_active_id_current');
+    }
+  }, [activeInstallatieId]);
 
   const [flags, setFlags] = useState<Record<string, 'red' | 'yellow' | 'green' | null>>(() => {
     try {
@@ -69,10 +78,20 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
     return `files_${category.replace(/[^a-zA-Z0-9_]/g, '')}`;
   };
 
+  useEffect(() => {
+    if (Array.isArray(data.allInstallations) && data.allInstallations.length > 0) {
+      if (JSON.stringify(data.allInstallations) !== JSON.stringify(installations)) {
+        setInstallations(data.allInstallations);
+      }
+    }
+  }, [data.allInstallations]);
+
   // Safe localStorage helper to save installations configurations to localStorage
   const safeSaveInstallations = (list: any[]) => {
     try {
-      localStorage.setItem(`mepa_installations_list_${data.clientId || 'default'}`, JSON.stringify(list));
+      const clientIdKey = data.clientId || 'default';
+      localStorage.setItem(`mepa_installations_list_${clientIdKey}`, JSON.stringify(list));
+      originalOnChange('allInstallations', list);
     } catch (e) {
       console.error("Failed to save configurations to localStorage:", e);
     }
@@ -81,7 +100,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
-    
+
     const currentFilesKey = getSanitizedFileKey(selectedCategory);
     const existingFiles: any[] = Array.isArray((data?.installations as any)?.[currentFilesKey])
       ? (data.installations as any)[currentFilesKey]
@@ -144,11 +163,11 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
           else if (approxSize >= 1024) sizeStr = (approxSize / 1024).toFixed(0) + ' KB';
           else sizeStr = approxSize + ' B';
 
-          resolve({ 
-            name: file.name || 'unnamed_file', 
-            type: file.type || 'application/octet-stream', 
-            size: sizeStr, 
-            dataUrl 
+          resolve({
+            name: file.name || 'unnamed_file',
+            type: file.type || 'application/octet-stream',
+            size: sizeStr,
+            dataUrl
           });
         };
         reader.readAsDataURL(file);
@@ -158,7 +177,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
     Promise.all(filePromises)
       .then(newFiles => {
         const updated = [...existingFiles, ...newFiles];
-        onChange(`installations.${currentFilesKey}`, updated);
+        handleFieldChange(`installations.${currentFilesKey}`, updated);
       })
       .catch(err => {
         console.error("File parsing layout crashed:", err);
@@ -171,7 +190,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
       ? (data.installations as any)[currentFilesKey]
       : [];
     const updated = existingFiles.filter((_: any, idx: number) => idx !== indexToDelete);
-    onChange(`installations.${currentFilesKey}`, updated);
+    handleFieldChange(`installations.${currentFilesKey}`, updated);
   };
 
   const toggleFlag = (fieldKey: string, status: 'red' | 'yellow' | 'green' | null) => {
@@ -213,14 +232,49 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
     return localStorage.getItem('installatie_selected_category') || 'Verwarming';
   });
 
+  const [globalPhotoModalOpen, setGlobalPhotoModalOpen] = useState(false);
+  const globalFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleGlobalUploadAction = (capture: boolean) => {
+    if (globalFileInputRef.current) {
+      if (capture) {
+        globalFileInputRef.current.setAttribute('capture', 'environment');
+      } else {
+        globalFileInputRef.current.removeAttribute('capture');
+      }
+      globalFileInputRef.current.click();
+    }
+  };
+
   useEffect(() => {
     localStorage.setItem('installatie_selected_category', selectedCategory);
   }, [selectedCategory]);
   const [installations, setInstallations] = useState<any[]>(() => {
-    const saved = localStorage.getItem(`mepa_installations_list_${data.clientId || 'default'}`);
+    if (Array.isArray(data.allInstallations) && data.allInstallations.length > 0) {
+      const clientIdKey = data.clientId || 'default';
+      try {
+        localStorage.setItem(`mepa_installations_list_${clientIdKey}`, JSON.stringify(data.allInstallations));
+      } catch { }
+      return data.allInstallations;
+    }
+    const clientIdKey = data.clientId || 'default';
+    let saved = localStorage.getItem(`mepa_installations_list_${clientIdKey}`);
+
+    // Auto-migrate default installations list to the client-specific key if the client-specific list is empty
+    if (!saved && data.clientId && data.clientId !== 'default') {
+      const defaultSaved = localStorage.getItem('mepa_installations_list_default');
+      if (defaultSaved) {
+        localStorage.setItem(`mepa_installations_list_${data.clientId}`, defaultSaved);
+        saved = defaultSaved;
+      }
+    }
+
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       } catch { }
     }
     return [
@@ -237,29 +291,6 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
   });
 
   useEffect(() => {
-    const saved = localStorage.getItem(`mepa_installations_list_${data.clientId || 'default'}`);
-    if (saved) {
-      try {
-        setInstallations(JSON.parse(saved));
-        return;
-      } catch { }
-    }
-    if (data.installations) {
-      setInstallations([
-        {
-          id: '1',
-          ventilatieName: data.installations.ventMerkType || 'Itho Daalderop CVE-S',
-          verwarmingName: data.installations.verwarmMerkType || 'Nefit Trendline HRC30',
-          tapwaterName: data.installations.tapMerkType || 'Nefit Trendline (Interne)',
-          koelingName: data.installations.koelMerkType || 'Niet aanwezig',
-          zonneName: data.installations.zonMerkType || 'JA Solar Mono',
-          details: { ...data.installations }
-        }
-      ]);
-    }
-  }, [data.clientId]);
-
-  useEffect(() => {
     const savedActiveId = localStorage.getItem('installatie_active_id');
     if (savedActiveId && installations.length > 0) {
       const targetInst = installations.find(i => i.id === savedActiveId);
@@ -269,8 +300,13 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
         setView('detail');
       }
       localStorage.removeItem('installatie_active_id');
+    } else if (activeInstallatieId && installations.length > 0) {
+      const exists = installations.some(i => i.id === activeInstallatieId);
+      if (!exists) {
+        setActiveInstallatieId(installations[0].id);
+      }
     }
-  }, [installations]);
+  }, [installations, activeInstallatieId]);
 
   const [ventilatorSelection, setVentilatorSelection] = useState<string>('Nominaal vermogen');
   const getVentSysteemType = (val?: string) => {
@@ -304,6 +340,46 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
       setVentilatorSelection(data.installations.ventVentilatoren || 'Nominaal vermogen');
     }
   }, [data.installations]);
+
+  useEffect(() => {
+    if (!data.installations) return;
+    const activeId = activeInstallatieId || '1';
+    const lastClientId = localStorage.getItem('installations_last_client_id');
+    const currentClientId = data.clientId || 'default';
+
+    if (lastClientId !== currentClientId) {
+      // User switched clients - sync parent data installations with the correct details of this client
+      const activeInst = installations.find(i => i.id === activeId) || installations[0];
+      if (activeInst) {
+        originalOnChange('installations', activeInst.details || {});
+      }
+      localStorage.setItem('installations_last_client_id', currentClientId);
+      return;
+    }
+
+    const activeInst = installations.find(i => i.id === activeId);
+    if (activeInst && JSON.stringify(activeInst.details) === JSON.stringify(data.installations)) {
+      return;
+    }
+
+    const next = installations.map(inst => {
+      if (inst.id === activeId) {
+        return {
+          ...inst,
+          ventilatieName: data.installations?.ventMerkType || inst.ventilatieName,
+          verwarmingName: data.installations?.verwarmMerkType || inst.verwarmingName,
+          tapwaterName: data.installations?.tapMerkType || inst.tapwaterName,
+          koelingName: data.installations?.koelMerkType || inst.koelingName,
+          zonneName: data.installations?.zonMerkType || inst.zonneName,
+          details: { ...data.installations }
+        };
+      }
+      return inst;
+    });
+
+    setInstallations(next);
+    safeSaveInstallations(next);
+  }, [data.installations, activeInstallatieId, data.clientId, installations]);
 
   const categories = [
     { id: 'Ventilatie', label: t('installations.ventilatie') },
@@ -463,19 +539,24 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
 
   const handleDeleteInstallatie = (id: string) => {
     if (installations.length > 1) {
-      setInstallations(prev => {
-        const next = prev.filter(inst => inst.id !== id);
-        safeSaveInstallations(next);
-        return next;
-      });
+      const next = installations.filter(inst => inst.id !== id);
+      setInstallations(next);
+      safeSaveInstallations(next);
+
+      if (activeInstallatieId === id) {
+        const fallbackId = next[0].id;
+        setActiveInstallatieId(fallbackId);
+        originalOnChange('installations', next[0].details || {});
+      }
+
       setFlags(prev => {
-        const next = { ...prev };
-        Object.keys(next).forEach(key => {
+        const nextFlags = { ...prev };
+        Object.keys(nextFlags).forEach(key => {
           if (key.startsWith(`${id}_`)) {
-            delete next[key];
+            delete nextFlags[key];
           }
         });
-        return next;
+        return nextFlags;
       });
     }
   };
@@ -546,8 +627,8 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
   const shadowedOnChange = (path: string, val: any) => {
     handleFieldChange(path, val);
   };
-  const originalOnChange = onChange;
-  onChange = shadowedOnChange;
+  let originalOnChange = propsOnChange;
+  let onChange = shadowedOnChange;
 
   const getActiveInstallatieName = () => {
     const inst = installations.find(i => i.id === activeInstallatieId);
@@ -803,42 +884,42 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
 
   return (
     <>
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl space-y-6">
-      <div className="space-y-3 mb-2">
-        <button
-          type="button"
-          onClick={() => setView('overview')}
-          className="flex items-center gap-1.5 text-xs font-black text-on-surface-variant/70 hover:text-primary hover:bg-primary/5 px-3 py-2 rounded-xl transition-all cursor-pointer border border-outline-variant/10 bg-white shadow-sm w-fit"
-        >
-          <ArrowLeft size={14} /> {t('installations.backToOverview')}
-        </button>
-        <h2 className="text-xs font-black text-on-surface-variant/70 uppercase tracking-widest leading-none block pt-1">
-          {getActiveInstallatieName()} &gt; {categories.find(c => c.id === selectedCategory)?.label || selectedCategory}
-        </h2>
-      </div>
-
-      {/* Category Tabs Switcher (Horizontal scrollable navbar) */}
-      <div className="flex items-center gap-1 bg-gray-100 p-1.5 rounded-2xl w-full sm:w-fit overflow-x-auto flex-nowrap scrollbar-none border border-outline-variant/5">
-        {categories.map((cat) => (
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl space-y-6">
+        <div className="space-y-3 mb-2">
           <button
-            key={cat.id}
             type="button"
-            onClick={() => setSelectedCategory(cat.id)}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 whitespace-nowrap ${
-              selectedCategory === cat.id
-                ? 'bg-white text-primary font-black shadow-xs'
-                : 'text-on-surface-variant/60 hover:text-on-surface hover:bg-white/50'
-            }`}
+            onClick={() => setView('overview')}
+            className="flex items-center gap-1.5 text-xs font-black text-on-surface-variant/70 hover:text-primary hover:bg-primary/5 px-3 py-2 rounded-xl transition-all cursor-pointer border border-outline-variant/10 bg-white shadow-sm w-fit"
           >
-            {cat.label}
+            <ArrowLeft size={14} /> {t('installations.backToOverview')}
           </button>
-        ))}
-      </div>
+          <h2 className="text-xs font-black text-on-surface-variant/70 uppercase tracking-widest leading-none block pt-1">
+            {getActiveInstallatieName()} &gt; {categories.find(c => c.id === selectedCategory)?.label || selectedCategory}
+          </h2>
+        </div>
 
-      {/* Main Content Area */}
-      <div className="w-full space-y-4">
-          <div className="bg-white p-5 border border-outline-variant/10 rounded-2xl shadow-sm space-y-4">
-            <FieldGroup label={renderLabelWithFlags('system_' + selectedCategory, t('installations.system'))}>
+        {/* Category Tabs Switcher (Horizontal scrollable navbar) */}
+        <div className="flex items-center gap-1 bg-gray-100 p-1.5 rounded-2xl w-full sm:w-fit overflow-x-auto flex-nowrap scrollbar-none border border-outline-variant/5">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setSelectedCategory(prev => prev === cat.id ? '' : cat.id)}
+              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 whitespace-nowrap ${selectedCategory === cat.id
+                  ? 'bg-white text-primary font-black shadow-xs'
+                  : 'text-on-surface-variant/60 hover:text-on-surface hover:bg-white/50'
+                }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Main Content Area */}
+        {selectedCategory && (
+          <div className="w-full space-y-4">
+            <div className="bg-white p-5 border border-outline-variant/10 rounded-2xl shadow-sm space-y-4">
+              <FieldGroup label={renderLabelWithFlags('system_' + selectedCategory, t('installations.system'))}>
               <LocalSelect
                 label={t('installations.system')}
                 validationStatus={getSelectValidationStatus('system_' + selectedCategory)}
@@ -852,38 +933,38 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                 onChange={(e) => {
                   const val = e.target.value;
                   if (selectedCategory === 'Ventilatie') {
-                    onChange('installations.ventTypeToestel', val);
+                    originalOnChange('installations.ventTypeToestel', val);
                   } else if (selectedCategory === 'Tapwater') {
-                    onChange('installations.tapTypeInstallatie', val);
+                    originalOnChange('installations.tapTypeInstallatie', val);
 
                     // Auto-reset dependent tapwater generator type
                     const isExternal = val.includes('derden') || val.includes('afleverset');
                     if (isExternal) {
-                      onChange('installations.tapTypeOpwekker', 'Externe warmtelevering via een afleverset');
+                      originalOnChange('installations.tapTypeOpwekker', 'Externe warmtelevering via een afleverset');
                     } else {
                       if (data.installations?.tapTypeOpwekker === 'Externe warmtelevering via een afleverset') {
-                        onChange('installations.tapTypeOpwekker', 'Compleet toestel');
+                        originalOnChange('installations.tapTypeOpwekker', 'Compleet toestel');
                       }
                     }
                   } else if (selectedCategory === 'Koeling') {
-                    onChange('installations.koelTypeToestel', val);
+                    originalOnChange('installations.koelTypeToestel', val);
                   } else if (selectedCategory === 'Zonne-panelen') {
-                    onChange('installations.zonTypeToestel', val);
+                    originalOnChange('installations.zonTypeToestel', val);
                   } else {
                     setHeatingSystemType(val);
-                    onChange('installations.verwarmTypeToestel', val);
+                    originalOnChange('installations.verwarmTypeToestel', val);
 
                     // Auto-reset dependent generator values to a valid option of the new system type
                     const isExternal = val.includes('derden') || val.includes('afleverset');
                     if (isExternal) {
-                      onChange('installations.verwarmTypeopwekker', 'Warmtelevering derden');
-                      onChange('installations.tapTypeOpwekker', 'Externe warmtelevering via een afleverset');
+                      originalOnChange('installations.verwarmTypeopwekker', 'Warmtelevering derden');
+                      originalOnChange('installations.tapTypeOpwekker', 'Externe warmtelevering via een afleverset');
                     } else {
                       if (data.installations?.verwarmTypeopwekker === 'Warmtelevering derden') {
-                        onChange('installations.verwarmTypeopwekker', 'Gasgestookte ketel');
+                        originalOnChange('installations.verwarmTypeopwekker', 'Gasgestookte ketel');
                       }
                       if (data.installations?.tapTypeOpwekker === 'Externe warmtelevering via een afleverset') {
-                        onChange('installations.tapTypeOpwekker', 'Compleet toestel');
+                        originalOnChange('installations.tapTypeOpwekker', 'Compleet toestel');
                       }
                     }
                   }
@@ -943,7 +1024,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                     'Zonne-panelen': 'installations.zonIdentiekeSystemen',
                     'Verwarming': 'installations.verwarmIdentiekeSystemen'
                   };
-                  onChange(keyMap[selectedCategory], val);
+                  originalOnChange(keyMap[selectedCategory], val);
                 }}
                 placeholder={t('installations.devicePlaceholder')}
               />
@@ -1001,7 +1082,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           className={`input-field font-bold ${getFieldBorder('verwarmSpecsBcrg')}`}
                           placeholder="2018"
                           value={data.installations?.verwarmSpecsBcrg || ''}
-                          onChange={(e) => onChange('installations.verwarmSpecsBcrg', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.verwarmSpecsBcrg', e.target.value)}
                         />
                       </FieldGroup>
                       <FieldGroup label={renderLabelWithFlags('verwarmTypeopwekker', t('installations.heating.generatorType'))}>
@@ -1009,7 +1090,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           label={t('installations.heating.generatorType')}
                           validationStatus={getSelectValidationStatus('verwarmTypeopwekker')}
                           value={data.installations?.verwarmTypeopwekker || 'Gasgestookte ketel'}
-                          onChange={(e) => onChange('installations.verwarmTypeopwekker', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.verwarmTypeopwekker', e.target.value)}
                         >
                           {(heatingSystemType === 'Individueel' || heatingSystemType === 'Gemeenschappelijk/collectief') ? (
                             <>
@@ -1045,7 +1126,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                             onChange={(e) => {
                               const val = e.target.value;
                               setDistributieMedium(val);
-                              onChange('installations.verwarmDistributiemedium', val);
+                              originalOnChange('installations.verwarmDistributiemedium', val);
                             }}
                           >
                             <option value="Water">{t('installations.heating.mediumWater')}</option>
@@ -1059,7 +1140,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                                 label={t('installations.heating.waterFlowTemp')}
                                 validationStatus={getSelectValidationStatus('verwarmWatertemprater')}
                                 value={data.installations?.verwarmWatertemprater || ''}
-                                onChange={(e) => onChange('installations.verwarmWatertemprater', e.target.value)}
+                                onChange={(e) => originalOnChange('installations.verwarmWatertemprater', e.target.value)}
                               >
                                 <option>30/27 °C</option>
                                 <option>35/30 °C</option>
@@ -1080,7 +1161,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                                 label={t('installations.heating.distributionType')}
                                 validationStatus={getSelectValidationStatus('verwarmDistributietype')}
                                 value={data.installations?.verwarmDistributietype || 'Tweepijpsysteem'}
-                                onChange={(e) => onChange('installations.verwarmDistributietype', e.target.value)}
+                                onChange={(e) => originalOnChange('installations.verwarmDistributietype', e.target.value)}
                               >
                                 <option value="Tweepijpsysteem">{t('installations.heating.twoPipe')}</option>
                                 <option value="Eenpijpsysteem">{t('installations.heating.onePipe')}</option>
@@ -1096,7 +1177,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           label={t('installations.heating.hrClass')}
                           validationStatus={getSelectValidationStatus('verwarmHrKlasse')}
                           value={data.installations?.verwarmHrKlasse || 'Onbekend'}
-                          onChange={(e) => onChange('installations.verwarmHrKlasse', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.verwarmHrKlasse', e.target.value)}
                         >
                           <option value="Onbekend">{t('general.options.onbekend')}</option>
                           <option value="HR-107">HR-107</option>
@@ -1112,8 +1193,8 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                             type="number"
                             className={`input-field font-bold ${getFieldBorder('verwarmPower')}`}
                             placeholder="24"
-                            value={data.installations?.verwarmWatertemprater || ''}
-                            onChange={(e) => onChange('installations.verwarmWatertemprater', e.target.value)}
+                            value={data.installations?.verwarmPower || ''}
+                            onChange={(e) => originalOnChange('installations.verwarmPower', e.target.value)}
                           />
                           <span className="text-xs text-on-surface-variant/60 font-bold">kW</span>
                         </div>
@@ -1124,7 +1205,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                         className={`input-field ${getFieldBorder('verwarmCode')}`}
                         placeholder={t('installations.heating.locationPlaceholder')}
                         value={data.installations?.verwarmCode || ''}
-                        onChange={(e) => onChange('installations.verwarmCode', e.target.value)}
+                        onChange={(e) => originalOnChange('installations.verwarmCode', e.target.value)}
                       />
                     </FieldGroup>
                   </div>
@@ -1141,7 +1222,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                         label={t('installations.heating.deliverySystem')}
                         validationStatus={getSelectValidationStatus('verwarmAfgiftesysteem')}
                         value={data.installations?.verwarmAfgiftesysteem || 'Radiatoren / convectoren'}
-                        onChange={(e) => onChange('installations.verwarmAfgiftesysteem', e.target.value)}
+                        onChange={(e) => originalOnChange('installations.verwarmAfgiftesysteem', e.target.value)}
                       >
                         <option value="Radiatoren / convectoren">{t('installations.heating.radiatorsConvectors')}</option>
                         <option value="Ventilatorgestuurde radiatoren en/of convectoren">{t('installations.heating.fanRadiatorsConvectors')}</option>
@@ -1155,7 +1236,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                         label={t('installations.heating.control')}
                         validationStatus={getSelectValidationStatus('verwarmRegeling')}
                         value={data.installations?.verwarmRegeling || 'Regeling in hoofdvertrek (kamerthermostaat)'}
-                        onChange={(e) => onChange('installations.verwarmRegeling', e.target.value)}
+                        onChange={(e) => originalOnChange('installations.verwarmRegeling', e.target.value)}
                       >
                         <option value="Regeling in hoofdvertrek (kamerthermostaat)">{t('installations.heating.controlRoomThermostat')}</option>
                         <option value="Centrale regeling met individuele regeling per ruimte">{t('installations.heating.controlCentralIndividual')}</option>
@@ -1168,7 +1249,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                         label={t('installations.heating.hydronicallyBalanced')}
                         validationStatus={getSelectValidationStatus('verwarmWaterzijdigIngeeregeld')}
                         value={data.installations?.verwarmWaterzijdigIngeeregeld || 'Nee / Onbekend'}
-                        onChange={(e) => onChange('installations.verwarmWaterzijdigIngeeregeld', e.target.value)}
+                        onChange={(e) => originalOnChange('installations.verwarmWaterzijdigIngeeregeld', e.target.value)}
                       >
                         <option value="Nee / Onbekend">{t('installations.heating.balanceNoUnknown')}</option>
                         <option value="Ja, aangetoond (Label A)">{t('installations.heating.balanceYesLabelA')}</option>
@@ -1185,27 +1266,19 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                       <Camera size={14} className="text-on-surface-variant/50" />
                       Foto's &amp; Documenten (Verwarming)
                     </h3>
-                    <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
+                    <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
                       <Plus size={12} />
-                      Upload
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                        className="hidden"
-                        onChange={handleFileUpload}
-                      />
-                    </label>
+                      Upload / Selecteer
+                    </button>
                   </div>
                   {(() => {
                     const files: any[] = (data.installations as any)?.[getSanitizedFileKey('Verwarming')] || [];
                     if (files.length === 0) {
                       return (
-                        <label className="cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
+                        <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="w-full cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
                           <Camera size={24} />
-                          <span className="text-xs font-semibold">Klik of sleep bestanden hier naartoe</span>
-                          <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden" onChange={handleFileUpload} />
-                        </label>
+                          <span className="text-xs font-semibold">Klik om foto's of documenten toe te voegen</span>
+                        </button>
                       );
                     }
                     const photos = files.filter(f => f.type?.startsWith('image/'));
@@ -1258,7 +1331,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           label={t('installations.tapwater.generatorType')}
                           validationStatus={getSelectValidationStatus('tapTypeOpwekker')}
                           value={data.installations?.tapTypeOpwekker || 'Compleet toestel'}
-                          onChange={(e) => onChange('installations.tapTypeOpwekker', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.tapTypeOpwekker', e.target.value)}
                         >
                           {(heatingSystemType === 'Individueel' || heatingSystemType === 'Gemeenschappelijk/collectief') ? (
                             <>
@@ -1279,7 +1352,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                             label={t('installations.tapwater.deviceType')}
                             validationStatus={getSelectValidationStatus('tapTypeToestel')}
                             value={data.installations?.tapTypeToestel || 'Keukengeiser'}
-                            onChange={(e) => onChange('installations.tapTypeToestel', e.target.value)}
+                            onChange={(e) => originalOnChange('installations.tapTypeToestel', e.target.value)}
                           >
                             <option value="Keukengeiser">{t('installations.tapwater.kitchenKitchenGeyser') || t('installations.tapwater.kitchenGeyser')}</option>
                             <option value="Gasgestookt warmwatertoestel (Badgeiser)">{t('installations.tapwater.bathGeyser')}</option>
@@ -1300,7 +1373,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           className={`input-field font-bold ${getFieldBorder('tapSpecsBcrg')}`}
                           placeholder="2015"
                           value={data.installations?.tapSpecsBcrg || ''}
-                          onChange={(e) => onChange('installations.tapSpecsBcrg', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.tapSpecsBcrg', e.target.value)}
                         />
                       </FieldGroup>
                     </div>
@@ -1316,7 +1389,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           label={t('installations.tapwater.kitchenDelivery')}
                           validationStatus={getSelectValidationStatus('tapAfgifteKeuken')}
                           value={data.installations?.tapAfgifteKeuken || '< 2 m'}
-                          onChange={(e) => onChange('installations.tapAfgifteKeuken', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.tapAfgifteKeuken', e.target.value)}
                         >
                           <option>&lt; 2 m</option>
                           <option>2 m &lt;= l &lt; 4 m</option>
@@ -1333,7 +1406,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           label={t('installations.tapwater.bathroomDelivery')}
                           validationStatus={getSelectValidationStatus('tapAfgifteBadkamer')}
                           value={data.installations?.tapAfgifteBadkamer || '< 2 m'}
-                          onChange={(e) => onChange('installations.tapAfgifteBadkamer', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.tapAfgifteBadkamer', e.target.value)}
                         >
                           <option>&lt; 2 m</option>
                           <option>2 m &lt;= l &lt; 4 m</option>
@@ -1352,7 +1425,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           label={t('installations.tapwater.circulationPipe')}
                           validationStatus={getSelectValidationStatus('tapCirculatieleiding')}
                           value={data.installations?.tapCirculatieleiding || 'Nee'}
-                          onChange={(e) => onChange('installations.tapCirculatieleiding', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.tapCirculatieleiding', e.target.value)}
                         >
                           <option value="Nee">{t('common.no')}</option>
                           <option value="Ja, geïsoleerd">{t('installations.tapwater.yesInsulated')}</option>
@@ -1364,7 +1437,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           label={t('installations.tapwater.showerHeatRecovery')}
                           validationStatus={getSelectValidationStatus('tapDwtw')}
                           value={data.installations?.tapDwtw || 'Nee'}
-                          onChange={(e) => onChange('installations.tapDwtw', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.tapDwtw', e.target.value)}
                         >
                           <option value="Nee">{t('common.no')}</option>
                           <option value="Ja, douchepijp-WTW">{t('installations.tapwater.yesShowerPipe')}</option>
@@ -1382,21 +1455,19 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                       <Camera size={14} className="text-on-surface-variant/50" />
                       Foto's &amp; Documenten (Tapwater)
                     </h3>
-                    <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
+                    <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
                       <Plus size={12} />
-                      Upload
-                      <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden" onChange={handleFileUpload} />
-                    </label>
+                      Upload / Selecteer
+                    </button>
                   </div>
                   {(() => {
                     const files: any[] = (data.installations as any)?.[getSanitizedFileKey('Tapwater')] || [];
                     if (files.length === 0) {
                       return (
-                        <label className="cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
+                        <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="w-full cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
                           <Camera size={24} />
-                          <span className="text-xs font-semibold">Klik of sleep bestanden hier naartoe</span>
-                          <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden" onChange={handleFileUpload} />
-                        </label>
+                          <span className="text-xs font-semibold">Klik om foto's of documenten toe te voegen</span>
+                        </button>
                       );
                     }
                     const photos = files.filter(f => f.type?.startsWith('image/'));
@@ -1451,8 +1522,8 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                         onChange={(e) => {
                           const val = e.target.value;
                           setVentSysteemType(val);
-                          onChange('installations.ventVentilatiesysteem', `Type ${val}`);
-                          onChange('installations.ventSysteem', val === 'A' ? 'Natuurlijke ventilatie' : 'Mechanische afvoer');
+                          originalOnChange('installations.ventVentilatiesysteem', `Type ${val}`);
+                          originalOnChange('installations.ventSysteem', val === 'A' ? 'Natuurlijke ventilatie' : 'Mechanische afvoer');
 
                           let defaultControl = '';
                           if (val === 'A') defaultControl = 'A1 Standaard (toevoer niet luchtdruk gestuurd)';
@@ -1462,7 +1533,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           else if (val === 'E') defaultControl = 'E1 Systeemdeel D: decentrale WTW (Systeem D.5b)';
 
                           if (defaultControl) {
-                            onChange('installations.ventDemandControl', defaultControl);
+                            originalOnChange('installations.ventDemandControl', defaultControl);
                           }
                         }}
                       >
@@ -1481,7 +1552,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           className={`input-field font-bold ${getFieldBorder('ventSpecsBcrg')}`}
                           placeholder="2020"
                           value={data.installations?.ventSpecsBcrg || ''}
-                          onChange={(e) => onChange('installations.ventSpecsBcrg', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.ventSpecsBcrg', e.target.value)}
                         />
                       </FieldGroup>
                       <FieldGroup label={renderLabelWithFlags('ventLuchtdichtheid', t('installations.ventilation.airTightness'))}>
@@ -1489,7 +1560,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           label={t('installations.ventilation.airTightness')}
                           validationStatus={getSelectValidationStatus('ventLuchtdichtheid')}
                           value={data.installations?.ventLuchtdichtheid || 'LUKA A,B of C'}
-                          onChange={(e) => onChange('installations.ventLuchtdichtheid', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.ventLuchtdichtheid', e.target.value)}
                         >
                           <option value="LUKA A,B of C">LUKA A, B of C</option>
                           <option value="LUKA D">LUKA D</option>
@@ -1504,7 +1575,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                         className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
                         id="lintverwarmde"
                         checked={data.installations?.ventSubsysteem === 'Ja'}
-                        onChange={(e) => onChange('installations.ventSubsysteem', e.target.checked ? 'Ja' : 'Nee')}
+                        onChange={(e) => originalOnChange('installations.ventSubsysteem', e.target.checked ? 'Ja' : 'Nee')}
                       />
                       <label htmlFor="lintverwarmde" className="text-xs font-bold text-on-surface-variant/60 cursor-pointer">{t('installations.ventilation.ribbonHeatingPresent')}</label>
                     </div>
@@ -1520,7 +1591,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           label={t('installations.ventilation.demandControlSystem')}
                           validationStatus={getSelectValidationStatus('ventDemandControl')}
                           value={data.installations?.ventDemandControl || ''}
-                          onChange={(e) => onChange('installations.ventDemandControl', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.ventDemandControl', e.target.value)}
                         >
                           {ventSysteemType === 'A' && (
                             <>
@@ -1584,7 +1655,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                               label={t('installations.ventilation.bypassPresent')}
                               validationStatus={getSelectValidationStatus('ventBypass')}
                               value={data.installations?.ventBypass || 'Nee'}
-                              onChange={(e) => onChange('installations.ventBypass', e.target.value)}
+                              onChange={(e) => originalOnChange('installations.ventBypass', e.target.value)}
                             >
                               <option value="Ja, 100% bypass">{t('installations.ventilation.bypass100')}</option>
                               <option value="Ja, gedeeltelijk">{t('installations.ventilation.bypassPartial')}</option>
@@ -1597,7 +1668,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                                 type="number"
                                 className={`input-field font-bold ${getFieldBorder('ventHrEfficiency')}`}
                                 value={data.installations?.ventHrEfficiency || '90'}
-                                onChange={(e) => onChange('installations.ventHrEfficiency', e.target.value)}
+                                onChange={(e) => originalOnChange('installations.ventHrEfficiency', e.target.value)}
                               />
                               <span className="text-xs text-on-surface-variant/60 font-bold">%</span>
                             </div>
@@ -1612,7 +1683,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           value={data.installations?.ventVentilatoren || 'Nominaal vermogen'}
                           onChange={(e) => {
                             setVentilatorSelection(e.target.value);
-                            onChange('installations.ventVentilatoren', e.target.value);
+                            originalOnChange('installations.ventVentilatoren', e.target.value);
                           }}
                         >
                           <option value="Nominaal vermogen">{t('installations.ventilation.fansNominal')}</option>
@@ -1629,7 +1700,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                             className={`input-field font-bold ${getFieldBorder('ventNomPower')}`}
                             placeholder="35"
                             value={data.installations?.ventNomPower || ''}
-                            onChange={(e) => onChange('installations.ventNomPower', e.target.value)}
+                            onChange={(e) => originalOnChange('installations.ventNomPower', e.target.value)}
                           />
                         </FieldGroup>
                       )}
@@ -1642,7 +1713,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                               className={`input-field font-bold ${getFieldBorder('ventNomPower')}`}
                               placeholder="Integer"
                               value={data.installations?.ventNomPower || ''}
-                              onChange={(e) => onChange('installations.ventNomPower', e.target.value)}
+                              onChange={(e) => originalOnChange('installations.ventNomPower', e.target.value)}
                             />
                           </FieldGroup>
                         </div>
@@ -1655,7 +1726,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                               label={t('installations.ventilation.motorType')}
                               validationStatus={getSelectValidationStatus('ventMotorType')}
                               value={data.installations?.ventMotorType || 'Gelijkstroom'}
-                              onChange={(e) => onChange('installations.ventMotorType', e.target.value)}
+                              onChange={(e) => originalOnChange('installations.ventMotorType', e.target.value)}
                             >
                               <option value="Gelijkstroom">{t('installations.ventilation.motorDC')}</option>
                               <option value="Wisselstroom">{t('installations.ventilation.motorAC')}</option>
@@ -1667,7 +1738,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                               label={t('installations.ventilation.fabrication')}
                               validationStatus={getSelectValidationStatus('ventFabrication')}
                               value={data.installations?.ventFabrication || ''}
-                              onChange={(e) => onChange('installations.ventFabrication', e.target.value)}
+                              onChange={(e) => originalOnChange('installations.ventFabrication', e.target.value)}
                             >
                               <option value="tot 1980">{t('installations.ventilation.fabTo1980')}</option>
                               <option>1980 - 1990</option>
@@ -1688,21 +1759,19 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                       <Camera size={14} className="text-on-surface-variant/50" />
                       Foto's &amp; Documenten (Ventilatie)
                     </h3>
-                    <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
+                    <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
                       <Plus size={12} />
-                      Upload
-                      <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden" onChange={handleFileUpload} />
-                    </label>
+                      Upload / Selecteer
+                    </button>
                   </div>
                   {(() => {
                     const files: any[] = (data.installations as any)?.[getSanitizedFileKey('Ventilatie')] || [];
                     if (files.length === 0) {
                       return (
-                        <label className="cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
+                        <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="w-full cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
                           <Camera size={24} />
-                          <span className="text-xs font-semibold">Klik of sleep bestanden hier naartoe</span>
-                          <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden" onChange={handleFileUpload} />
-                        </label>
+                          <span className="text-xs font-semibold">Klik om foto's of documenten toe te voegen</span>
+                        </button>
                       );
                     }
                     const photos = files.filter(f => f.type?.startsWith('image/'));
@@ -1754,7 +1823,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                         label={t('installations.cooling.generatorType')}
                         validationStatus={getSelectValidationStatus('koelTypeInstallatie')}
                         value={data.installations?.koelTypeInstallatie || 'Compressiekoeling'}
-                        onChange={(e) => onChange('installations.koelTypeInstallatie', e.target.value)}
+                        onChange={(e) => originalOnChange('installations.koelTypeInstallatie', e.target.value)}
                       >
                         <option value="Compressiekoeling">{t('installations.cooling.comp')}</option>
                         <option value="Absorptiekoeling">{t('installations.cooling.abs')}</option>
@@ -1766,7 +1835,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                         label={t('installations.cooling.expansion')}
                         validationStatus={getSelectValidationStatus('koelExpansie')}
                         value={data.installations?.koelExpansie || 'Directe koeling in de ruimte (airconditioning)'}
-                        onChange={(e) => onChange('installations.koelExpansie', e.target.value)}
+                        onChange={(e) => originalOnChange('installations.koelExpansie', e.target.value)}
                       >
                         <option value="Directe koeling in de ruimte (airconditioning)">{t('installations.cooling.expDirect')}</option>
                         <option value="Directe koeling in het LBK (DX-systeem)">{t('installations.cooling.expLbk')}</option>
@@ -1779,7 +1848,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           label={t('installations.cooling.medium')}
                           validationStatus={getSelectValidationStatus('koelDistributiemedium')}
                           value={data.installations?.koelDistributiemedium || 'Water'}
-                          onChange={(e) => onChange('installations.koelDistributiemedium', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.koelDistributiemedium', e.target.value)}
                         >
                           <option value="Water">{t('installations.cooling.medWater')}</option>
                           <option value="Lucht">{t('installations.cooling.medAir')}</option>
@@ -1791,7 +1860,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           type="number"
                           className={`input-field font-bold ${getFieldBorder('koelGeneratorsCount')}`}
                           value={data.installations?.koelGeneratorsCount || '1'}
-                          onChange={(e) => onChange('installations.koelGeneratorsCount', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.koelGeneratorsCount', e.target.value)}
                         />
                       </FieldGroup>
                     </div>
@@ -1800,7 +1869,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                         label={t('installations.cooling.waterFlowTemp')}
                         validationStatus={getSelectValidationStatus('koelWatertemprater')}
                         value={data.installations?.koelWatertemprater || '6/12 °C'}
-                        onChange={(e) => onChange('installations.koelWatertemprater', e.target.value)}
+                        onChange={(e) => originalOnChange('installations.koelWatertemprater', e.target.value)}
                       >
                         <option>6/12 °C</option>
                         <option>12/16 °C</option>
@@ -1814,7 +1883,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                         label={t('installations.cooling.mainCirculationPump')}
                         validationStatus={getSelectValidationStatus('koelMainCirculationPump')}
                         value={data.installations?.koelMainCirculationPump || 'Werkelijk vermogen en EI'}
-                        onChange={(e) => onChange('installations.koelMainCirculationPump', e.target.value)}
+                        onChange={(e) => originalOnChange('installations.koelMainCirculationPump', e.target.value)}
                       >
                         <option value="Werkelijk vermogen en EI">{t('installations.cooling.pumpActualEi')}</option>
                         <option value="Werkelijk vermogen">{t('installations.cooling.pumpActual')}</option>
@@ -1832,7 +1901,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                         label={t('installations.cooling.deliverySystem')}
                         validationStatus={getSelectValidationStatus('koelAfgiftesysteem')}
                         value={data.installations?.koelAfgiftesysteem || 'Vloerkoeling'}
-                        onChange={(e) => onChange('installations.koelAfgiftesysteem', e.target.value)}
+                        onChange={(e) => originalOnChange('installations.koelAfgiftesysteem', e.target.value)}
                       >
                         <option value="Vloerkoeling">{t('installations.cooling.delFloor')}</option>
                         <option value="Wandkoeling">{t('installations.cooling.delWall')}</option>
@@ -1847,7 +1916,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                         label={t('installations.cooling.control')}
                         validationStatus={getSelectValidationStatus('koelRegeling')}
                         value={data.installations?.koelRegeling || 'Standalone regeling'}
-                        onChange={(e) => onChange('koelRegeling', e.target.value)}
+                        onChange={(e) => originalOnChange('koelRegeling', e.target.value)}
                       >
                         <option value="Standalone regeling">{t('installations.cooling.ctrlStandalone')}</option>
                         <option value="Centrale regeling">{t('installations.cooling.ctrlCentral')}</option>
@@ -1864,21 +1933,19 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                       <Camera size={14} className="text-on-surface-variant/50" />
                       Foto's &amp; Documenten (Koeling)
                     </h3>
-                    <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
+                    <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
                       <Plus size={12} />
-                      Upload
-                      <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden" onChange={handleFileUpload} />
-                    </label>
+                      Upload / Selecteer
+                    </button>
                   </div>
                   {(() => {
                     const files: any[] = (data.installations as any)?.[getSanitizedFileKey('Koeling')] || [];
                     if (files.length === 0) {
                       return (
-                        <label className="cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
+                        <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="w-full cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
                           <Camera size={24} />
-                          <span className="text-xs font-semibold">Klik of sleep bestanden hier naartoe</span>
-                          <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden" onChange={handleFileUpload} />
-                        </label>
+                          <span className="text-xs font-semibold">Klik om foto's of documenten toe te voegen</span>
+                        </button>
                       );
                     }
                     const photos = files.filter(f => f.type?.startsWith('image/'));
@@ -1933,7 +2000,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                         onChange={(e) => {
                           const val = e.target.value;
                           setPvType(val);
-                          onChange('installations.zonSysteem', val);
+                          originalOnChange('installations.zonSysteem', val);
                         }}
                       >
                         <option value="PV-panelen">{t('installations.solar.sysPv')}</option>
@@ -1953,7 +2020,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           type="number"
                           className={`input-field font-bold ${getFieldBorder('zonWattpiekvermogen')}`}
                           value={data.installations?.zonWattpiekvermogen || '400'}
-                          onChange={(e) => onChange('installations.zonWattpiekvermogen', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.zonWattpiekvermogen', e.target.value)}
                         />
                       </FieldGroup>
                       <FieldGroup label={renderLabelWithFlags('zonAantal', t('installations.solar.count'))}>
@@ -1961,7 +2028,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           type="number"
                           className={`input-field font-bold ${getFieldBorder('zonAantal')}`}
                           value={data.installations?.zonAantal || '10'}
-                          onChange={(e) => onChange('installations.zonAantal', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.zonAantal', e.target.value)}
                         />
                       </FieldGroup>
                     </div>
@@ -1971,7 +2038,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                           label={t('installations.solar.orientation')}
                           validationStatus={getSelectValidationStatus('zonOrientatie')}
                           value={data.installations?.zonOrientatie || 'Zuid'}
-                          onChange={(e) => onChange('installations.zonOrientatie', e.target.value)}
+                          onChange={(e) => originalOnChange('installations.zonOrientatie', e.target.value)}
                         >
                           <option value="Zuid">{t('installations.solar.orientSouth')}</option>
                           <option value="Zuid-West">{t('installations.solar.orientSouthWest')}</option>
@@ -1986,7 +2053,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                             type="number"
                             className={`input-field font-bold ${getFieldBorder('zonHellingshook')}`}
                             value={data.installations?.zonHellingshook || '35'}
-                            onChange={(e) => onChange('installations.zonHellingshook', e.target.value)}
+                            onChange={(e) => originalOnChange('installations.zonHellingshook', e.target.value)}
                           />
                           <span className="text-xs text-on-surface-variant/60 font-bold">°</span>
                         </div>
@@ -1997,7 +2064,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                         label={t('installations.solar.shading')}
                         validationStatus={getSelectValidationStatus('zonBouwintegratie')}
                         value={data.installations?.zonBouwintegratie || 'Onbekend'}
-                        onChange={(e) => onChange('installations.zonBouwintegratie', e.target.value)}
+                        onChange={(e) => originalOnChange('installations.zonBouwintegratie', e.target.value)}
                       >
                         <option value="Niet geventileerd: zonder luchtspouw">{t('installations.solar.shadeUnventilated')}</option>
                         <option value="Matig geventileerd: met luchtspouw">{t('installations.solar.shadeModerate')}</option>
@@ -2016,21 +2083,19 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
                       <Camera size={14} className="text-on-surface-variant/50" />
                       Foto's &amp; Documenten (Zonne-panelen)
                     </h3>
-                    <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
+                    <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
                       <Plus size={12} />
-                      Upload
-                      <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden" onChange={handleFileUpload} />
-                    </label>
+                      Upload / Selecteer
+                    </button>
                   </div>
                   {(() => {
                     const files: any[] = (data.installations as any)?.[getSanitizedFileKey('Zonne-panelen')] || [];
                     if (files.length === 0) {
                       return (
-                        <label className="cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
+                        <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="w-full cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
                           <Camera size={24} />
-                          <span className="text-xs font-semibold">Klik of sleep bestanden hier naartoe</span>
-                          <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden" onChange={handleFileUpload} />
-                        </label>
+                          <span className="text-xs font-semibold">Klik om foto's of documenten toe te voegen</span>
+                        </button>
                       );
                     }
                     const photos = files.filter(f => f.type?.startsWith('image/'));
@@ -2072,6 +2137,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
           )}
 
         </div>
+        )}
       </div>
 
       {/* Lightbox */}
@@ -2084,6 +2150,55 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange }) => 
         onNext={() => setLightboxIndex(i => (i + 1) % lightboxPhotos.length)}
         zIndexClassName="z-[99999]"
       />
+
+      {/* Global Photo Modal */}
+      {selectedCategory && (
+        <GlobalPhotoSelectorModal
+          isOpen={globalPhotoModalOpen}
+          categoryName={selectedCategory}
+          onClose={() => setGlobalPhotoModalOpen(false)}
+          data={data}
+          initialPhotoUrls={(() => {
+          const currentFilesKey = getSanitizedFileKey(selectedCategory);
+          const existingFiles: any[] = Array.isArray((data?.installations as any)?.[currentFilesKey])
+            ? (data.installations as any)[currentFilesKey]
+            : [];
+          return existingFiles.filter(f => f.type?.startsWith('image/')).map(f => f.dataUrl);
+        })()}
+        onSelect={(dataUrls) => {
+          if (!dataUrls || dataUrls.length === 0) {
+            // User unselected all photos
+            const currentFilesKey = getSanitizedFileKey(selectedCategory);
+            const existingFiles: any[] = Array.isArray((data?.installations as any)?.[currentFilesKey])
+              ? (data.installations as any)[currentFilesKey]
+              : [];
+            handleFieldChange(`installations.${currentFilesKey}`, existingFiles.filter(f => !f.type?.startsWith('image/')));
+            return;
+          }
+          const currentFilesKey = getSanitizedFileKey(selectedCategory);
+          const existingFiles: any[] = Array.isArray((data?.installations as any)?.[currentFilesKey])
+            ? (data.installations as any)[currentFilesKey]
+            : [];
+          
+          const existingFilesByUrl = new Map(existingFiles.filter(f => f.type?.startsWith('image/')).map(f => [f.dataUrl, f]));
+          const nonImageFiles = existingFiles.filter(f => !f.type?.startsWith('image/'));
+
+          const finalImageFiles = dataUrls.map((url, i) => {
+             if (existingFilesByUrl.has(url)) return existingFilesByUrl.get(url);
+             return {
+                name: `library_photo_${Date.now()}_${i}.jpg`,
+                type: 'image/jpeg',
+                size: '0 B',
+                dataUrl: url
+             };
+          });
+
+          handleFieldChange(`installations.${currentFilesKey}`, [...nonImageFiles, ...finalImageFiles]);
+        }}
+        onUpload={handleGlobalUploadAction}
+      />
+      )}
+      <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden" ref={globalFileInputRef} onChange={handleFileUpload} />
     </>
   );
 };

@@ -197,6 +197,7 @@ export function PhotoCapturePage({
   const [mediaGuideOpen, setMediaGuideOpen] = useState(false);
   const [mediaGuideStep, setMediaGuideStep] = useState<MediaInstructionStep>('instructions');
   const [pendingGuidePhotos, setPendingGuidePhotos] = useState<string[]>([]);
+  const [initialSessionPhotos, setInitialSessionPhotos] = useState<string[]>([]);
   const [captureTargetSection, setCaptureTargetSection] = useState<string | null>(null);
   const [captureTargetRoomId, setCaptureTargetRoomId] = useState<string | null>(null);
   const [captureTargetCategory, setCaptureTargetCategory] = useState<string | null>(null);
@@ -606,8 +607,13 @@ export function PhotoCapturePage({
   };
 
   const discardPendingGuidePhotos = () => {
-    pendingGuidePhotos.forEach((url) => revokeFileUrlIfBlob(url));
+    pendingGuidePhotos.forEach((url) => {
+      if (!initialSessionPhotos.includes(url)) {
+        revokeFileUrlIfBlob(url);
+      }
+    });
     setPendingGuidePhotos([]);
+    setInitialSessionPhotos([]);
   };
 
   const closeMediaGuide = () => {
@@ -628,7 +634,22 @@ export function PhotoCapturePage({
     setCaptureTargetSection(options.sectionId || null);
     setCaptureTargetRoomId(options.roomId || null);
     setCaptureTargetCategory(options.category || null);
-    setMediaGuideStep('instructions');
+    
+    let existingPhotos: string[] = [];
+    if (options.sectionId) {
+      existingPhotos = getExteriorPhotos(options.sectionId) || [];
+    } else if (options.roomId && options.category) {
+      existingPhotos = interiorPhotos[options.roomId]?.[options.category] || [];
+    }
+
+    setInitialSessionPhotos(existingPhotos);
+    setPendingGuidePhotos([...existingPhotos]);
+
+    if (existingPhotos.length > 0) {
+      setMediaGuideStep('review');
+    } else {
+      setMediaGuideStep('instructions');
+    }
     setMediaGuideOpen(true);
   };
 
@@ -659,23 +680,31 @@ export function PhotoCapturePage({
 
   const removePendingGuidePhoto = (index: number) => {
     const photoToRemove = pendingGuidePhotos[index];
-    revokeFileUrlIfBlob(photoToRemove);
+    if (!initialSessionPhotos.includes(photoToRemove)) {
+      revokeFileUrlIfBlob(photoToRemove);
+    }
     setPendingGuidePhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleMediaGuideDone = () => {
+    initialSessionPhotos.forEach(url => {
+      if (!pendingGuidePhotos.includes(url)) {
+        revokeFileUrlIfBlob(url);
+      }
+    });
+
     const count = pendingGuidePhotos.length;
-    if (count === 0) return;
+    if (count === 0 && initialSessionPhotos.length === 0) {
+      closeMediaGuide();
+      return;
+    }
 
     savedExpandedSections.current = [...expandedSections];
 
     if (captureTargetSection) {
       setExteriorPhotos((prev) => ({
         ...prev,
-        [captureTargetSection]: [
-          ...(prev[captureTargetSection as keyof ExteriorPhotos] || []),
-          ...pendingGuidePhotos,
-        ],
+        [captureTargetSection]: pendingGuidePhotos,
       }));
     }
 
@@ -684,22 +713,22 @@ export function PhotoCapturePage({
         ...prev,
         [captureTargetRoomId]: {
           ...(prev[captureTargetRoomId] || {}),
-          [captureTargetCategory]: [
-            ...((prev[captureTargetRoomId] || {})[captureTargetCategory] || []),
-            ...pendingGuidePhotos,
-          ],
+          [captureTargetCategory]: pendingGuidePhotos,
         },
       }));
     }
 
     setPendingGuidePhotos([]);
+    setInitialSessionPhotos([]);
     setMediaGuideStep('instructions');
     setMediaGuideOpen(false);
     setCaptureTargetSection(null);
     setCaptureTargetRoomId(null);
     setCaptureTargetCategory(null);
 
-    showToast(t('photos.guide.savedToast', { count }), 'success');
+    if (count > 0) {
+      showToast(t('photos.guide.savedToast', { count }), 'success');
+    }
 
     setTimeout(() => {
       if (savedExpandedSections.current.length > 0) {
@@ -1390,12 +1419,27 @@ export function PhotoCapturePage({
                       const isCatComplete = isCatPhotosComplete && isCatQuestionsComplete;
                       
                       const isExtraInstance = getPhotoCaptureCategoryNumber(category) > 1;
-                      const categoryLabel = translatePhotoCategory(category, t, {
+                      let categoryLabel = translatePhotoCategory(category, t, {
                         siblingCount: countPhotoCaptureCategoryInstances(
                           categories,
                           getPhotoCaptureCategoryBase(category),
                         ),
                       });
+
+                      if (isPhotoCaptureDoorCategory(category)) {
+                        const doorVal = getCategoryDetail(selectedInteriorRoomId, category).doorIsolated;
+                        if (doorVal === true) categoryLabel += ` _ ${t('common.yes') || 'yes'}`;
+                        else if (doorVal === false) categoryLabel += ` _ ${t('common.no') || 'no'}`;
+                      } else if (isPhotoCaptureWindowCategory(category)) {
+                        const glass = getCategoryDetail(selectedInteriorRoomId, category).glassType;
+                        const frame = getCategoryDetail(selectedInteriorRoomId, category).frameType;
+                        if (glass || frame) {
+                          const parts = [];
+                          if (glass) parts.push(translateKozijnGlassType(glass, t));
+                          if (frame) parts.push(translateKozijnFrameType(frame, t));
+                          categoryLabel += ` _ ${parts.join('_')}`;
+                        }
+                      }
 
                       return (
                         <div key={category} className="space-y-2">

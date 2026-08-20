@@ -1,21 +1,22 @@
 import { canonicalizeRoomInput, getRoomBaseName, normalizeRoomName } from './houseDesignRooms';
 import { loadAlgemeenFromStorage } from '../storage/algemeenData';
+import { loadInstallatieFromStorage } from '../storage/installatieData';
 
 /** Photo categories per room type (numbered variants use the same base type). */
 export const PHOTO_CAPTURE_ROOM_CATEGORIES: Record<string, string[]> = {
-  WOONKAMER: ['Full room view', 'Windows', 'Heating control panel', 'Ventilation panel'],
-  SLAAPKAMER: ['Window', 'Heating system'],
-  KEUKEN: ['Window', 'CO₂ sensor', 'Ventilation grill'],
+  WOONKAMER: ['Full room view', 'Windows', 'Heating control panel', 'Ventilation panel', 'Heating system'],
+  SLAAPKAMER: ['Window', 'Heating system', 'Ventilation grill'],
+  KEUKEN: ['Window', 'CO₂ sensor', 'Ventilation grill', 'Heating system'],
   BADKAMER: ['Window', 'Heating system', 'Ventilation grill'],
-  HAL: ['Doors', 'Window'],
+  HAL: ['Doors', 'Window', 'Heating system'],
   MK: ['Heating system - merk & type', 'PV system - merk & type', 'Tapwater system - brand & type'],
-  WC: ['Window', 'Ventilation grill'],
+  WC: ['Window', 'Ventilation grill', 'Heating system'],
   BERGING: ['General View'],
   'TECHNICAL ROOM': ['General View'],
   WASRUIMTE: ['General View'],
-  EETKAMER: ['Window'],
+  EETKAMER: ['Window', 'Heating system'],
   AANBOUW: ['General View'],
-  ZOLDER: ['General View', 'Roof windows'],
+  ZOLDER: ['General View', 'Roof windows', 'Heating system'],
   DAKKAPEL: ['General View', 'Windows'],
   SERRE: ['General View'],
   VLOERISOLATIE: ['General View'],
@@ -133,6 +134,20 @@ export function buildPhotoCaptureCategoryList(
       /* ignore */
     }
   }
+
+  try {
+    const installatie = loadInstallatieFromStorage();
+    if (installatie.activeCooling === true) {
+      const canonicalRoom = canonicalizeRoomInput(roomName);
+      const isCoolingRoom = installatie.coolingRooms.some(r => canonicalizeRoomInput(r) === canonicalRoom);
+      if (isCoolingRoom && !baseCategories.includes('Cooling system')) {
+        baseCategories.push('Cooling system');
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
   const known = new Set<string>([
     ...(extraCategoriesByRoom[roomId] ?? []),
     ...Object.keys(interiorPhotos[roomId] ?? {}),

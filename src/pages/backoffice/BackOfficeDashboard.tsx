@@ -103,13 +103,14 @@ export const BackOfficeDashboard: React.FC<BackOfficeDashboardProps> = ({ data, 
       persoon: getTranslation('general.residentName', 'Naam bewoner', 'Resident name'),
       telefoon: getTranslation('general.phone', 'Telefoon', 'Phone'),
       email: getTranslation('general.email', 'E-mail', 'Email'),
-      adviseur: getTranslation('general.advisorName', 'Naam adviseur', 'Advisor name'),
-      certificaathouder: getTranslation('general.certificateHolder', 'Certificaathouder', 'Certificate holder'),
-      gebruiker: getTranslation('general.username', 'Gebruiker', 'Username'),
+      adviseur: getTranslation('general.inspectorName', 'Naam inspecteur', 'Inspector name'),
+      certificaathouder: getTranslation('general.certificateNumber', 'Certificaatnummer', 'Certificate number'),
+      gebruiker: getTranslation('general.certificateHolder', 'Certificaathouder', 'Certificate holder'),
       opnamedatum: getTranslation('general.inspectionDate', 'Opnamedatum', 'Inspection date'),
       invoerdatum: getTranslation('general.entryDate', 'Invoerdatum', 'Entry date'),
       leidingdoorvoeren: getTranslation('general.pipePenetrations', 'Leidingdoorvoeren', 'Pipe penetrations'),
       avr: getTranslation('general.avr', 'AVR', 'AVR'),
+      aantal: getTranslation('general.aantal', 'Aantal', 'Amount'),
       fullName: getTranslation('general.fullName', 'Contactpersoon', 'Full name'),
       phoneNumber: getTranslation('general.phoneNumber', 'Telefoonnummer', 'Phone number'),
       contactAddress: getTranslation('general.contactAddress', 'Contactadres', 'Contact address')
@@ -149,8 +150,8 @@ export const BackOfficeDashboard: React.FC<BackOfficeDashboardProps> = ({ data, 
         verwarmCode: { nl: 'Code', en: 'Code' },
         verwarmRegeling: { nl: 'Regeling', en: 'Regulation' },
         verwarmWaterzijdigIngeeregeld: { nl: 'Waterzijdig ingeregeld', en: 'Hydronically balanced' },
-        verwarmHrKlasse: { nl: 'HR-klasse', en: 'HR class' },
         verwarmDistributietype: { nl: 'Distributietype', en: 'Distribution type' },
+        verwarmPower: { nl: 'Nominaal vermogen', en: 'Nominal power' },
 
         tapSysteem: { nl: 'Systeem type', en: 'System type' },
         tapMerkType: { nl: 'Merk & Type', en: 'Brand & Type' },
@@ -208,6 +209,11 @@ export const BackOfficeDashboard: React.FC<BackOfficeDashboardProps> = ({ data, 
     // 1. Process general
     Object.entries(algemeen).forEach(([key, color]) => {
       if (color) {
+        // Skip aantal flag if leidingdoorvoeren is not 'Ja'
+        if (key === 'aantal' && data.algemeen?.technical?.leidingdoorvoeren !== 'Ja') {
+          return;
+        }
+
         items.push({
           id: `algemeen-${key}`,
           label: generalKeyLabels[key] || key,
@@ -405,23 +411,29 @@ export const BackOfficeDashboard: React.FC<BackOfficeDashboardProps> = ({ data, 
         </div>
 
         {/* Dashboard stats grids */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:shadow-md transition-shadow">
             <div className="text-4xl font-display font-black text-primary mb-2">A++</div>
             <div className="text-[10px] text-on-surface-variant/50 uppercase tracking-widest font-bold text-center">
-              {t('dashboard.energyLabelPrelim') || 'Voorlopige Energieklasse'}
+              {t('dashboard.energyLabelPrelim') || 'Energy Label'}
             </div>
           </div>
-          <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center">
+          <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:shadow-md transition-shadow">
+            <div className="text-4xl font-display font-black text-on-surface-variant/80 mb-2">72.4</div>
+            <div className="text-[10px] text-on-surface-variant/50 uppercase tracking-widest font-bold text-center">
+              EP1 (kWh/m²)
+            </div>
+          </div>
+          <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:shadow-md transition-shadow">
             <div className="text-4xl font-display font-black text-on-surface-variant/80 mb-2">94.2</div>
             <div className="text-[10px] text-on-surface-variant/50 uppercase tracking-widest font-bold text-center">
-              {t('dashboard.kwhYear') || 'kWh/m² per jaar'}
+              EP2 (kWh/m²)
             </div>
           </div>
-          <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center">
+          <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:shadow-md transition-shadow">
             <div className="text-4xl font-display font-black text-emerald-600 mb-2">82%</div>
             <div className="text-[10px] text-on-surface-variant/50 uppercase tracking-widest font-bold text-center">
-              {t('dashboard.sustainabilityIndex') || 'Verduurzamingsindex'}
+              EP3
             </div>
           </div>
         </div>

@@ -121,7 +121,7 @@ function reviveSnapshot(raw: unknown): AppSnapshotV1 | null {
       email: typeof profile.email === 'string' ? profile.email : '',
       address: typeof profile.address === 'string' ? profile.address : '',
       companyName: typeof profile.companyName === 'string' ? profile.companyName : undefined,
-      advisorName: typeof profile.advisorName === 'string' ? profile.advisorName : undefined,
+      inspectorName: typeof profile.inspectorName === 'string' ? profile.inspectorName : undefined,
       certificaathouder: typeof profile.certificaathouder === 'string' ? profile.certificaathouder : undefined,
       profilePhoto: typeof profile.profilePhoto === 'string' ? profile.profilePhoto : undefined,
     },

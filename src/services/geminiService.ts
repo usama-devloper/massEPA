@@ -13,7 +13,7 @@ export const extractInspectionData = async (input: string | { mimeType: string; 
         bouwfase: 'Bestaande bouw',
         opname: 'Basisopname',
         adres: 'Kerkstraat 45',
-        gebouwtype: 'Woonhuis',
+        gebouwtype: 'Detached house',
         subtype: 'Eengezinswoning',
         ligging: 'Tussenwoning',
         daktype: 'Hellend dak',

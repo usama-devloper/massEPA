@@ -87,8 +87,12 @@ const AlgemeenView: React.FC<AlgemeenViewProps> = ({ data, onChange, onAddGboT, 
   ];
 
   const svbStatusOptions = [
-    { value: 'Definitief', label: getTranslation('general.options.definitief', 'Definitief', 'Definitive') },
-    { value: 'Concept', label: getTranslation('general.options.concept', 'Concept', 'Draft') },
+    { value: 'Continue exploitation', label: getTranslation('general.options.continueExploitation', 'Voortzetting exploitatie', 'Continue exploitation') },
+    { value: 'Sale', label: getTranslation('general.options.sale', 'Verkoop', 'Sale') },
+    { value: 'Demolition', label: getTranslation('general.options.demolition', 'Sloop', 'Demolition') },
+    { value: 'Minor maintenance', label: getTranslation('general.options.minorMaintenance', 'Klein onderhoud', 'Minor maintenance') },
+    { value: 'Major maintenance', label: getTranslation('general.options.majorMaintenance', 'Groot onderhoud', 'Major maintenance') },
+    { value: 'Otherwise', label: getTranslation('general.options.otherwise', 'Anders', 'Otherwise') },
   ];
 
   const bronOptions = [
@@ -98,30 +102,30 @@ const AlgemeenView: React.FC<AlgemeenViewProps> = ({ data, onChange, onAddGboT, 
   ];
 
   const gebouwtypeOptions = [
-    { value: 'Woonhuis', label: getTranslation('general.options.woonhuis', 'Woonhuis', 'House') },
-    { value: 'Woongebouw', label: getTranslation('general.options.woongebouw', 'Woongebouw', 'Apartment Building') },
-    { value: 'Woonwagen', label: getTranslation('general.options.woonwagen', 'Woonwagen', 'Mobile Home') },
+    { value: 'Detached house', label: getTranslation('algemeen.options.buildingType.detachedHouse', 'Eengezinswoning', 'Detached house') },
+    { value: 'Apartment building unit', label: getTranslation('algemeen.options.buildingType.apartment', 'Appartementsrecht', 'Apartment building unit') },
+    { value: 'Detached house (non-self-contained units)', label: getTranslation('algemeen.options.buildingType.detachedNonSelfContained', 'Eengezinswoning (onstandig)', 'Detached house (non-self-contained units)') },
+    { value: 'Apartment (non-self-contained units)', label: getTranslation('algemeen.options.buildingType.apartmentNonSelfContained', 'Appartement (onstandig)', 'Apartment (non-self-contained units)') },
   ];
 
   const subtypeOptions = [
-    { value: 'Tussenwoning', label: getTranslation('general.options.tussenwoning', 'Tussenwoning', 'Terraced House') },
-    { value: 'Hoekwoning', label: getTranslation('general.options.hoekwoning', 'Hoekwoning', 'Corner House') },
-    { value: 'Eindwoning', label: getTranslation('general.options.eindwoning', 'Eindwoning', 'End-of-Terrace House') },
-    { value: 'Twee-onder-één-kap', label: getTranslation('general.options.tweeOnderEenKap', 'Twee-onder-één-kap', 'Semi-Detached') },
-    { value: 'Vrijstaande woning', label: getTranslation('general.options.vrijstaand', 'Vrijstaande woning', 'Detached') },
+    { value: 'detached', label: getTranslation('algemeen.options.position.detached', 'Vrijstaand', 'Detached') },
+    { value: 'endTerrace', label: getTranslation('algemeen.options.position.endTerrace', 'Eindwoning / hoek', 'End-terrace / corner') },
+    { value: 'midTerrace', label: getTranslation('algemeen.options.position.midTerrace', 'Tussenwoning', 'Mid-terrace') },
+    { value: 'semiDetached', label: getTranslation('algemeen.options.position.semiDetached', 'Twee-onder-één-kap', 'Semi-detached') },
   ];
 
   const liggingOptions = [
-    { value: 'Beschut', label: getTranslation('general.options.beschut', 'Beschut', 'Sheltered') },
-    { value: 'Niet beschut', label: getTranslation('general.options.nietBeschut', 'Niet beschut', 'Not Sheltered') },
+    { value: 'groundFloorUnit', label: getTranslation('algemeen.options.location.groundFloorUnit', 'Benedenwoning', 'Ground floor unit') },
+    { value: 'middleFloor', label: getTranslation('algemeen.options.location.middleFloor', 'Tussenverdieping', 'Middle floor') },
+    { value: 'topFloor', label: getTranslation('algemeen.options.location.topFloor', 'Bovenste verdieping', 'Top floor') },
+    { value: 'groundWithRoof', label: getTranslation('algemeen.options.location.groundWithRoof', 'Benedenwoning met kap', 'Ground floor with roof') },
   ];
 
   const daktypeOptions = [
-    { value: 'Zadeldak', label: getTranslation('general.options.zadeldak', 'Zadeldak', 'Gable Roof') },
-    { value: 'Plat dak', label: getTranslation('general.options.platDak', 'Plat dak', 'Flat Roof') },
-    { value: 'Lessenaarsdak', label: getTranslation('general.options.lessenaarsdak', 'Lessenaarsdak', 'Shed Roof') },
-    { value: 'Schilddak', label: getTranslation('general.options.schilddak', 'Schilddak', 'Hip Roof') },
-    { value: 'Mansardedak', label: getTranslation('general.options.mansardedak', 'Mansardedak', 'Mansard Roof') },
+    { value: 'pitchedRoof', label: getTranslation('algemeen.options.location.pitchedRoof', 'Hellend dak', 'Pitched roof') },
+    { value: 'partlyFlat', label: getTranslation('algemeen.options.location.partlyFlat', 'Deels plat dak', 'Partly flat roof') },
+    { value: 'flatRoof', label: getTranslation('algemeen.options.location.flatRoof', 'Plat dak / geen kap', 'Flat roof / no cap') },
   ];
 
   const constructieTypeOptions = [
@@ -435,7 +439,7 @@ const AlgemeenView: React.FC<AlgemeenViewProps> = ({ data, onChange, onAddGboT, 
             </FieldGroup>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FieldGroup label={renderLabelWithFlags('leidingdoorvoeren', getTranslation('general.leidingdoorvoeren', 'Leidingdoorvoeren', 'Pipe Penetrations'))}>
               <AppSelect
                 value={data.algemeen.technical.leidingdoorvoeren || ''}
@@ -447,6 +451,23 @@ const AlgemeenView: React.FC<AlgemeenViewProps> = ({ data, onChange, onAddGboT, 
                 hideLabelHtml={true}
               />
             </FieldGroup>
+            {data.algemeen.technical.leidingdoorvoeren === 'Ja' ? (
+              <FieldGroup label={renderLabelWithFlags('aantal', getTranslation('general.aantal', 'Aantal', 'Amount'))}>
+                <input
+                  type="number"
+                  min="0"
+                  onKeyDown={(e) => { if (e.key === '-' || e.key === 'e') e.preventDefault(); }}
+                  className={`bg-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full border border-transparent transition-all font-semibold ${getFieldBorder('aantal')}`}
+                  value={data.algemeen.technical.aantal || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || parseFloat(val) >= 0) {
+                      onChange('algemeen.technical.aantal', val);
+                    }
+                  }}
+                />
+              </FieldGroup>
+            ) : <div />}
             <FieldGroup label={renderLabelWithFlags('avr', getTranslation('general.aantalAvr', 'Aantal AVR', 'Number of AVRs'))}>
               <input
                 type="number"

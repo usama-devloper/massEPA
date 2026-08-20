@@ -43,6 +43,7 @@ export interface KozijnRow {
   height: string;
   area: string;
   constructieId: string;
+  flag?: 'red' | 'yellow' | 'green';
 }
 
 export interface InspectionData {
@@ -111,6 +112,7 @@ export interface InspectionData {
   overstekRows?: any[];
   bouwkundigRows?: any[];
   kozijnenLibrary?: any[];
+  allInstallations?: any[];
   overstek: {
     overstekAanwezig: string;
     overstekDiepte: string;

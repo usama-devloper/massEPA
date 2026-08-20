@@ -11,7 +11,7 @@ export function createDefaultInspectionData(address: string, fullName = '', emai
         bouwfase: 'Bestaande bouw',
         opname: 'Basisopname',
         adres: address,
-        gebouwtype: 'Woonhuis',
+        gebouwtype: 'Detached house',
         subtype: 'Eengezinswoning',
         ligging: 'Tussenwoning',
         daktype: 'Zadeldek',
