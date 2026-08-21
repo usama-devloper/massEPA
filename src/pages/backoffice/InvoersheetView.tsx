@@ -27,6 +27,7 @@ import { slidesFromUrls } from '../../utils/photoViewer';
 import { ConstructieEditModal } from '../../components/common/ConstructieEditModal';
 import { BouwkundigEditModal, BouwkundigRow } from '../../components/common/BouwkundigEditModal';
 import { KozijnEditModal } from '../../components/common/KozijnEditModal';
+import { ConfirmModal } from '../../components/common/ConfirmModal';
 
 interface InvoersheetViewProps {
   data: InspectionData;
@@ -113,6 +114,8 @@ const DynamicMasonryImage = React.memo(({
 const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onViewChange }) => {
   const { t, locale } = useLanguage();
   const [activeTab, setActiveTab] = useState<'p1' | 'p2' | 'p3' | 'p4'>('p1');
+  const [categoryToDelete, setCategoryToDelete] = useState<{ instId: string; cat: string } | null>(null);
+  const [installationToDelete, setInstallationToDelete] = useState<string | null>(null);
   
   const [isBouwkundigModalOpen, setIsBouwkundigModalOpen] = useState(false);
   const [editingKozijnRow, setEditingKozijnRow] = useState<any>(null);
@@ -122,7 +125,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
   const [isPrinting, setIsPrinting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeUploadKeyRef = useRef<string | null>(null);
-  const activeUploadContextRef = useRef<{ type?: 'bouwkundig' | 'kozijn', id?: string, index?: number, instId?: string } | null>(null);
+  const activeUploadContextRef = useRef<{ type?: 'bouwkundig' | 'kozijn' | 'constructie', id?: string, index?: number, instId?: string } | null>(null);
 
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
@@ -150,7 +153,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
     title: string;
     existingPhotoUrl?: string;
     visiblePhotos?: string[];
-    itemContext?: { type: 'bouwkundig' | 'kozijn'; id: string; index?: number };
+    itemContext?: { type: 'bouwkundig' | 'kozijn' | 'constructie'; id: string; index?: number };
   } | null>(null);
 
   const safeSetItem = (key: string, value: string) => {
@@ -1844,9 +1847,9 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                   </div>
 
                   {installationsList.map((inst, index) => {
-                    const instDetails = (inst.id === activeInstallatieId && data.installations)
-                      ? { ...(inst.details || {}), ...data.installations }
-                      : (inst.details || {});
+                    const instDetails = { ...(inst.details || {}), ...(data.installations || {}) };
+
+                    const activeCategories = inst.activeCategories || ['Ventilatie', 'Verwarming', 'Tapwater', 'Koeling', 'Zonne-panelen'];
 
                     const ventSysteemVal = instDetails.ventVentilatiesysteem || '';
                     const ventSysteemType = ventSysteemVal.includes('Type D') ? 'D' :
@@ -1898,13 +1901,28 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                 Installatie #{index + 1}
                               </span>
                             </div>
+                            {installationsList.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => setInstallationToDelete(inst.id)}
+                                className="p-1.5 hover:bg-red-50 text-neutral-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer mr-2 no-print"
+                                title="Verwijder installatie"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
                           </div>
 
                           {/* 3.1 Ventilatie Card */}
+                          {activeCategories.includes('Ventilatie') && (
                           <div className="border border-outline-variant/10 border-l-4 border-l-primary rounded-2xl bg-white p-4.5 shadow-2xs flex flex-col md:flex-row print:flex-row gap-5 print-card">
                             <div className="flex-grow md:w-[72%] print:w-[72%]">
                               <h3 className="text-xs font-black text-primary mb-3 flex items-center justify-between gap-1.5 w-full uppercase tracking-wider font-sans">
                                 <span className="flex items-center gap-1.5"><Wind size={14} /> Ventilatie</span>
+                                <div className="flex items-center gap-1.5 no-print">
+                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Ventilatie'); localStorage.setItem('installatie_view_state', 'detail'); if (onViewChange) onViewChange('installatie'); }} className="p-1.5 hover:bg-blue-50 text-neutral-400 hover:text-blue-500 rounded-lg transition-colors cursor-pointer" title="Bewerken"><Pencil size={13} /></button>
+                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Ventilatie' }) }} className="p-1.5 hover:bg-red-50 text-neutral-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer" title="Verwijderen"><Trash2 size={13} /></button>
+                                </div>
                               </h3>
                               <div className="grid grid-cols-2 gap-x-5 gap-y-3 mt-1">
                                 <div>{renderInstCell('SYSTEM', instDetails.ventTypeToestel || 'Individueel', 'ventTypeToestel', 'select', ['Individueel', 'Gemeenschappelijk/collectief'])}</div>
@@ -1956,15 +1974,21 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               {renderInstallationMasonryGallery('Ventilatie', instDetails, inst.id)}
                             </div>
                           </div>
+                          )}
                         </div>
 
                         <div className="flex flex-col gap-6 mt-6">
 
                           {/* 3.2 Verwarming Card */}
+                          {activeCategories.includes('Verwarming') && (
                           <div className="border border-outline-variant/10 border-l-4 border-l-primary rounded-2xl bg-white p-4.5 shadow-2xs flex flex-col md:flex-row print:flex-row gap-5 print-card">
                             <div className="flex-grow md:w-[72%] print:w-[72%]">
                               <h3 className="text-xs font-black text-primary mb-3 flex items-center justify-between gap-1.5 w-full uppercase tracking-wider font-sans">
                                 <span className="flex items-center gap-1.5"><Flame size={14} /> Verwarming</span>
+                                <div className="flex items-center gap-1.5 no-print">
+                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Verwarming'); localStorage.setItem('installatie_view_state', 'detail'); if (onViewChange) onViewChange('installatie'); }} className="p-1.5 hover:bg-blue-50 text-neutral-400 hover:text-blue-500 rounded-lg transition-colors cursor-pointer" title="Bewerken"><Pencil size={13} /></button>
+                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Verwarming' }) }} className="p-1.5 hover:bg-red-50 text-neutral-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer" title="Verwijderen"><Trash2 size={13} /></button>
+                                </div>
                               </h3>
                               <div className="grid grid-cols-2 gap-x-5 gap-y-3 mt-1">
                                 <div>{renderInstCell('SYSTEM', instDetails.verwarmTypeToestel || 'Individueel', 'verwarmTypeToestel', 'select', ['Individueel', 'Gemeenschappelijk/collectief', 'Warmtelevering derden individueel', 'Warmtelevering derden gemeenschappelijk'])}</div>
@@ -2001,12 +2025,18 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               {renderInstallationMasonryGallery('Verwarming', instDetails, inst.id)}
                             </div>
                           </div>
+                          )}
 
                           {/* 3.3 Tapwater Card */}
+                          {activeCategories.includes('Tapwater') && (
                           <div className="border border-outline-variant/10 border-l-4 border-l-primary rounded-2xl bg-white p-4.5 shadow-2xs flex flex-col md:flex-row print:flex-row gap-5 print-card">
                             <div className="flex-grow md:w-[72%] print:w-[72%]">
                               <h3 className="text-xs font-black text-primary mb-3 flex items-center justify-between gap-1.5 w-full uppercase tracking-wider font-sans">
                                 <span className="flex items-center gap-1.5"><Droplet size={14} /> Tapwater</span>
+                                <div className="flex items-center gap-1.5 no-print">
+                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Tapwater'); localStorage.setItem('installatie_view_state', 'detail'); if (onViewChange) onViewChange('installatie'); }} className="p-1.5 hover:bg-blue-50 text-neutral-400 hover:text-blue-500 rounded-lg transition-colors cursor-pointer" title="Bewerken"><Pencil size={13} /></button>
+                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Tapwater' }) }} className="p-1.5 hover:bg-red-50 text-neutral-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer" title="Verwijderen"><Trash2 size={13} /></button>
+                                </div>
                               </h3>
                               <div className="grid grid-cols-2 gap-x-5 gap-y-3 mt-1">
                                 <div>{renderInstCell('SYSTEM', instDetails.tapTypeInstallatie || 'Individueel', 'tapTypeInstallatie', 'select', ['Individueel', 'Gemeenschappelijk/collectief', 'Externe warmtelevering via een afleverset individueel', 'Externe warmtelevering via een afleverset gemeenschappelijk (centraal)'])}</div>
@@ -2034,12 +2064,18 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               {renderInstallationMasonryGallery('Tapwater', instDetails, inst.id)}
                             </div>
                           </div>
+                          )}
 
                           {/* 3.4 Koeling Card */}
+                          {activeCategories.includes('Koeling') && (
                           <div className="border border-outline-variant/10 border-l-4 border-l-primary rounded-2xl bg-white p-4.5 shadow-2xs flex flex-col md:flex-row print:flex-row gap-5 print-card">
                             <div className="flex-grow md:w-[72%] print:w-[72%]">
                               <h3 className="text-xs font-black text-primary mb-3 flex items-center justify-between gap-1.5 w-full uppercase tracking-wider font-sans">
                                 <span className="flex items-center gap-1.5"><Snowflake size={14} /> Koeling</span>
+                                <div className="flex items-center gap-1.5 no-print">
+                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Koeling'); localStorage.setItem('installatie_view_state', 'detail'); if (onViewChange) onViewChange('installatie'); }} className="p-1.5 hover:bg-blue-50 text-neutral-400 hover:text-blue-500 rounded-lg transition-colors cursor-pointer" title="Bewerken"><Pencil size={13} /></button>
+                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Koeling' }) }} className="p-1.5 hover:bg-red-50 text-neutral-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer" title="Verwijderen"><Trash2 size={13} /></button>
+                                </div>
                               </h3>
                               <div className="grid grid-cols-2 gap-x-5 gap-y-3 mt-1">
                                 <div>{renderInstCell('SYSTEM', instDetails.koelTypeToestel || 'Individueel', 'koelTypeToestel', 'select', ['Individueel', 'Ge/collectief', 'Koudelevering derden', 'Koudelevering derden ge'])}</div>
@@ -2060,12 +2096,18 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               {renderInstallationMasonryGallery('Koeling', instDetails, inst.id)}
                             </div>
                           </div>
+                          )}
 
                           {/* 3.5 Zonne-panelen Card */}
+                          {activeCategories.includes('Zonne-panelen') && (
                           <div className="border border-outline-variant/10 border-l-4 border-l-primary rounded-2xl bg-white p-4.5 shadow-2xs flex flex-col md:flex-row print:flex-row gap-5 print-card">
                             <div className="flex-grow md:w-[72%] print:w-[72%]">
                               <h3 className="text-xs font-black text-primary mb-3 flex items-center justify-between gap-1.5 w-full uppercase tracking-wider font-sans">
                                 <span className="flex items-center gap-1.5"><Sun size={14} /> Zonne-panelen</span>
+                                <div className="flex items-center gap-1.5 no-print">
+                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Zonne-panelen'); localStorage.setItem('installatie_view_state', 'detail'); if (onViewChange) onViewChange('installatie'); }} className="p-1.5 hover:bg-blue-50 text-neutral-400 hover:text-blue-500 rounded-lg transition-colors cursor-pointer" title="Bewerken"><Pencil size={13} /></button>
+                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Zonne-panelen' }) }} className="p-1.5 hover:bg-red-50 text-neutral-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer" title="Verwijderen"><Trash2 size={13} /></button>
+                                </div>
                               </h3>
                               <div className="grid grid-cols-2 gap-x-5 gap-y-3 mt-1">
                                 <div>{renderInstCell('SYSTEM', instDetails.zonTypeToestel || 'Individueel', 'zonTypeToestel', 'select', ['Individueel', 'Gemeenschappelijk/collectief'])}</div>
@@ -2084,6 +2126,86 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               {renderInstallationMasonryGallery('Zonne-panelen', instDetails, inst.id)}
                             </div>
                           </div>
+                          )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="mt-8 flex flex-wrap items-center justify-start gap-4 no-print border-t border-neutral-200/60 pt-6 print:hidden">
+                          {(() => {
+                            const availableCategoriesList = [
+                              { id: 'Ventilatie', label: 'Ventilatie' },
+                              { id: 'Verwarming', label: 'Verwarming' },
+                              { id: 'Tapwater', label: 'Tapwater' },
+                              { id: 'Koeling', label: 'Koeling' },
+                              { id: 'Zonne-panelen', label: 'Zonne-energie' }
+                            ].filter(c => !activeCategories.includes(c.id));
+
+                            if (availableCategoriesList.length === 0) return null;
+
+                            return (
+                              <div className="relative group/addmenu">
+                                <button
+                                  type="button"
+                                  className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 px-3 py-2.5 rounded-xl transition-colors cursor-pointer"
+                                >
+                                  <Plus size={14} className="stroke-[3]" /> Add System
+                                </button>
+                                <div className="absolute left-0 bottom-full mb-2 w-48 bg-white rounded-xl shadow-lg border border-outline-variant/10 overflow-hidden opacity-0 invisible group-hover/addmenu:opacity-100 group-hover/addmenu:visible group-focus-within/addmenu:opacity-100 group-focus-within/addmenu:visible transition-all z-[100]">
+                                  {availableCategoriesList.map((cat) => (
+                                    <button
+                                      key={cat.id}
+                                      type="button"
+                                      onClick={() => {
+                                        if (onChange) {
+                                          const updated = (data.allInstallations || []).map((i: any) => {
+                                            if (i.id === inst.id) {
+                                              return {
+                                                ...i,
+                                                activeCategories: [...(i.activeCategories || ['Ventilatie', 'Verwarming', 'Tapwater', 'Koeling', 'Zonne-panelen']), cat.id]
+                                              };
+                                            }
+                                            return i;
+                                          });
+                                          onChange('allInstallations', updated);
+                                        }
+                                      }}
+                                      className="w-full text-left px-4 py-3 text-xs font-bold text-on-surface-variant hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer border-b border-outline-variant/5 last:border-0"
+                                    >
+                                      + {cat.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })()}
+                          
+                          {index === installationsList.length - 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (onChange) {
+                                  const newId = crypto.randomUUID();
+                                  const updated = [
+                                    ...(data.allInstallations || []),
+                                    {
+                                      id: newId,
+                                      activeCategories: [],
+                                      ventilatieName: '',
+                                      verwarmingName: '',
+                                      tapwaterName: '',
+                                      koelingName: '',
+                                      zonneName: '',
+                                      details: {}
+                                    }
+                                  ];
+                                  onChange('allInstallations', updated);
+                                }
+                              }}
+                              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary-dark text-white font-black rounded-xl transition-all shadow-sm hover:shadow-md uppercase text-[11px] tracking-wider active:scale-[0.98]"
+                            >
+                              <Plus size={14} className="stroke-[3]" /> Add New Installation
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -2141,18 +2263,11 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                         </div>
 
                         {items.length === 0 ? (
-                          <div className="border border-dashed border-neutral-250 rounded-2xl p-4 bg-neutral-50/50 flex items-center justify-between text-neutral-400">
+                          <div className="border border-dashed border-neutral-250 rounded-2xl p-4 bg-neutral-50/50 flex items-center justify-center text-neutral-400">
                             <span className="text-xs italic font-sans">Geen {cat.key.toLowerCase()} constructies ingevoerd in het dossier.</span>
-                            <button
-                              type="button"
-                              onClick={() => navigateToConstructieTab(cat.key)}
-                              className="px-2.5 py-1 bg-white border border-neutral-200 hover:border-primary text-primary rounded-lg text-[10px] font-black uppercase tracking-wider transition cursor-pointer font-sans no-print"
-                            >
-                              + Toevoegen
-                            </button>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 print:grid-cols-3 gap-4">
+                          <div className="grid grid-cols-1 gap-6">
                             {items.map((item) => {
                               const isWindowOrDoor = item.type === 'Raam' || item.type === 'Deur' || item.type === 'Paneel';
                               const showGValue = item.type === 'Raam';
@@ -2169,10 +2284,10 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               }
 
                               return (
-                                <div
-                                  key={item.id}
-                                  className={`rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:shadow-xs transition duration-200 print-card break-inside-avoid ${cBorderStyle}`}
-                                >
+                                <div key={item.id} className="flex flex-col md:flex-row print:flex-row gap-6 w-full items-start">
+                                  <div
+                                    className={`rounded-2xl p-4 w-full md:w-[300px] print:w-[300px] shrink-0 shadow-2xs flex flex-col justify-between hover:shadow-xs transition duration-200 print-card break-inside-avoid ${cBorderStyle}`}
+                                  >
                                   <div>
                                     <div className="flex justify-between items-start mb-2 gap-2">
                                       <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -2200,19 +2315,33 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                       </div>
                                       <div className="flex items-center gap-2 shrink-0">
                                         {renderFlagCycleClicker(`constructie_row_${item.id}`)}
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setEditingConstructieRow({
-                                              ...item,
-                                              flag: fieldFlags[`constructie_row_${item.id}`] || undefined
-                                            });
-                                          }}
-                                          className="text-[9px] font-black text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 px-2 py-0.5 rounded-full uppercase tracking-wider cursor-pointer no-print font-sans"
-                                          title="Bewerken in popup"
-                                        >
-                                          Bewerken
-                                        </button>
+                                        <div className="flex items-center gap-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditingConstructieRow({
+                                                ...item,
+                                                flag: fieldFlags[`constructie_row_${item.id}`] || undefined
+                                              });
+                                            }}
+                                            className="bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs"
+                                            title="Bewerken in popup"
+                                          >
+                                            <Pencil size={11} />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              if (window.confirm('Weet je zeker dat je deze constructie wilt verwijderen?')) {
+                                                onChange('constructies', (data.constructies || []).filter((c: any) => c.id !== item.id));
+                                              }
+                                            }}
+                                            className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs"
+                                            title="Verwijderen"
+                                          >
+                                            <Trash2 size={11} />
+                                          </button>
+                                        </div>
                                       </div>
                                     </div>
 
@@ -2384,6 +2513,88 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                         </div>
                                       )}
                                     </div>
+                                  </div>
+                                  </div>
+                                  
+                                  <div className="flex-1 w-full flex flex-col gap-2">
+                                    {(() => {
+                                      const slots = ['p1', 'p2', 'p3', 'p4'];
+                                      const activePhotos: any[] = [];
+                                      const originalIdx = allConstructies.indexOf(item);
+                                      
+                                      slots.forEach((pK, i) => {
+                                        const iKey = `constructie_${item.id}_${pK}`;
+                                        const allItemP = [...(item.photos || []), ...(item.photoUrl ? [item.photoUrl] : [])].filter((p: string, idx: number, arr: string[]) => arr.indexOf(p) === idx);
+                                        const selIdxStr = (data.installations as any)?.[`selectedPhotoIndex_${iKey}`];
+                                        
+                                        const idx = selIdxStr !== undefined && selIdxStr !== '-1' ? parseInt(selIdxStr, 10) : (i < allItemP.length && selIdxStr !== '-1' ? i : -1);
+                                        
+                                        let url: string | undefined;
+                                        if (idx !== -1) {
+                                          url = allItemP[idx];
+                                        }
+                                        if (url && url !== '-' && url !== '') {
+                                          activePhotos.push({ url, slotKey: iKey, index: i + 1, internalIndex: idx, pK });
+                                        }
+                                      });
+
+                                      const handleConstructiePhotoDelete = (deletedSlotKey: string) => {
+                                        const removeIdx = activePhotos.findIndex(p => p.slotKey === deletedSlotKey);
+                                        if (removeIdx === -1) return;
+                                        
+                                        const newActivePhotos = [...activePhotos];
+                                        newActivePhotos.splice(removeIdx, 1);
+                                        
+                                        const activeId = localStorage.getItem('installatie_active_id_current') || '1';
+                                        
+                                        slots.forEach((sKey, i) => {
+                                          const fullKey = `constructie_${item.id}_${sKey}`;
+                                          const newIndex = i < newActivePhotos.length ? newActivePhotos[i].internalIndex : -1;
+                                          updateInstallationField(activeId, `selectedPhotoIndex_${fullKey}`, newIndex.toString());
+                                          onChange(`installations.selectedPhotoIndex_${fullKey}`, newIndex.toString());
+                                        });
+                                      };
+
+                                      const emptySlotIndex = slots.findIndex(s => !activePhotos.some(p => p.pK === s));
+                                      const nextSlotKey = emptySlotIndex !== -1 ? `constructie_${item.id}_${slots[emptySlotIndex]}` : null;
+                                      const nextSlotTitleIndex = emptySlotIndex !== -1 ? emptySlotIndex + 1 : -1;
+
+                                      return (
+                                        <div className="grid grid-cols-3 lg:grid-cols-4 gap-2 w-full grid-flow-row-dense">
+                                          {activePhotos.map((photo) => {
+                                            const itemContext = { type: 'constructie' as const, id: item.id || originalIdx.toString(), index: originalIdx };
+                                            return (
+                                              <DynamicMasonryImage
+                                                key={photo.slotKey}
+                                                src={photo.url}
+                                                alt={`${item.naam || 'Constructie'} ${photo.index}`}
+                                                readOnly={false}
+                                                slotKey={photo.slotKey}
+                                                categoryName={item.naam || 'Constructie'}
+                                                title={`${item.naam || item.type || 'Constructie'} ${photo.index}`}
+                                                setPhotoSelectorModal={(modal) => setPhotoSelectorModal({ ...modal, itemContext })}
+                                                onDelete={handleConstructiePhotoDelete}
+                                                onPhotoClick={() => openLightbox(activePhotos.map(p => p.url), activePhotos.findIndex(p => p.slotKey === photo.slotKey))}
+                                                makeInstActive={() => {}}
+                                              />
+                                            );
+                                          })}
+                                          
+                                          {nextSlotKey && (
+                                            <div
+                                              onClick={() => {
+                                                const itemContext = { type: 'constructie' as const, id: item.id || originalIdx.toString(), index: originalIdx };
+                                                setPhotoSelectorModal({ isOpen: true, slotKey: nextSlotKey, categoryName: item.naam || 'Constructie', title: `${item.naam || item.type || 'Constructie'} ${nextSlotTitleIndex}`, visiblePhotos: activePhotos.map(p => p.url), itemContext });
+                                              }}
+                                              className="col-span-1 border border-[#e2e8f0] border-dashed rounded-xl flex flex-col items-center justify-center bg-gray-50/50 hover:bg-neutral-100 hover:border-primary/50 text-neutral-400 aspect-[4/3] w-full print:hidden transition cursor-pointer shadow-xs p-1"
+                                            >
+                                              <Camera size={20} className="mb-1 opacity-50" />
+                                              <span className="text-[10px] font-black uppercase tracking-wider font-sans opacity-70">{t('structural.addPhoto')}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })()}
                                   </div>
                                 </div>
                               );
@@ -2575,8 +2786,10 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               }
 
                               return (
-                                <div key={item.constructieId || index} className="">
-                                  <div className="flex justify-between items-start pb-1 border-b border-outline-variant/10 mb-3 gap-2">
+                                <div key={item.id || item.naam || index} className="flex flex-col gap-4 mb-8">
+                                  <div className="flex flex-col md:flex-row print:flex-row gap-6 w-full items-start">
+                                  <div className={`rounded-2xl p-4 w-full md:w-[300px] print:w-[300px] shrink-0 shadow-2xs flex flex-col ${bBorderStyle}`}>
+                                    <div className="flex justify-between items-start mb-3 gap-2">
                                     <div className="flex items-start gap-1 min-w-0 flex-1">
                                       <span
                                         contentEditable
@@ -2589,27 +2802,40 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
                                       {renderFlagCycleClicker(`bouwkundig_${originalIdx}`)}
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setEditingBouwkundigRow({
-                                              ...item,
-                                              flag: fieldFlags[`bouwkundig_${originalIdx}`]
-                                            });
-                                            setEditingBouwkundigIndex(originalIdx);
-                                            setIsBouwkundigModalOpen(true);
-                                          }}
-                                          className="text-[9px] font-black text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 px-2 py-0.5 rounded-full uppercase tracking-wider cursor-pointer no-print font-sans"
-                                          title="Bewerken in popup"
-                                        >
-                                          Bewerken
-                                        </button>
+                                        <div className="flex items-center gap-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditingBouwkundigRow({
+                                                ...item,
+                                                flag: fieldFlags[`bouwkundig_${originalIdx}`]
+                                              });
+                                              setEditingBouwkundigIndex(originalIdx);
+                                              setIsBouwkundigModalOpen(true);
+                                            }}
+                                            className="bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs"
+                                            title="Bewerken in popup"
+                                          >
+                                            <Pencil size={11} />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              if (window.confirm('Weet je zeker dat je dit item wilt verwijderen?')) {
+                                                const newRows = [...allBouwkundig];
+                                                newRows.splice(originalIdx, 1);
+                                                onChange('bouwkundigRows', newRows);
+                                              }
+                                            }}
+                                            className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs"
+                                            title="Verwijderen"
+                                          >
+                                            <Trash2 size={11} />
+                                          </button>
+                                        </div>
                                     </div>
-                                  </div>
-
-                                  <div className="flex flex-col md:flex-row print:flex-row gap-6 w-full items-start">
-                                    <div className={`rounded-2xl p-4.5 w-full md:w-[300px] print:w-[300px] shrink-0 shadow-2xs flex flex-col ${bBorderStyle}`}>
-                                      <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-xs font-bold flex-1">
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-xs font-bold flex-1">
                                         <div className="w-full flex flex-col">
                                           <div className="flex items-center gap-1.5 mb-1.5 justify-between">
                                             <label className="text-[9px] font-black text-on-surface-variant/40 tracking-wider block uppercase font-sans">Constructie</label>
@@ -2735,7 +2961,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                         const activePhotos: any[] = [];
                                         
                                         slots.forEach((pK, i) => {
-                                          const iKey = `bouwkundig_${item.constructieId || index}_${pK}`;
+                                          const iKey = `bouwkundig_${item.id || item.naam || index}_${pK}`;
                                           const allItemP = [...(item.photos || []), ...(item.photoUrl ? [item.photoUrl] : [])].filter((p: string, i: number, arr: string[]) => arr.indexOf(p) === i);
                                           const selIdxStr = (data.installations as any)?.[`selectedPhotoIndex_${iKey}`];
                                           
@@ -2760,7 +2986,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                           const activeId = localStorage.getItem('installatie_active_id_current') || '1';
                                           
                                           slots.forEach((sKey, i) => {
-                                            const fullKey = `bouwkundig_${item.constructieId || index}_${sKey}`;
+                                            const fullKey = `bouwkundig_${item.id || item.naam || index}_${sKey}`;
                                             const newIndex = i < newActivePhotos.length ? newActivePhotos[i].internalIndex : -1;
                                             updateInstallationField(activeId, `selectedPhotoIndex_${fullKey}`, newIndex.toString());
                                             onChange(`installations.selectedPhotoIndex_${fullKey}`, newIndex.toString());
@@ -2768,13 +2994,13 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                         };
 
                                         const emptySlotIndex = slots.findIndex(s => !activePhotos.some(p => p.pK === s));
-                                        const nextSlotKey = emptySlotIndex !== -1 ? `bouwkundig_${item.constructieId || index}_${slots[emptySlotIndex]}` : null;
+                                        const nextSlotKey = emptySlotIndex !== -1 ? `bouwkundig_${item.id || item.naam || index}_${slots[emptySlotIndex]}` : null;
                                         const nextSlotTitleIndex = emptySlotIndex !== -1 ? emptySlotIndex + 1 : -1;
 
                                         return (
                                           <div className="grid grid-cols-3 lg:grid-cols-4 gap-2 w-full grid-flow-row-dense">
                                             {activePhotos.map((photo) => {
-                                              const itemContext = { type: 'bouwkundig' as const, id: item.constructieId || item.id || item.naam || originalIdx.toString(), index: originalIdx };
+                                              const itemContext = { type: 'bouwkundig' as const, id: item.id || item.naam || originalIdx.toString(), index: originalIdx };
                                               return (
                                                 <DynamicMasonryImage
                                                   key={photo.slotKey}
@@ -2782,7 +3008,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                                   alt={`${item.naam || 'Bouwkundig'} ${photo.index}`}
                                                   readOnly={false}
                                                   slotKey={photo.slotKey}
-                                                  categoryName="Bouwkundig"
+                                                  categoryName={item.naam || item.type || 'Gevel'}
                                                   title={`${item.naam || item.type || 'Gevel'} ${photo.index}`}
                                                   setPhotoSelectorModal={(modal) => setPhotoSelectorModal({ ...modal, itemContext })}
                                                   onDelete={handleBouwkundigPhotoDelete}
@@ -2795,13 +3021,13 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                             {nextSlotKey && (
                                               <div
                                                 onClick={() => {
-                                                  const itemContext = { type: 'bouwkundig' as const, id: item.constructieId || item.id || item.naam || originalIdx.toString(), index: originalIdx };
-                                                  setPhotoSelectorModal({ isOpen: true, slotKey: nextSlotKey, categoryName: 'Bouwkundig', title: `${item.naam || item.type || 'Gevel'} ${nextSlotTitleIndex}`, visiblePhotos: activePhotos.map(p => p.url), itemContext });
+                                                  const itemContext = { type: 'bouwkundig' as const, id: item.id || item.naam || originalIdx.toString(), index: originalIdx };
+                                                  setPhotoSelectorModal({ isOpen: true, slotKey: nextSlotKey, categoryName: item.naam || item.type || 'Gevel', title: `${item.naam || item.type || 'Gevel'} ${nextSlotTitleIndex}`, visiblePhotos: activePhotos.map(p => p.url), itemContext });
                                                 }}
                                                 className="col-span-1 border border-[#e2e8f0] border-dashed rounded-xl flex flex-col items-center justify-center bg-gray-50/50 hover:bg-neutral-100 hover:border-primary/50 text-neutral-400 aspect-[4/3] w-full print:hidden transition cursor-pointer shadow-xs"
                                               >
                                                 <Camera size={20} className="mb-1 opacity-50" />
-                                                <span className="text-[10px] font-black uppercase tracking-wider font-sans opacity-70">Voeg foto toe</span>
+                                                <span className="text-[10px] font-black uppercase tracking-wider font-sans opacity-70">{t('structural.addPhoto')}</span>
                                               </div>
                                             )}
                                           </div>
@@ -2810,11 +3036,35 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                     </div>
                                   </div>
 
-                                  {itemKozijnen.length > 0 && (
+                                  {cat.key !== 'Vloer' && (
                                     <div className="mt-4 pt-4 border-t border-dashed border-outline-variant/15">
-                                      <h5 className="text-[10px] font-black text-on-surface-variant/50 uppercase tracking-wider font-sans mb-3">
+                                      <div className="flex items-center justify-between mb-3">
+                                      <h5 className="text-[10px] font-black text-on-surface-variant/50 uppercase tracking-wider font-sans">
                                         Gekoppelde Kozijnen ({itemKozijnen.length})
                                       </h5>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newId = `k-${Date.now()}`;
+                                          const newKozijn = {
+                                            id: newId,
+                                            naam: `Nieuw Kozijn`,
+                                            gevel: item.naam || item.gevel || item.id,
+                                            width: '',
+                                            height: '',
+                                            area: '',
+                                            constructieId: '',
+                                            photos: [],
+                                            photoUrl: ''
+                                          };
+                                          setEditingKozijnRow(newKozijn as any);
+                                        }}
+                                        className="text-[10px] font-black text-primary hover:bg-primary/5 px-2 py-1 rounded transition-colors uppercase tracking-wider font-sans flex items-center gap-1 print:hidden"
+                                      >
+                                        + Add Kozijn
+                                      </button>
+                                    </div>
+                                    {itemKozijnen.length > 0 && (
                                       <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-4">
                                         {itemKozijnen.map((k: any, kIdx: number) => {
                                           const kImgKey = `kozijn_${k.id}`;
@@ -2920,19 +3170,33 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                                   </div>
                                                   <div className="flex items-center gap-2 shrink-0">
                                                     {renderFlagCycleClicker(`library_${k.id}`)}
-                                                    <button
-                                                      type="button"
-                                                      onClick={() => {
-                                                        setEditingKozijnRow({
-                                                          ...k,
-                                                          flag: fieldFlags[`library_${k.id}`]
-                                                        });
-                                                      }}
-                                                      className="text-[9px] font-black text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 px-2 py-0.5 rounded-full uppercase tracking-wider cursor-pointer no-print font-sans"
-                                                      title="Bewerk Frame & Glass"
-                                                    >
-                                                      Bewerken
-                                                    </button>
+                                                    <div className="flex items-center gap-1">
+                                                      <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                          setEditingKozijnRow({
+                                                            ...k,
+                                                            flag: fieldFlags[`library_${k.id}`]
+                                                          });
+                                                        }}
+                                                        className="bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs"
+                                                        title="Bewerk Frame & Glass"
+                                                      >
+                                                        <Pencil size={11} />
+                                                      </button>
+                                                      <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                          if (window.confirm('Weet je zeker dat je dit kozijn wilt verwijderen?')) {
+                                                            onChange('kozijnen', (data.kozijnen || []).filter((kz: any) => kz.id !== k.id));
+                                                          }
+                                                        }}
+                                                        className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs"
+                                                        title="Verwijderen"
+                                                      >
+                                                        <Trash2 size={11} />
+                                                      </button>
+                                                    </div>
                                                   </div>
                                                 </div>
 
@@ -2967,27 +3231,11 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
 
                                               <div className="w-28 md:w-36 print:w-32 flex-shrink-0 flex flex-col h-full self-stretch">
                                                 {(() => {
-                                                  const kImgKey = `kozijn_${item.constructieId || item.id || originalIdx}_${k.id || kIdx}`;
-                                                  const targetId = (k.id || k.naam || '').toString().trim().toLowerCase();
-                                                  const kLib = data.kozijnenLibrary || defaultKozijnenLibrary;
-                                                  const matchingLib = kLib.find((libItem: any) =>
-                                                    (libItem.id && libItem.id.toString().trim().toLowerCase() === targetId) ||
-                                                    (libItem.naam && libItem.naam.toString().trim().toLowerCase() === targetId)
-                                                  );
-                                                  const kList = data.kozijnen || [];
-                                                  const matchingList = kList.filter((kItem: any) =>
-                                                    (kItem.id && kItem.id.toString().trim().toLowerCase() === targetId) ||
-                                                    (kItem.naam && kItem.naam.toString().trim().toLowerCase() === targetId)
-                                                  );
+                                                  // Use the exact same key and photos as the outer scope to stay consistent with the table view
+                                                  const currentImgKey = `kozijn_${k.id}`;
+                                                  const allKozijnPhotos = allKPhotos;
 
-                                                  const allKozijnPhotos = [
-                                                    ...(matchingLib?.photos || []),
-                                                    ...(matchingLib?.photoUrl ? [matchingLib.photoUrl] : []),
-                                                    ...matchingList.flatMap((m: any) => [...(m.photos || []), ...(m.photoUrl ? [m.photoUrl] : [])]),
-                                                    ...(k.photos || []),
-                                                    ...(k.photoUrl ? [k.photoUrl] : [])
-                                                  ].filter((p: string, i: number, arr: string[]) => p && arr.indexOf(p) === i);
-                                                  const selectedIdxStr = (data.installations as any)?.[`selectedPhotoIndex_${kImgKey}`];
+                                                  const selectedIdxStr = (data.installations as any)?.[`selectedPhotoIndex_${currentImgKey}`];
                                                   let kImgUrl: string | undefined;
                                                   if (selectedIdxStr !== undefined) {
                                                     if (selectedIdxStr !== '-1') {
@@ -3000,7 +3248,14 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
 
                                                   return (
                                                     <div
-                                                      onClick={() => setPhotoSelectorModal({ isOpen: true, slotKey: kImgKey, categoryName: 'Kozijnen', title: k.naam || 'Kozijn', existingPhotoUrl: kImgUrl, itemContext })}
+                                                      onClick={() => {
+                                                        if (hasKPhoto && kImgUrl) {
+                                                          const pIdx = allKPhotos.indexOf(kImgUrl);
+                                                          openLightbox(allKPhotos, pIdx >= 0 ? pIdx : 0);
+                                                        } else {
+                                                          setPhotoSelectorModal({ isOpen: true, slotKey: currentImgKey, categoryName: 'Kozijnen', title: k.naam || 'Kozijn', existingPhotoUrl: kImgUrl, itemContext });
+                                                        }
+                                                      }}
                                                       className={`group relative rounded-2xl overflow-hidden flex items-center justify-center text-center transition w-full h-full min-h-[140px] print:min-h-[140px] print:h-full cursor-pointer ${hasKPhoto ? 'border border-outline-variant/15 bg-neutral-50 shadow-2xs hover:shadow-xs hover:border-primary/50 print:border print:bg-neutral-50' : 'border border-dashed border-outline-variant/30 bg-transparent hover:bg-neutral-50/50 print:hidden'}`}
                                                     >
                                                       {hasKPhoto ? (
@@ -3025,9 +3280,6 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                                                 if (itemContext) {
                                                                   const lib = data.kozijnenLibrary || defaultKozijnenLibrary;
                                                                   let idxInLib = lib.findIndex((itemObj: any) => (itemObj.id && itemObj.id === itemContext.id) || (itemObj.naam && itemObj.naam === itemContext.id));
-                                                                  if (idxInLib === -1 && itemContext.index !== undefined && itemContext.index < lib.length) {
-                                                                    idxInLib = itemContext.index;
-                                                                  }
                                                                   if (idxInLib >= 0) {
                                                                     const libObj = lib[idxInLib];
                                                                     const allCurrent = [...(libObj.photos || []), ...(libObj.photoUrl ? [libObj.photoUrl] : [])].filter((p: string, i: number, arr: string[]) => p && arr.indexOf(p) === i);
@@ -3058,7 +3310,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                                                     onChange('kozijnen', updatedKozijnen as any);
                                                                   }
                                                                 }
-                                                                onChange(`installations.selectedPhotoIndex_${kImgKey}`, '-1');
+                                                                onChange(`installations.selectedPhotoIndex_${currentImgKey}`, '-1');
                                                               }}
                                                               className="bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-md transition cursor-pointer flex items-center justify-center"
                                                               title="Verwijder foto"
@@ -3070,7 +3322,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                                       ) : (
                                                         <div className="flex flex-col items-center justify-center gap-1.5 opacity-50 group-hover:opacity-100 transition-opacity print:hidden">
                                                           <ImageIcon size={20} className="stroke-[1.5]" />
-                                                          <span className="text-[8px] font-black uppercase tracking-wider block text-on-surface-variant/40 leading-none">Foto</span>
+                                                          <span className="text-[8px] font-black uppercase tracking-wider block text-on-surface-variant/40 leading-none">{t('structural.addPhoto')}</span>
                                                         </div>
                                                       )}
                                                     </div>
@@ -3081,8 +3333,9 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                           );
                                         })}
                                       </div>
-                                    </div>
-                                  )}
+                                    )}
+                                  </div>
+                                )}
                                 </div>
                               );
                             })}
@@ -3102,7 +3355,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
           <div className="bg-white rounded-3xl max-w-md w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl border border-outline-variant/10 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex justify-between items-center px-6 py-4.5 border-b border-outline-variant/10">
               <h3 className="text-sm font-black text-[#191c1d] uppercase tracking-wider font-sans">
-                MEDIA BIBLIOTHEEK ({(photoSelectorModal.title || photoSelectorModal.categoryName || '').toUpperCase()})
+                MEDIA BIBLIOTHEEK ({(photoSelectorModal.categoryName || photoSelectorModal.title || '').toUpperCase()})
               </h3>
               <button
                 type="button"
@@ -3125,26 +3378,18 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                   let rawPhotos: string[] = [];
                   if (itemContext.type === 'bouwkundig') {
                     const bRows = data.bouwkundigRows || defaultBouwkundigRows;
-                    let row = bRows.find((r: any) => (r.constructieId && r.constructieId === itemContext.id) || (r.id && r.id === itemContext.id) || (r.naam && r.naam === itemContext.id));
-                    if (!row && itemContext.index !== undefined) {
-                      row = bRows[itemContext.index];
+                    let row = bRows.find((r: any) => (r.id && r.id === itemContext.id) || (r.naam && r.naam === itemContext.id));
+                    if (row) {
+                      rawPhotos = [...(row.photos || []), ...(row.photoUrl ? [row.photoUrl] : [])];
                     }
+                  } else if (itemContext.type === 'constructie') {
+                    const allC = data.constructies || [];
+                    let row = allC.find((r: any) => (r.id && r.id === itemContext.id));
                     if (row) {
                       rawPhotos = [...(row.photos || []), ...(row.photoUrl ? [row.photoUrl] : [])];
                     }
                   } else if (itemContext.type === 'kozijn') {
                     const targetId = (itemContext.id || '').toString().trim().toLowerCase();
-                    const kLib = data.kozijnenLibrary || defaultKozijnenLibrary;
-                    let lib = kLib.find((k: any) =>
-                      (k.id && k.id.toString().trim().toLowerCase() === targetId) ||
-                      (k.naam && k.naam.toString().trim().toLowerCase() === targetId)
-                    );
-                    if (!lib && itemContext.index !== undefined && itemContext.index < kLib.length) {
-                      lib = kLib[itemContext.index];
-                    }
-                    if (lib) {
-                      rawPhotos.push(...(lib.photos || []), ...(lib.photoUrl ? [lib.photoUrl] : []));
-                    }
                     const kList = data.kozijnen || [];
                     const matchingList = kList.filter((k: any) =>
                       (k.id && k.id.toString().trim().toLowerCase() === targetId) ||
@@ -3171,7 +3416,11 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                   }));
                 } else {
                   const filesKey = `files_${categoryName.replace(/[^a-zA-Z0-9_]/g, '')}`;
-                  let files = (data.installations as any)?.[filesKey] || [];
+                  const activeId = localStorage.getItem('installatie_active_id_current') || '1';
+                  const allInst = data.allInstallations || [];
+                  const inst = allInst.find((i: any) => i.id === activeId);
+                  
+                  let files = (inst?.details?.[filesKey]) || (data.installations as any)?.[filesKey] || [];
                   imageFiles = files.filter((f: any) => f.type?.startsWith('image/'));
 
                   const toAdd = [
@@ -3208,9 +3457,11 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                 return (
                   <>
                     {imageFiles.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center text-center p-8 bg-neutral-50 rounded-2xl border border-dashed border-outline-variant/15 text-on-surface-variant/40 gap-2">
-                        <ImageIcon size={32} className="stroke-[1.5]" />
-                        <p className="text-xs font-bold">Nog geen foto's geüpload voor {categoryName}</p>
+                      <div className="flex flex-col items-center justify-center text-center p-8 bg-neutral-50 rounded-2xl border border-dashed border-outline-variant/15">
+                        <div className="w-16 h-16 rounded-2xl bg-white border border-outline-variant/10 flex items-center justify-center shadow-xs mb-3">
+                          <ImageIcon size={24} className="text-on-surface-variant/40" />
+                        </div>
+                        <p className="text-xs font-bold">{t('structural.noPhotosUploaded', { name: categoryName })}</p>
                       </div>
                     ) : (
                       <div className="grid grid-cols-3 gap-3">
@@ -3246,10 +3497,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                   if (fileObj.isSharedContext && itemContext) {
                                     if (itemContext.type === 'bouwkundig') {
                                       const rows = data.bouwkundigRows || defaultBouwkundigRows;
-                                      let idxInRows = rows.findIndex((r: any) => (r.constructieId && r.constructieId === itemContext.id) || (r.id && r.id === itemContext.id) || (r.naam && r.naam === itemContext.id));
-                                      if (idxInRows === -1 && itemContext.index !== undefined && itemContext.index < rows.length) {
-                                        idxInRows = itemContext.index;
-                                      }
+                                      let idxInRows = rows.findIndex((r: any) => (r.id && r.id === itemContext.id) || (r.naam && r.naam === itemContext.id));
                                       if (idxInRows >= 0) {
                                         const rowObj = rows[idxInRows];
                                         const allCurrent = [...(rowObj.photos || []), ...(rowObj.photoUrl ? [rowObj.photoUrl] : [])].filter((p: string, i: number, arr: string[]) => p && arr.indexOf(p) === i);
@@ -3263,24 +3511,6 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                         onChange('bouwkundigRows', updatedRows as any);
                                       }
                                     } else if (itemContext.type === 'kozijn') {
-                                      const lib = data.kozijnenLibrary || defaultKozijnenLibrary;
-                                      let idxInLib = lib.findIndex((k: any) => (k.id && k.id === itemContext.id) || (k.naam && k.naam === itemContext.id));
-                                      if (idxInLib === -1 && itemContext.index !== undefined && itemContext.index < lib.length) {
-                                        idxInLib = itemContext.index;
-                                      }
-                                      if (idxInLib >= 0) {
-                                        const libObj = lib[idxInLib];
-                                        const allCurrent = [...(libObj.photos || []), ...(libObj.photoUrl ? [libObj.photoUrl] : [])].filter((p: string, i: number, arr: string[]) => p && arr.indexOf(p) === i);
-                                        const updatedPhotos = allCurrent.filter(p => p !== fileObj.dataUrl);
-                                        const updatedLib = [...lib];
-                                        updatedLib[idxInLib] = {
-                                          ...libObj,
-                                          photos: updatedPhotos,
-                                          photoUrl: updatedPhotos[0] || ''
-                                        };
-                                        onChange('kozijnenLibrary', updatedLib as any);
-                                      }
-
                                       const list = data.kozijnen || [];
                                       const updatedKozijnen = list.map((kItem: any) => {
                                         if ((kItem.id && kItem.id === itemContext.id) || (kItem.naam && kItem.naam === itemContext.id)) {
@@ -3476,6 +3706,38 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
         onChangeData={onChange}
         flagKey={editingKozijnRow ? `library_${editingKozijnRow.id}` : undefined}
         onFlagChange={setFieldFlag}
+      />
+      <ConfirmModal
+        isOpen={categoryToDelete !== null}
+        onClose={() => setCategoryToDelete(null)}
+        onConfirm={() => {
+          if (categoryToDelete) {
+            onChange('allInstallations', (data.allInstallations || []).map((i: any) => i.id === categoryToDelete.instId ? { ...i, activeCategories: (i.activeCategories || ['Ventilatie', 'Verwarming', 'Tapwater', 'Koeling', 'Zonne-panelen']).filter((c: string) => c !== categoryToDelete.cat) } : i));
+          }
+          setCategoryToDelete(null);
+        }}
+        title="Weet je het zeker?"
+        message="Weet je zeker dat je deze categorie wilt verwijderen?"
+      />
+      <ConfirmModal
+        isOpen={installationToDelete !== null}
+        onClose={() => setInstallationToDelete(null)}
+        onConfirm={() => {
+          if (installationToDelete && (data.allInstallations || []).length > 1) {
+            const newList = (data.allInstallations || []).filter((i: any) => i.id !== installationToDelete);
+            onChange('allInstallations', newList);
+            
+            const activeId = localStorage.getItem('installatie_active_id_current') || '1';
+            if (activeId === installationToDelete && newList.length > 0) {
+              const fallbackId = newList[0].id;
+              safeSetItem('installatie_active_id_current', fallbackId);
+              onChange('installations', newList[0].details || {});
+            }
+          }
+          setInstallationToDelete(null);
+        }}
+        title="Weet je het zeker?"
+        message="Weet je zeker dat je deze gehele installatie wilt verwijderen?"
       />
     </div>
   );

@@ -385,7 +385,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
                         onClick={() => setGlobalPhotoModalOpen(true)}
                       >
                         <Camera size={11} />
-                        Voeg foto toe
+                        {t('structural.addPhoto')}
                       </button>
                     </div>
                   </div>

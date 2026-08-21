@@ -295,7 +295,7 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
                         onClick={() => setGlobalPhotoModalOpen(true)}
                       >
                         <Camera size={11} />
-                        Voeg foto toe
+                        {t('structural.addPhoto')}
                       </button>
                     </div>
                   </div>

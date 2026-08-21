@@ -74,5 +74,15 @@ export const getAllPropertyPhotos = (data: InspectionData, extraImages?: Record<
     });
   }
 
+  // 6. From constructies
+  if (Array.isArray(data.constructies)) {
+    data.constructies.forEach(row => {
+      if (Array.isArray(row.photos)) {
+        row.photos.forEach((p: string) => addPhoto(p, row.naam || 'Constructie'));
+      }
+      if (row.photoUrl) addPhoto(row.photoUrl, row.naam || 'Constructie');
+    });
+  }
+
   return Array.from(photoMap.values());
 };

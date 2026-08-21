@@ -133,17 +133,6 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
   const handleSaveClick = () => {
     if (editingRow) {
       let finalRow = { ...editingRow };
-      if (finalRow.invoer === 'Beslisschema') {
-        if (finalRow.type === 'Deur' || finalRow.type === 'Raam' || finalRow.type === 'Paneel') {
-          if (!finalRow.uWaarde) {
-            finalRow.uWaarde = getCalculatedUValue(finalRow);
-          }
-        } else {
-          if (!finalRow.rc) {
-            finalRow.rc = getCalculatedRcValue(finalRow);
-          }
-        }
-      }
       onSave(finalRow);
     }
   };
@@ -313,19 +302,19 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
                 type="number"
                 value={editingRow.dikte || ''}
                 onChange={(e) => setEditingRow({ ...editingRow, dikte: e.target.value })}
-                placeholder="Dikte in mm, bijv. 80"
+                placeholder={t('structural.thicknessPlaceholder')}
               />
             </div>
           )}
 
           {editingRow.type !== 'Deur' && editingRow.type !== 'Raam' && editingRow.type !== 'Paneel' && (
             <div>
-              <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">constructionYear</label>
+              <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">{t('structural.yearBuilt')}</label>
               <AppInputField
                 type="text"
                 value={editingRow.bouwjaar || ''}
                 onChange={(e) => setEditingRow({ ...editingRow, bouwjaar: e.target.value })}
-                placeholder="Bijv. 1998, Tot 1965..."
+                placeholder={t('structural.yearBuiltPlaceholder')}
               />
             </div>
           )}
@@ -391,7 +380,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
                         onClick={() => setGlobalPhotoModalOpen(true)}
                       >
                         <Camera size={11} />
-                        Voeg foto toe
+                        {t('structural.addPhoto')}
                       </button>
                     </div>
                   </div>

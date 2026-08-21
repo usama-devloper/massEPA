@@ -480,9 +480,20 @@ const ConstructieView: React.FC<ConstructieViewProps> = ({ data, onChange, allow
                           );
                         }
                         return (
-                          <span className="text-[10px] text-on-surface-variant/40 font-bold uppercase tracking-wider">
-                            {t('structural.noPhoto')}
-                          </span>
+                          <button
+                            type="button"
+                            className="flex flex-col items-center justify-center gap-1 cursor-pointer group/upload h-8 bg-transparent border-none w-full"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setGlobalUploadContext({ type: 'constructie', id: row.id, source: 'table' });
+                              setGlobalPhotoModalOpen(true);
+                            }}
+                          >
+                            <Camera size={14} className="text-on-surface-variant/40 group-hover/upload:text-primary transition-colors" />
+                            <span className="text-[8px] font-black uppercase text-on-surface-variant/40 group-hover/upload:text-primary tracking-wider transition-colors">
+                              Upload
+                            </span>
+                          </button>
                         );
                       })()}
                     </div>
@@ -540,6 +551,46 @@ const ConstructieView: React.FC<ConstructieViewProps> = ({ data, onChange, allow
         onPrev={() => setLightboxIndex(i => (i - 1 + lightboxPhotos.length) % lightboxPhotos.length)}
         onNext={() => setLightboxIndex(i => (i + 1) % lightboxPhotos.length)}
         zIndexClassName="z-[99999]"
+      />
+
+      <GlobalPhotoSelectorModal
+        isOpen={globalPhotoModalOpen}
+        categoryName={(() => {
+          if (globalUploadContext?.source === 'table') {
+            return constructies.find(r => r.id === globalUploadContext.id)?.naam || 'Constructie';
+          }
+          return editingRow?.naam || 'Constructie';
+        })()}
+        onClose={() => setGlobalPhotoModalOpen(false)}
+        data={data!}
+        initialPhotoUrls={(() => {
+          if (!globalUploadContext) return [];
+          const { id, source } = globalUploadContext;
+          if (source === 'table') {
+            const row = constructies.find(r => r.id === id);
+            return row ? [...(row.photos || []), ...(row.photoUrl ? [row.photoUrl] : [])].filter((p, i, arr) => p && arr.indexOf(p) === i) : [];
+          } else if (source === 'modal' && editingRow && editingRow.id === id) {
+            return [...(editingRow.photos || []), ...(editingRow.photoUrl ? [editingRow.photoUrl] : [])].filter((p, i, arr) => p && arr.indexOf(p) === i);
+          }
+          return [];
+        })()}
+        onSelect={(dataUrls) => {
+          if (!globalUploadContext) return;
+          const { id, source } = globalUploadContext;
+          const newPhotos = dataUrls || [];
+          const newPhotoUrl = newPhotos.length > 0 ? newPhotos[0] : '';
+          
+          if (source === 'table') {
+            onChange(constructies.map(r => r.id === id ? { ...r, photos: newPhotos, photoUrl: newPhotoUrl } : r));
+          } else if (source === 'modal' && editingRow && editingRow.id === id) {
+            setEditingRow({
+              ...editingRow,
+              photos: newPhotos,
+              photoUrl: newPhotoUrl
+            });
+          }
+        }}
+        onUpload={handleGlobalUploadAction}
       />
       
 
@@ -854,7 +905,12 @@ export const KozijnView: React.FC<KozijnViewProps> = ({ data, kozijnen, construc
       {/* Global Photo Modal for KozijnView */}
       <GlobalPhotoSelectorModal
         isOpen={globalPhotoModalOpen}
-        categoryName={editingKozijn?.naam || 'Kozijnen'}
+        categoryName={(() => {
+          if (globalUploadContext?.source === 'table') {
+            return kozijnen.find(r => r.id === globalUploadContext.id)?.naam || 'Kozijnen';
+          }
+          return editingKozijn?.naam || 'Kozijnen';
+        })()}
         onClose={() => setGlobalPhotoModalOpen(false)}
         data={data!}
         initialPhotoUrls={(() => {

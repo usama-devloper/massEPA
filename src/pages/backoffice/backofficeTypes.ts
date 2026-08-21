@@ -44,6 +44,19 @@ export interface KozijnRow {
   area: string;
   constructieId: string;
   flag?: 'red' | 'yellow' | 'green';
+  photos?: string[];
+  photoUrl?: string;
+}
+
+export interface InstallatieRow {
+  id: string;
+  activeCategories?: string[];
+  ventilatieName?: string;
+  verwarmingName?: string;
+  tapwaterName?: string;
+  koelingName?: string;
+  zonneName?: string;
+  details?: any;
 }
 
 export interface InspectionData {
@@ -72,6 +85,7 @@ export interface InspectionData {
       bron: string;
       floorConstructieType: string;
       wallConstructieType: string;
+      photos?: string[];
     };
     bewoner: {
       nummer: string;
@@ -81,6 +95,7 @@ export interface InspectionData {
       plaats: string;
       telefoon: string;
       email: string;
+      photos?: string[];
     };
     inspector: {
       adviseur: string;
@@ -112,7 +127,7 @@ export interface InspectionData {
   overstekRows?: any[];
   bouwkundigRows?: any[];
   kozijnenLibrary?: any[];
-  allInstallations?: any[];
+  allInstallations?: InstallatieRow[];
   overstek: {
     overstekAanwezig: string;
     overstekDiepte: string;

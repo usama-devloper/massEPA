@@ -14,6 +14,7 @@ import { GlobalPhotoSelectorModal } from '../../components/common/GlobalPhotoSel
 import { PhotoViewerModal } from '../../components/common/PhotoViewerModal';
 import { slidesFromUrls } from '../../utils/photoViewer';
 import { AppFlaggedLabel } from '../../components/common/AppFlaggedLabel';
+import { ConfirmModal } from '../../components/common/ConfirmModal';
 
 interface LocalSelectProps {
   label?: string;
@@ -35,7 +36,14 @@ interface InstallatieViewProps {
 
 const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: propsOnChange }) => {
   const { t, locale } = useLanguage();
-  const [view, setView] = useState<'overview' | 'detail' | 'table'>('overview');
+  const [view, setView] = useState<'overview' | 'detail' | 'table'>(() => {
+    const saved = localStorage.getItem('installatie_view_state');
+    if (saved === 'detail' || saved === 'overview' || saved === 'table') {
+      localStorage.removeItem('installatie_view_state');
+      return saved;
+    }
+    return 'overview';
+  });
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
@@ -44,6 +52,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
     setLightboxIndex(index);
     setSelectedPhoto(photos[index]);
   };
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [activeInstallatieId, setActiveInstallatieId] = useState<string | null>(() => {
     return localStorage.getItem('installatie_active_id_current') || localStorage.getItem('installatie_active_id') || null;
   });
@@ -91,6 +100,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
     try {
       const clientIdKey = data.clientId || 'default';
       localStorage.setItem(`mepa_installations_list_${clientIdKey}`, JSON.stringify(list));
+      setInstallations(list);
       originalOnChange('allInstallations', list);
     } catch (e) {
       console.error("Failed to save configurations to localStorage:", e);
@@ -397,6 +407,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
     const newId = Date.now().toString();
     const newInst = {
       id: newId,
+      activeCategories: [],
       ventilatieName: '',
       verwarmingName: '',
       tapwaterName: '',
@@ -461,7 +472,12 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
         tapIdentiekeSystemen: '1',
         koelIdentiekeSystemen: '1',
         verwarmIdentiekeSystemen: '1',
-        zonIdentiekeSystemen: '1'
+        zonIdentiekeSystemen: '1',
+        selectedPhotoIndex_vent: '-1', selectedPhotoIndex_vent_extra: '-1', selectedPhotoIndex_vent_3: '-1', selectedPhotoIndex_vent_4: '-1',
+        selectedPhotoIndex_ketel: '-1', selectedPhotoIndex_ketel_extra: '-1', selectedPhotoIndex_ketel_3: '-1', selectedPhotoIndex_ketel_4: '-1',
+        selectedPhotoIndex_tapwater: '-1', selectedPhotoIndex_tapwater_extra: '-1', selectedPhotoIndex_tapwater_3: '-1', selectedPhotoIndex_tapwater_4: '-1',
+        selectedPhotoIndex_koeling: '-1', selectedPhotoIndex_koeling_extra: '-1', selectedPhotoIndex_koeling_3: '-1', selectedPhotoIndex_koeling_4: '-1',
+        selectedPhotoIndex_solar: '-1', selectedPhotoIndex_solar_extra: '-1', selectedPhotoIndex_solar_3: '-1', selectedPhotoIndex_solar_4: '-1'
       }
     };
     setInstallations(prev => {
@@ -538,12 +554,23 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
   };
 
   const handleDeleteInstallatie = (id: string) => {
-    if (installations.length > 1) {
-      const next = installations.filter(inst => inst.id !== id);
-      setInstallations(next);
-      safeSaveInstallations(next);
+    let next = installations.filter(inst => inst.id !== id);
+    if (next.length === 0) {
+      next = [{
+        id: crypto.randomUUID(),
+        activeCategories: [],
+        ventilatieName: '',
+        verwarmingName: '',
+        tapwaterName: '',
+        koelingName: '',
+        zonneName: '',
+        details: {}
+      }];
+    }
+    setInstallations(next);
+    safeSaveInstallations(next);
 
-      if (activeInstallatieId === id) {
+    if (activeInstallatieId === id) {
         const fallbackId = next[0].id;
         setActiveInstallatieId(fallbackId);
         originalOnChange('installations', next[0].details || {});
@@ -558,16 +585,19 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
         });
         return nextFlags;
       });
-    }
   };
 
   const getFullName = (inst: any) => {
-    const vent = inst.ventilatieName || t('installations.ventilatie');
-    const verw = inst.verwarmingName || t('installations.verwarming');
-    const tap = inst.tapwaterName || t('installations.tapwaterLabel');
-    const koel = inst.koelingName || t('installations.koeling');
-    const zon = inst.zonneName || t('installations.zonneEnergie');
-    return `${vent}_${verw}_${tap}_${koel}_${zon}`;
+    const cats = inst.activeCategories || ['Ventilatie', 'Verwarming', 'Tapwater', 'Koeling', 'Zonne-panelen'];
+    const parts = [];
+    if (cats.includes('Ventilatie')) parts.push(inst.ventilatieName || t('installations.ventilatie'));
+    if (cats.includes('Verwarming')) parts.push(inst.verwarmingName || t('installations.verwarming'));
+    if (cats.includes('Tapwater')) parts.push(inst.tapwaterName || t('installations.tapwaterLabel'));
+    if (cats.includes('Koeling')) parts.push(inst.koelingName || t('installations.koeling'));
+    if (cats.includes('Zonne-panelen')) parts.push(inst.zonneName || t('installations.zonneEnergie'));
+    
+    if (parts.length === 0) return 'Lege Installatie';
+    return parts.join('_');
   };
 
   const handleFieldChange = (path: string, val: any) => {
@@ -721,7 +751,12 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                         className="overflow-hidden"
                       >
                         <div className="space-y-2 mt-1">
-                          {/* Ventilation */}
+                          {(() => {
+                            const overviewCats = inst.activeCategories || ['Ventilatie', 'Verwarming', 'Tapwater', 'Koeling', 'Zonne-panelen'];
+                            return (
+                              <>
+                                {/* Ventilation */}
+                                {overviewCats.includes('Ventilatie') && (
                           <div className="p-2 bg-gray-50 rounded-xl">
                             <div className="flex justify-between items-center mb-1">
                               <span className="text-[11px] text-on-surface-variant font-black uppercase tracking-wider">{t('installations.ventilatie')}</span>
@@ -733,8 +768,10 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                               <div>{t('installations.brand')}: <span className="text-on-background font-bold ml-1">{inst.details?.ventMerkType || t('general.options.onbekend')}</span></div>
                             </div>
                           </div>
+                          )}
 
                           {/* Heating */}
+                          {overviewCats.includes('Verwarming') && (
                           <div className="p-2 bg-gray-50 rounded-xl">
                             <div className="flex justify-between items-center mb-1">
                               <span className="text-[11px] text-on-surface-variant font-black uppercase tracking-wider">{t('installations.verwarming')}</span>
@@ -746,8 +783,10 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                               <div>{t('installations.heating.generator1')}: <span className="text-on-background font-bold ml-1">{inst.details?.verwarmMerkType || t('general.options.onbekend')}</span></div>
                             </div>
                           </div>
+                          )}
 
                           {/* Tapwater */}
+                          {overviewCats.includes('Tapwater') && (
                           <div className="p-2 bg-gray-50 rounded-xl">
                             <div className="flex justify-between items-center mb-1">
                               <span className="text-[11px] text-on-surface-variant font-black uppercase tracking-wider">{t('installations.tapwater.title')}</span>
@@ -759,8 +798,10 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                               <div>{t('installations.tapwater.generatorType')}: <span className="text-on-background font-bold ml-1">{inst.details?.tapMerkType || t('general.options.onbekend')}</span></div>
                             </div>
                           </div>
+                          )}
 
                           {/* Cooling */}
+                          {overviewCats.includes('Koeling') && (
                           <div className="p-2 bg-gray-50 rounded-xl">
                             <div className="flex justify-between items-center mb-1">
                               <span className="text-[11px] text-on-surface-variant font-black uppercase tracking-wider">{t('installations.koeling')}</span>
@@ -772,8 +813,10 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                               <div>{t('structural.brandAndType')}: <span className="text-on-background font-bold ml-1">{inst.details?.koelMerkType || '-'}</span></div>
                             </div>
                           </div>
+                          )}
 
                           {/* Solar Panels */}
+                          {overviewCats.includes('Zonne-panelen') && (
                           <div className="p-2 bg-gray-50 rounded-xl">
                             <div className="flex justify-between items-center mb-1">
                               <span className="text-[11px] text-on-surface-variant font-black uppercase tracking-wider">{t('installations.zonneEnergie')}</span>
@@ -785,6 +828,10 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                               <div>{t('structural.brandAndType')}: <span className="text-on-background font-bold ml-1">{inst.details?.zonMerkType || '-'}</span></div>
                             </div>
                           </div>
+                          )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </motion.div>
                     )}
@@ -881,6 +928,50 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
       </div>
     );
   }
+  const activeInst = installations.find(i => i.id === activeInstallatieId);
+  const activeCats = activeInst?.activeCategories ?? categories.map(c => c.id);
+  const activeCategoriesList = categories.filter(c => activeCats.includes(c.id));
+  const availableCategoriesList = categories.filter(c => !activeCats.includes(c.id));
+  
+  const handleAddCategory = (catId: string) => {
+    if (!activeInst) return;
+    const currentCats = activeInst.activeCategories ?? categories.map(c => c.id);
+    if (!currentCats.includes(catId)) {
+      const defaultCatDetails: any = {
+        'Ventilatie': { ventSysteem: 'Mechanische afvoer', ventMerkType: '', ventSpecsBcrg: '', ventVentilatiesysteem: '', ventSubsysteem: '', ventLuchtdichtheid: '', ventVentilatoren: '', ventTypeVentilator: '', ventCode: '', ventIdentiekeSystemen: '1', selectedPhotoIndex_vent: '-1', selectedPhotoIndex_vent_extra: '-1', selectedPhotoIndex_vent_3: '-1', selectedPhotoIndex_vent_4: '-1' },
+        'Verwarming': { verwarmSysteem: 'HR-Combiketel', verwarmMerkType: '', verwarmSpecsBcrg: '', verwarmTypeopwekker: '', verwarmTypeToestel: '', verwarmDistributiemedium: '', verwarmWatertemprater: '', verwarmAfgiftesysteem: '', verwarmCode: '', verwarmRegeling: '', verwarmIdentiekeSystemen: '1', selectedPhotoIndex_ketel: '-1', selectedPhotoIndex_ketel_extra: '-1', selectedPhotoIndex_ketel_3: '-1', selectedPhotoIndex_ketel_4: '-1' },
+        'Tapwater': { tapSysteem: 'Gecombineerd met CV', tapMerkType: '', tapSpecsBcrg: '', tapTypeInstallatie: '', tapTypeOpwekker: '', tapTypeToestel: '', tapCode: '', tapAfgifteKeuken: '', tapAfgifteBadkamer: '', tapCirculatieleiding: '', tapDwtw: '', tapIdentiekeSystemen: '1', selectedPhotoIndex_tapwater: '-1', selectedPhotoIndex_tapwater_extra: '-1', selectedPhotoIndex_tapwater_3: '-1', selectedPhotoIndex_tapwater_4: '-1' },
+        'Koeling': { koelSysteem: 'Niet aanwezig', koelMerkType: '', koelSpecsBcrg: '', koelTypeInstallatie: '', koelExpansie: '', koelCode: '', koelDistributiemedium: '', koelWatertemprater: '', koelAfgiftesysteem: '', koelRegeling: '', koelIdentiekeSystemen: '1', selectedPhotoIndex_koeling: '-1', selectedPhotoIndex_koeling_extra: '-1', selectedPhotoIndex_koeling_3: '-1', selectedPhotoIndex_koeling_4: '-1' },
+        'Zonne-panelen': { zonSysteem: 'PV-panelen', zonMerkType: '', zonSpecsBcrg: '', zonAantal: '', zonHellingshook: '', zonCode: '', zonOppPerPanelen: '', zonWattpiekvermogen: '', zonBouwintegratie: '', zonTypeToestel: 'Individueel', zonIdentiekeSystemen: '1', selectedPhotoIndex_solar: '-1', selectedPhotoIndex_solar_extra: '-1', selectedPhotoIndex_solar_3: '-1', selectedPhotoIndex_solar_4: '-1' }
+      };
+
+      originalOnChange('allInstallations', installations.map(i => {
+        if (i.id === activeInstallatieId) {
+          return {
+            ...i,
+            activeCategories: [...currentCats, catId],
+            details: { ...(i.details || {}), ...defaultCatDetails[catId] }
+          };
+        }
+        return i;
+      }));
+
+      Object.keys(defaultCatDetails[catId]).forEach(k => {
+        originalOnChange(`installations.${k}`, defaultCatDetails[catId][k]);
+      });
+    }
+    setSelectedCategory(catId);
+  };
+  
+  const handleRemoveCategory = (catId: string) => {
+    if (!activeInst) return;
+    const currentCats = activeInst.activeCategories ?? categories.map(c => c.id);
+    const newList = installations.map(i => i.id === activeInstallatieId ? { ...i, activeCategories: currentCats.filter((c: string) => c !== catId) } : i);
+    safeSaveInstallations(newList);
+    if (selectedCategory === catId) {
+      setSelectedCategory('');
+    }
+  };
 
   return (
     <>
@@ -899,26 +990,63 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
         </div>
 
         {/* Category Tabs Switcher (Horizontal scrollable navbar) */}
-        <div className="flex items-center gap-1 bg-gray-100 p-1.5 rounded-2xl w-full sm:w-fit overflow-x-auto flex-nowrap scrollbar-none border border-outline-variant/5">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setSelectedCategory(prev => prev === cat.id ? '' : cat.id)}
-              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 whitespace-nowrap ${selectedCategory === cat.id
-                  ? 'bg-white text-primary font-black shadow-xs'
-                  : 'text-on-surface-variant/60 hover:text-on-surface hover:bg-white/50'
-                }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+        <div className="flex items-center flex-wrap gap-2">
+          <div className="flex items-center gap-1 bg-gray-100 p-1.5 rounded-2xl w-full sm:w-fit overflow-x-auto flex-nowrap scrollbar-none border border-outline-variant/5">
+            {activeCategoriesList.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(prev => prev === cat.id ? '' : cat.id)}
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 whitespace-nowrap ${selectedCategory === cat.id
+                    ? 'bg-white text-primary font-black shadow-xs'
+                    : 'text-on-surface-variant/60 hover:text-on-surface hover:bg-white/50'
+                  }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {availableCategoriesList.length > 0 && (
+            <div className="relative group/addmenu">
+              <button
+                type="button"
+                className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 px-3 py-2.5 rounded-xl transition-colors cursor-pointer"
+              >
+                <Plus size={14} className="stroke-[3]" /> Add System
+              </button>
+              <div className="absolute left-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-outline-variant/10 overflow-hidden opacity-0 invisible group-hover/addmenu:opacity-100 group-hover/addmenu:visible group-focus-within/addmenu:opacity-100 group-focus-within/addmenu:visible transition-all z-[100]">
+                {availableCategoriesList.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleAddCategory(cat.id)}
+                    className="w-full text-left px-4 py-3 text-xs font-bold text-on-surface-variant hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer border-b border-outline-variant/5 last:border-0"
+                  >
+                    + {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Main Content Area */}
-        {selectedCategory && (
+        {selectedCategory && activeCats.includes(selectedCategory) && (
           <div className="w-full space-y-4">
             <div className="bg-white p-5 border border-outline-variant/10 rounded-2xl shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-outline-variant/10 mb-4">
+                <h3 className="text-sm font-black text-on-surface-variant uppercase tracking-wider">
+                  {categories.find(c => c.id === selectedCategory)?.label}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setCategoryToDelete(selectedCategory)}
+                  className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-2 transition cursor-pointer flex items-center justify-center"
+                  title="Verwijderen"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
               <FieldGroup label={renderLabelWithFlags('system_' + selectedCategory, t('installations.system'))}>
               <LocalSelect
                 label={t('installations.system')}
@@ -1264,11 +1392,11 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-black text-on-surface-variant/70 uppercase tracking-widest flex items-center gap-2">
                       <Camera size={14} className="text-on-surface-variant/50" />
-                      Foto's &amp; Documenten (Verwarming)
+                      {t('installations.photosAndDocuments')} ({t('installations.verwarming')})
                     </h3>
                     <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
                       <Plus size={12} />
-                      Upload / Selecteer
+                      {t('installations.uploadSelect')}
                     </button>
                   </div>
                   {(() => {
@@ -1277,7 +1405,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                       return (
                         <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="w-full cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
                           <Camera size={24} />
-                          <span className="text-xs font-semibold">Klik om foto's of documenten toe te voegen</span>
+                          <span className="text-xs font-semibold">{t('installations.clickToAddPhotos')}</span>
                         </button>
                       );
                     }
@@ -1453,11 +1581,11 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-black text-on-surface-variant/70 uppercase tracking-widest flex items-center gap-2">
                       <Camera size={14} className="text-on-surface-variant/50" />
-                      Foto's &amp; Documenten (Tapwater)
+                      {t('installations.photosAndDocuments')} ({t('installations.tapwaterLabel')})
                     </h3>
                     <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
                       <Plus size={12} />
-                      Upload / Selecteer
+                      {t('installations.uploadSelect')}
                     </button>
                   </div>
                   {(() => {
@@ -1466,7 +1594,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                       return (
                         <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="w-full cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
                           <Camera size={24} />
-                          <span className="text-xs font-semibold">Klik om foto's of documenten toe te voegen</span>
+                          <span className="text-xs font-semibold">{t('installations.clickToAddPhotos')}</span>
                         </button>
                       );
                     }
@@ -1757,11 +1885,11 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-black text-on-surface-variant/70 uppercase tracking-widest flex items-center gap-2">
                       <Camera size={14} className="text-on-surface-variant/50" />
-                      Foto's &amp; Documenten (Ventilatie)
+                      {t('installations.photosAndDocuments')} ({t('installations.ventilatie')})
                     </h3>
                     <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
                       <Plus size={12} />
-                      Upload / Selecteer
+                      {t('installations.uploadSelect')}
                     </button>
                   </div>
                   {(() => {
@@ -1770,7 +1898,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                       return (
                         <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="w-full cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
                           <Camera size={24} />
-                          <span className="text-xs font-semibold">Klik om foto's of documenten toe te voegen</span>
+                          <span className="text-xs font-semibold">{t('installations.clickToAddPhotos')}</span>
                         </button>
                       );
                     }
@@ -1931,11 +2059,11 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-black text-on-surface-variant/70 uppercase tracking-widest flex items-center gap-2">
                       <Camera size={14} className="text-on-surface-variant/50" />
-                      Foto's &amp; Documenten (Koeling)
+                      {t('installations.photosAndDocuments')} ({t('installations.koeling')})
                     </h3>
                     <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
                       <Plus size={12} />
-                      Upload / Selecteer
+                      {t('installations.uploadSelect')}
                     </button>
                   </div>
                   {(() => {
@@ -1944,7 +2072,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                       return (
                         <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="w-full cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
                           <Camera size={24} />
-                          <span className="text-xs font-semibold">Klik om foto's of documenten toe te voegen</span>
+                          <span className="text-xs font-semibold">{t('installations.clickToAddPhotos')}</span>
                         </button>
                       );
                     }
@@ -2081,11 +2209,11 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-black text-on-surface-variant/70 uppercase tracking-widest flex items-center gap-2">
                       <Camera size={14} className="text-on-surface-variant/50" />
-                      Foto's &amp; Documenten (Zonne-panelen)
+                      {t('installations.photosAndDocuments')} ({t('installations.zonneEnergie')})
                     </h3>
                     <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition-all shadow-sm">
                       <Plus size={12} />
-                      Upload / Selecteer
+                      {t('installations.uploadSelect')}
                     </button>
                   </div>
                   {(() => {
@@ -2094,7 +2222,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                       return (
                         <button type="button" onClick={() => setGlobalPhotoModalOpen(true)} className="w-full cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-outline-variant/20 rounded-xl text-on-surface-variant/40 hover:border-outline-variant/40 hover:bg-gray-100/50 transition-all">
                           <Camera size={24} />
-                          <span className="text-xs font-semibold">Klik om foto's of documenten toe te voegen</span>
+                          <span className="text-xs font-semibold">{t('installations.clickToAddPhotos')}</span>
                         </button>
                       );
                     }
@@ -2138,6 +2266,8 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
 
         </div>
         )}
+
+
       </div>
 
       {/* Lightbox */}
@@ -2199,6 +2329,19 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
       />
       )}
       <input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden" ref={globalFileInputRef} onChange={handleFileUpload} />
+
+      <ConfirmModal
+        isOpen={!!categoryToDelete}
+        title="Delete Category"
+        message="Are you sure you want to delete this category? All entered data for this system will be lost."
+        onClose={() => setCategoryToDelete(null)}
+        onConfirm={() => {
+          if (categoryToDelete) {
+            handleRemoveCategory(categoryToDelete);
+            setCategoryToDelete(null);
+          }
+        }}
+      />
     </>
   );
 };
