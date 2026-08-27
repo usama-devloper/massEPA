@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { InspectionData, ConstructionRow } from './backofficeTypes';
 import {
   FileText,
@@ -28,11 +29,14 @@ import { ConstructieEditModal } from '../../components/common/ConstructieEditMod
 import { BouwkundigEditModal, BouwkundigRow } from '../../components/common/BouwkundigEditModal';
 import { KozijnEditModal } from '../../components/common/KozijnEditModal';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
+import InstallatieView from './InstallatieView';
 
 interface InvoersheetViewProps {
   data: InspectionData;
   onChange: (path: string, value: any) => void;
   onViewChange?: (view: any) => void;
+  currentUserName?: string;
+  currentUserRole?: string;
 }
 
 const defaultBouwkundigRows = [
@@ -111,11 +115,14 @@ const DynamicMasonryImage = React.memo(({
   );
 });
 
-const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onViewChange }) => {
+const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onViewChange, currentUserName, currentUserRole }) => {
   const { t, locale } = useLanguage();
   const [activeTab, setActiveTab] = useState<'p1' | 'p2' | 'p3' | 'p4'>('p1');
   const [categoryToDelete, setCategoryToDelete] = useState<{ instId: string; cat: string } | null>(null);
   const [installationToDelete, setInstallationToDelete] = useState<string | null>(null);
+  const [showInstallatieModal, setShowInstallatieModal] = useState(false);
+  const [constructieToDelete, setConstructieToDelete] = useState<string | null>(null);
+  const [bouwkundigToDelete, setBouwkundigToDelete] = useState<number | null>(null);
   
   const [isBouwkundigModalOpen, setIsBouwkundigModalOpen] = useState(false);
   const [editingKozijnRow, setEditingKozijnRow] = useState<any>(null);
@@ -557,6 +564,97 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
           updated[alternateKey] = next;
         }
       }
+      return updated;
+    });
+  };
+
+  const [fieldRoles, setFieldRoles] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const clientId = data.clientId || 'default';
+    try {
+      const savedRoles = localStorage.getItem(`field_roles_${clientId}`);
+      if (savedRoles) {
+        const parsed = JSON.parse(savedRoles);
+        let cleaned = false;
+        Object.keys(parsed).forEach(k => {
+          if (parsed[k] === 'BACK_OFFICE') {
+            parsed[k] = 'SYS';
+            cleaned = true;
+          }
+        });
+        if (cleaned) {
+          localStorage.setItem(`field_roles_${clientId}`, JSON.stringify(parsed));
+        }
+        setFieldRoles(parsed);
+      }
+    } catch {}
+  }, [data.clientId]);
+
+  const setFieldFlagGreen = (fieldKey: string) => {
+    const res = resolveFlagNamespace(fieldKey);
+    if (!res) return;
+
+    const { storageKey, subKey } = res;
+    const clientId = data.clientId || 'default';
+
+    // Track user role
+    let role = 'SYS';
+    
+    if (currentUserRole) {
+      if (currentUserRole === 'INSPECTOR') role = 'INS';
+      else if (currentUserRole === 'BEWONER') role = 'BWO';
+      else role = 'SYS';
+    } else {
+      const activeUserName = currentUserName || localStorage.getItem('user_name') || 'Demo Inspector';
+      if (activeUserName.toLowerCase().includes('inspector') || activeUserName.toLowerCase().includes('adviseur')) {
+        role = 'INS';
+      } else if (activeUserName.toLowerCase().includes('bewoner')) {
+        role = 'BWO';
+      }
+    }
+
+    setFieldRoles(prev => {
+      const updated = { ...prev, [fieldKey]: role };
+      if (storageKey.startsWith('constructie_flags_')) {
+        updated[`constructie_row_${subKey}`] = role;
+      }
+      try {
+        safeSetItem(`field_roles_${clientId}`, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    if (role !== 'INS') return;
+
+    setFieldFlags(prev => {
+      const current = prev[fieldKey];
+      if (current === 'green') return prev;
+
+      try {
+        let storedObj: Record<string, any> = {};
+        const saved = localStorage.getItem(storageKey);
+        if (saved) storedObj = JSON.parse(saved);
+
+        storedObj[subKey] = 'green';
+        safeSetItem(storageKey, JSON.stringify(storedObj));
+      } catch (e) {
+        console.error('Failed to save flag to localstorage', e);
+      }
+
+      const updated = { ...prev };
+
+      if (storageKey.startsWith('constructie_flags_')) {
+        updated[`constructie_row_${subKey}`] = 'green';
+        updated[`constructie_${subKey}_invoer`] = 'green';
+        updated[`constructie_${subKey}_merk`] = 'green';
+        updated[`constructie_${subKey}_val`] = 'green';
+        updated[`constructie_${subKey}_g`] = 'green';
+        updated[`constructie_${subKey}_dikte`] = 'green';
+        updated[`constructie_${subKey}_code`] = 'green';
+      } else {
+        updated[fieldKey] = 'green';
+      }
 
       return updated;
     });
@@ -984,6 +1082,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
   };
 
   const handleRealConstructieChange = (id: string, field: string, val: string) => {
+    setFieldFlagGreen(`constructie_row_${id}`);
     const list = data.constructies || [];
     const updated = list.map(item => {
       if (item.id === id) {
@@ -1226,147 +1325,43 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
     return `${day} ${month} ${year}`;
   };
 
-  const translationMap: Record<string, { en: string; nl: string }> = {
-    'Onbekend': { en: 'Unknown', nl: 'Onbekend' },
-    'Ja': { en: 'Yes', nl: 'Ja' },
-    'Nee': { en: 'No', nl: 'Nee' },
-    'Individueel': { en: 'Individual', nl: 'Individueel' },
-    'Gemeenschappelijk/collectief': { en: 'Collective', nl: 'Gemeenschappelijk/collectief' },
-    'Ge/collectief': { en: 'Collective', nl: 'Ge/collectief' },
-    'Warmtelevering derden individueel': { en: 'Third party heat supply individual', nl: 'Warmtelevering derden individueel' },
-    'Warmtelevering derden gemeenschappelijk': { en: 'Third party heat supply collective', nl: 'Warmtelevering derden gemeenschappelijk' },
-    'Koudelevering derden': { en: 'Cooling from third parties', nl: 'Koudelevering derden' },
-    'Koudelevering derden ge': { en: 'Cooling from third parties collective', nl: 'Koudelevering derden ge' },
-    'Externe warmtelevering via een afleverset individueel': { en: 'External heat supply via individual delivery set', nl: 'Externe warmtelevering via een afleverset individueel' },
-    'Externe warmtelevering via een afleverset gemeenschappelijk (centraal)': { en: 'External heat supply via collective delivery set', nl: 'Externe warmtelevering via een afleverset gemeenschappelijk (centraal)' },
-    'Nominaal vermogen': { en: 'Nominal power', nl: 'Nominaal vermogen' },
-    'Nominaal vermogen onbekend': { en: 'Nominal power unknown', nl: 'Nominaal vermogen onbekend' },
-    'Kwaliteitsverklaring': { en: 'Quality declaration', nl: 'Kwaliteitsverklaring' },
-    'Gelijkstroom': { en: 'Direct Current (DC)', nl: 'Gelijkstroom' },
-    'Wisselstroom': { en: 'Alternating Current (AC)', nl: 'Wisselstroom' },
-    'Draaistroom': { en: 'Three-phase', nl: 'Draaistroom' },
-    'tot 1980': { en: 'up to 1980', nl: 'tot 1980' },
-    '1980 - 1990': { en: '1980 - 1990', nl: '1980 - 1990' },
-    '1990 - 2000': { en: '1990 - 2000', nl: '1990 - 2000' },
-    '>2006': { en: '>2006', nl: '>2006' },
-    'LUKA A,B of C': { en: 'LUKA A,B or C', nl: 'LUKA A,B of C' },
-    'LUKA D': { en: 'LUKA D', nl: 'LUKA D' },
-    'Geen kanaal': { en: 'No duct', nl: 'Geen kanaal' },
-    'Ja, 100% bypass': { en: 'Yes, 100% bypass', nl: 'Ja, 100% bypass' },
-    'Ja, gedeeltelijk': { en: 'Yes, partial', nl: 'Ja, gedeeltelijk' },
-    'Gasgestookte ketel': { en: 'Gas-fired boiler', nl: 'Gasgestookte ketel' },
-    'Elektrische verwarming': { en: 'Electric heating', nl: 'Elektrische verwarming' },
-    'Moederhaard': { en: 'Mother fireplace / back boiler', nl: 'Moederhaard' },
-    'Lokale gaskachel': { en: 'Local gas stove', nl: 'Lokale gaskachel' },
-    'Lokale oliekachel': { en: 'Local oil stove', nl: 'Lokale oliekachel' },
-    'Oliegestookte ketel': { en: 'Oil-fired boiler', nl: 'Oliegestookte ketel' },
-    'WKK': { en: 'CHP', nl: 'WKK' },
-    'Warmtepomp gasinjectie': { en: 'Gas injection heat pump', nl: 'Warmtepomp gasinjectie' },
-    'Warmtepomp gasmotor': { en: 'Gas engine heat pump', nl: 'Warmtepomp gasmotor' },
-    'Warmtepomp elektrisch': { en: 'Electric heat pump', nl: 'Warmtepomp elektrisch' },
-    'Biomassakachel': { en: 'Biomass stove', nl: 'Biomassakachel' },
-    'Biomassaketel handmatig gestookt': { en: 'Manually fired biomass boiler', nl: 'Biomassaketel handmatig gestookt' },
-    'Biomassaketel automatisch gestookt': { en: 'Automatically fired biomass boiler', nl: 'Biomassaketel automatisch gestookt' },
-    'Warmtelevering derden': { en: 'Heat supply by third parties', nl: 'Warmtelevering derden' },
-    'Water': { en: 'Water', nl: 'Water' },
-    'Local': { en: 'Local', nl: 'Local' },
-    'Tweepijpsysteem': { en: 'Two-pipe system', nl: 'Tweepijpsysteem' },
-    'Eenpijpsysteem': { en: 'One-pipe system', nl: 'Eenpijpsysteem' },
-    'VR-ketel': { en: 'VR boiler', nl: 'VR-ketel' },
-    'Verbeterd rendement': { en: 'Improved efficiency', nl: 'Verbeterd rendement' },
-    'Niet-condenserend': { en: 'Non-condensing', nl: 'Niet-condenserend' },
-    'Radiatoren / convectoren': { en: 'Radiators / convectors', nl: 'Radiatoren / convectoren' },
-    'Ventilatorgestuurde radiatoren en/of convectoren': { en: 'Fan-assisted radiators and/or convectors', nl: 'Ventilatorgestuurde radiatoren en/of convectoren' },
-    'Vloerverwarming': { en: 'Underfloor heating', nl: 'Vloerverwarming' },
-    'Luchtverwarming': { en: 'Warm air heating', nl: 'Luchtverwarming' },
-    'Overig van': { en: 'Other', nl: 'Overig van' },
-    'Regeling in hoofdvertrek (kamerthermostaat)': { en: 'Control in main room (room thermostat)', nl: 'Regeling in hoofdvertrek (kamerthermostaat)' },
-    'Centrale regeling met individuele regeling per ruimte': { en: 'Central control with individual control per room', nl: 'Centrale regeling met individuele regeling per ruimte' },
-    'Individuele regeling per ruimte': { en: 'Individual control per room', nl: 'Individuele regeling per ruimte' },
-    'Overig of onbekend': { en: 'Other or unknown', nl: 'Overig of onbekend' },
-    'Nee / Onbekend': { en: 'No / Unknown', nl: 'Nee / Onbekend' },
-    'Ja, aangetoond (Label A)': { en: 'Yes, proven (Label A)', nl: 'Ja, aangetoond (Label A)' },
-    'Ja, waarschijnlijk': { en: 'Yes, likely', nl: 'Ja, waarschijnlijk' },
-    'Compleet toestel': { en: 'Complete device', nl: 'Compleet toestel' },
-    'Directly heated vessel': { en: 'Directly heated vessel', nl: 'Directly heated vessel' },
-    'Indirectly heated vessel': { en: 'Indirectly heated vessel', nl: 'Indirectly heated vessel' },
-    'Externe heat supply via delivery set': { en: 'External heat supply via delivery set', nl: 'Externe heat supply via delivery set' },
-    'Keukengeiser': { en: 'Kitchen geyser', nl: 'Keukengeiser' },
-    'Gasgestookt warmwatertoestel (Badgeiser)': { en: 'Gas water heater (bath geyser)', nl: 'Gasgestookt warmwatertoestel (Badgeiser)' },
-    'Gasgestookt combitoestel': { en: 'Gas combi boiler', nl: 'Gasgestookt combitoestel' },
-    '(micro) WKK': { en: '(micro) CHP', nl: '(micro) WKK' },
-    'Elektrisch': { en: 'Electric', nl: 'Elektrisch' },
-    'Boosterwarmtepomp': { en: 'Booster heat pump', nl: 'Boosterwarmtepomp' },
-    'Elektrische doorstroomverwarmer': { en: 'Electric instantaneous water heater', nl: 'Elektrische doorstroomverwarmer' },
-    'Vast biobrandstoftoestel': { en: 'Solid biofuel appliance', nl: 'Vast biobrandstoftoestel' },
-    'Elektrische boiler': { en: 'Electric boiler', nl: 'Elektrische boiler' },
-    'Warmwaterboiler': { en: 'Hot water boiler', nl: 'Warmwaterboiler' },
-    'Ja, geïsoleerd': { en: 'Yes, insulated', nl: 'Ja, geïsoleerd' },
-    'Ja, ongeïsoleerd': { en: 'Yes, uninsulated', nl: 'Ja, ongeïsoleerd' },
-    'Ja, douchepijp-WTW': { en: 'Yes, shower pipe recovery', nl: 'Ja, douchepijp-WTW' },
-    'Ja, douchebak-WTW': { en: 'Yes, shower tray recovery', nl: 'Ja, douchebak-WTW' },
-    'Compressiekoeling': { en: 'Compression cooling', nl: 'Compressiekoeling' },
-    'Absorptiekoeling': { en: 'Absorption cooling', nl: 'Absorptiekoeling' },
-    'Passieve vrije koeling': { en: 'Passive free cooling', nl: 'Passieve vrije koeling' },
-    'Directe koeling in de ruimte (airconditioning)': { en: 'Direct cooling in the room (air conditioning)', nl: 'Directe koeling in de ruimte (airconditioning)' },
-    'Directe koeling in het LBK (DX-systeem)': { en: 'Direct cooling in the AHU (DX system)', nl: 'Directe koeling in het LBK (DX-systeem)' },
-    'Met indirecte verdamping': { en: 'With indirect evaporation', nl: 'Met indirecte verdamping' },
-    'Lucht': { en: 'Air', nl: 'Lucht' },
-    'Koudemiddel': { en: 'Refrigerant', nl: 'Koudemiddel' },
-    'Werkelijk vermogen en EI': { en: 'Actual power and EI', nl: 'Werkelijk vermogen en EI' },
-    'Werkelijk vermogen': { en: 'Actual power', nl: 'Werkelijk vermogen' },
-    'Vloerkoeling': { en: 'Floor cooling', nl: 'Vloerkoeling' },
-    'Wandkoeling': { en: 'Wall cooling', nl: 'Wandkoeling' },
-    'Plafondkoeling': { en: 'Ceiling cooling', nl: 'Plafondkoeling' },
-    'Ventilatorconvectoren (aan plafond)': { en: 'Fan coils (on ceiling)', nl: 'Ventilatorconvectoren (aan plafond)' },
-    'Ventilatorconvectoren (aan buitenmuur)': { en: 'Fan coils (on external wall)', nl: 'Ventilatorconvectoren (aan buitenmuur)' },
-    'Standalone regeling': { en: 'Standalone control', nl: 'Standalone regeling' },
-    'Centrale regeling': { en: 'Central control', nl: 'Centrale regeling' },
-    'Bestaande bouw': { en: 'Existing building', nl: 'Bestaande bouw' },
-    'Nieuwbouw': { en: 'New construction', nl: 'Nieuwbouw' },
-    'Renovatie': { en: 'Renovation', nl: 'Renovatie' },
-    'Basisopname': { en: 'Basic recording', nl: 'Basisopname' },
-    'Detailopname': { en: 'Detailed recording', nl: 'Detailopname' },
-    'Licht': { en: 'Light', nl: 'Licht' },
-    'Middel': { en: 'Medium', nl: 'Middel' },
-    'Zwaar': { en: 'Heavy', nl: 'Zwaar' },
-    'Eigen opname': { en: 'Own recording', nl: 'Eigen opname' },
-    'Bouwtekening': { en: 'Construction drawing', nl: 'Bouwtekening' }
-  };
+
 
   const renderFormCell = (
     label: string,
     value: string,
     pathOrLocalKey: string,
     isLocal: boolean = false,
-    type: 'text' | 'select' = 'text',
+    type: 'text' | 'select' | 'date' = 'text',
     options?: string[],
     hasCalendarIcon: boolean = false,
     readOnly: boolean = false,
     customOnChange?: (val: string) => void
   ) => {
     const isDash = !value || value === '-' || value.trim() === '';
-    const translatedValue = (!isDash && translationMap[value]?.[locale]) ? translationMap[value][locale] : value;
-    const displayVal = isDash ? '-' : translatedValue;
+    const translationKey = `values.${value}`;
+    const tr = t(translationKey);
+    const translatedValue = (!isDash && tr !== translationKey) ? tr : value;
+    const displayVal = isDash ? (type === 'date' ? '' : '-') : translatedValue;
     const isDate = label.toLowerCase().includes('datum') || hasCalendarIcon;
     const flag = fieldFlags[pathOrLocalKey];
 
     let labelNode;
     if (flag === 'red') {
       labelNode = (
-        <span className="bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full font-black text-[9px] uppercase tracking-wider block w-fit">
+        <span className="bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full font-black text-[9px] uppercase tracking-wider block w-fit font-sans leading-none">
           {label}
         </span>
       );
     } else if (flag === 'yellow') {
       labelNode = (
-        <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-black text-[9px] uppercase tracking-wider block w-fit">
+        <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-black text-[9px] uppercase tracking-wider block w-fit font-sans leading-none">
           {label}
         </span>
       );
     } else if (flag === 'green') {
       labelNode = (
-        <span className="bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-black text-[9px] uppercase tracking-wider block w-fit">
+        <span className="bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-black text-[9px] uppercase tracking-wider block w-fit font-sans leading-none">
           {label}
         </span>
       );
@@ -1379,6 +1374,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
     }
 
     let borderStyle = 'border-outline-variant/15 bg-gray-50 hover:bg-gray-100/80';
+    
     if (flag === 'red') {
       borderStyle = '!border-red-500 ring-2 ring-red-100 bg-red-50/20';
     } else if (flag === 'yellow') {
@@ -1387,28 +1383,70 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
       borderStyle = '!border-green-500 ring-2 ring-green-100 bg-green-50/20';
     }
 
+    let defaultRoleBadge = '';
+    if (pathOrLocalKey.startsWith('algemeen.bewoner.')) {
+      defaultRoleBadge = 'BWO';
+    } else if (pathOrLocalKey.startsWith('algemeen.inspector.')) {
+      if (['algemeen.inspector.certificaathouder', 'algemeen.inspector.gebruiker', 'algemeen.inspector.invoerdatum'].includes(pathOrLocalKey)) {
+        defaultRoleBadge = 'SYS';
+      } else {
+        defaultRoleBadge = 'INS';
+      }
+    } else if (pathOrLocalKey.startsWith('algemeen.bidIntern.')) {
+      defaultRoleBadge = 'SYS';
+    } else if (pathOrLocalKey.startsWith('algemeen.woning.')) {
+      if (['algemeen.woning.gebouwtype', 'algemeen.woning.subtype', 'algemeen.woning.daktype', 'algemeen.woning.ligging', 'algemeen.woning.bouwfase', 'algemeen.woning.opname', 'algemeen.woning.floorConstructieType', 'algemeen.woning.wallConstructieType'].includes(pathOrLocalKey)) {
+        defaultRoleBadge = 'INS';
+      } else {
+        defaultRoleBadge = 'SYS';
+      }
+    } else if (pathOrLocalKey.startsWith('algemeen.technical.')) {
+      defaultRoleBadge = 'SYS';
+    } else if (pathOrLocalKey.startsWith('inst_')) {
+      const fieldKey = pathOrLocalKey.split('_').slice(2).join('_').toLowerCase();
+      if (['venttypetoestel', 'verwarmtypetoestel', 'taptypeinstallatie', 'koeltypetoestel', 'zontypetoestel', 'ventventilatoren', 'ventp'].includes(fieldKey)) {
+        defaultRoleBadge = 'BWO';
+      } else if (['ventmerktype', 'verwarmmerktype', 'tapmerktype', 'koelmerktype', 'zonmerktype', 'ventsysteem', 'verwarmsysteem', 'tapsysteem', 'koelsysteem'].includes(fieldKey)) {
+        defaultRoleBadge = 'SYS';
+      } else {
+        defaultRoleBadge = 'INS';
+      }
+    }
+
+    const roleBadge = fieldRoles[pathOrLocalKey] || defaultRoleBadge;
+
     return (
       <div className="w-full flex flex-col">
         <div className="flex items-center gap-1.5 mb-1.5 justify-between">
           {labelNode}
-          {readOnly ? (
-            (() => {
-              const currentFlag = fieldFlags[pathOrLocalKey];
-              if (!currentFlag) return null;
-              const colorClass = currentFlag === 'red' ? 'bg-red-500' : currentFlag === 'yellow' ? 'bg-amber-500' : 'bg-green-500';
-              return <span className={`w-2 h-2 rounded-full ${colorClass} inline-block`} />;
-            })()
-          ) : (
-            renderFlagCycleClicker(pathOrLocalKey)
-          )}
+          <div className="flex items-center gap-1.5">
+            {roleBadge && (
+              <span className="text-[8px] font-black text-neutral-900 tracking-wider leading-none select-none">
+                {roleBadge}
+              </span>
+            )}
+            {readOnly ? (
+              (() => {
+                const currentFlag = fieldFlags[pathOrLocalKey];
+                let colorClass = 'bg-neutral-200 border-neutral-300';
+                if (currentFlag === 'red') colorClass = 'bg-red-500 border-red-600';
+                else if (currentFlag === 'yellow') colorClass = 'bg-amber-400 border-amber-500';
+                else if (currentFlag === 'green') colorClass = 'bg-green-500 border-green-600';
+                return <span className={`w-2.5 h-2.5 rounded-full border ${colorClass} inline-block`} />;
+              })()
+            ) : (
+              renderFlagCycleClicker(pathOrLocalKey)
+            )}
+          </div>
         </div>
-        <div className={`flex items-center justify-between gap-1.5 min-h-[34px] px-3 py-1 rounded-xl border transition duration-150 ${borderStyle}`}>
+        <div className={`flex items-center justify-between gap-2 min-h-[40px] px-3 py-2 rounded-xl border transition duration-150 ${borderStyle}`}>
           {type === 'select' && options ? (
             <>
               <select
                 value={value || ''}
                 disabled={readOnly}
                 onChange={(e) => {
+                  setFieldFlagGreen(pathOrLocalKey);
                   if (customOnChange) {
                     customOnChange(e.target.value);
                   } else if (isLocal) {
@@ -1417,29 +1455,32 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                     onChange(pathOrLocalKey, e.target.value);
                   }
                 }}
-                className={`w-full text-xs font-bold text-on-background bg-transparent border-none p-0 focus:outline-none focus:ring-0 leading-tight outline-none print:hidden ${readOnly ? 'cursor-default pointer-events-none opacity-80' : 'cursor-pointer'
+                className={`w-full text-xs font-bold text-on-background bg-transparent border-none focus:outline-none focus:ring-0 leading-tight outline-none print:hidden font-sans ${readOnly ? 'cursor-default pointer-events-none opacity-80' : 'cursor-pointer'
                   }`}
               >
                 {options.map(opt => {
-                  const translatedOpt = translationMap[opt]?.[locale] || opt;
+                  const transKey = `values.${opt}`;
+                  const trVal = t(transKey);
+                  const translatedOpt = trVal !== transKey ? trVal : opt;
                   return (
                     <option key={opt} value={opt}>{translatedOpt}</option>
                   );
                 })}
               </select>
-              <div className="hidden print:block w-full text-xs font-bold text-on-background leading-tight break-words whitespace-normal py-1">
+              <div className="hidden print:block w-full text-xs font-bold text-on-background leading-tight break-words whitespace-normal py-1 font-sans">
                 {displayVal}
               </div>
             </>
           ) : (
             <>
               <input
-                type="text"
+                type={type === 'date' ? 'date' : 'text'}
                 value={displayVal}
                 disabled={readOnly}
                 readOnly={readOnly}
                 onChange={(e) => {
                   const val = e.target.value;
+                  setFieldFlagGreen(pathOrLocalKey);
                   if (customOnChange) {
                     customOnChange(val);
                   } else if (isLocal) {
@@ -1448,43 +1489,13 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                     onChange(pathOrLocalKey, val);
                   }
                 }}
-                style={isDate ? { width: `${Math.max(displayVal.length * 7.5, 90)}px` } : undefined}
-                className={`${isDate ? 'w-auto' : 'w-full'
-                  } text-xs font-bold text-on-background bg-transparent border-none p-0 focus:outline-none focus:ring-0 leading-tight outline-none print:hidden ${isDash ? 'text-on-surface-variant/30 font-semibold' : ''
+                className={`w-full text-xs font-bold text-on-background bg-transparent border-none focus:outline-none focus:ring-0 leading-tight outline-none print:hidden font-sans ${isDash ? 'text-on-surface-variant/30 font-semibold' : ''
                   } ${readOnly ? 'cursor-default pointer-events-none opacity-80' : ''}`}
               />
               <div className={`hidden print:block w-full text-xs font-bold leading-tight break-words whitespace-normal py-1 ${isDash ? 'text-on-surface-variant/30 font-semibold' : 'text-on-background'}`}>
                 {displayVal}
               </div>
             </>
-          )}
-          {isDate && (
-            <div className="relative inline-flex items-center">
-              <button
-                className="text-primary hover:text-primary-dark transition duration-150 p-0.5 rounded cursor-pointer no-print flex-shrink-0"
-                title="Kies datum"
-                type="button"
-              >
-                <Calendar size={13} className="text-[#0288d1]" />
-              </button>
-              <input
-                type="date"
-                value={parseToDateInputValue(value)}
-                onChange={(e) => {
-                  const selectedVal = e.target.value;
-                  if (selectedVal) {
-                    const formatted = formatToDutchDate(selectedVal);
-                    if (isLocal) {
-                      handleInstallationChange(pathOrLocalKey as keyof typeof installations, formatted);
-                    } else {
-                      onChange(pathOrLocalKey, formatted);
-                    }
-                  }
-                }}
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                title="Kies datum"
-              />
-            </div>
           )}
         </div>
       </div>
@@ -1655,14 +1666,17 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
             </div>
 
             {(activeTab === 'p1' || isPrinting) && (
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <div className="border-b border-neutral-250 pb-1 flex justify-between items-center">
-                    <h2 className="text-sm font-black text-primary uppercase tracking-wider">Identificatie</h2>
+              <div className="space-y-8">
+                <div className="space-y-6">
+                  <div className="border-b border-neutral-250 pb-3 mb-3 flex justify-between items-center">
+                    <h2 className="text-sm font-black text-primary uppercase tracking-wider font-sans">Identificatie</h2>
                   </div>
 
                   <div className="print:break-inside-avoid">
-                    <h3 className="text-xs font-black text-primary mb-1.5 uppercase tracking-wide">Bewoner</h3>
+                    <h3 className="text-xs font-black text-primary mb-3 uppercase tracking-wide flex items-center justify-between font-sans">
+                      <span>Bewoner</span>
+
+                    </h3>
                     <div className="border border-outline-variant/10 rounded-2xl bg-white p-4.5 shadow-2xs">
                       <div className="grid grid-cols-1 md:grid-cols-3 print:grid-cols-3 gap-x-6 gap-y-4">
                         {renderFormCell('Name', data.algemeen?.bewoner?.persoon || 'Mevrouw S. van Wessum', 'algemeen.bewoner.persoon')}
@@ -1675,28 +1689,37 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                     </div>
                   </div>
 
-                  <div className="pt-1 print:break-inside-avoid">
-                    <h3 className="text-xs font-black text-primary mb-1.5 uppercase tracking-wide">Inspecteur</h3>
+                  <div className="pt-6 print:break-inside-avoid">
+                    <h3 className="text-xs font-black text-primary mb-3 uppercase tracking-wide flex items-center justify-between font-sans">
+                      <span>Inspecteur</span>
+
+                    </h3>
                     <div className="border-t border-r border-b border-l-4 border-l-primary border-outline-variant/10 rounded-2xl bg-white p-4.5 shadow-2xs">
                       <div className="grid grid-cols-1 md:grid-cols-3 print:grid-cols-3 gap-x-6 gap-y-4">
                         {renderFormCell('Inspecteur Name', data.algemeen?.inspector?.adviseur || 'Mevrouw S. van Wessum', 'algemeen.inspector.adviseur')}
-                        {renderFormCell('Certificaatnummer', data.algemeen?.inspector?.certificaathouder || '5923.3337.5020', 'algemeen.inspector.certificaathouder')}
-                        {renderFormCell('Certificaathouder', data.algemeen?.inspector?.gebruiker || '-', 'algemeen.inspector.gebruiker')}
                         {renderFormCell('Adress', data.algemeen?.inspector?.adres || '-', 'algemeen.inspector.adres')}
                         {renderFormCell('Postcode', data.algemeen?.inspector?.postcode || '-', 'algemeen.inspector.postcode')}
+                        
                         {renderFormCell('Plaats', data.algemeen?.inspector?.plaats || '-', 'algemeen.inspector.plaats')}
                         {renderFormCell('Telephone', data.algemeen?.inspector?.telefoon || '-', 'algemeen.inspector.telefoon')}
                         {renderFormCell('Email', data.algemeen?.inspector?.email || 'joep.esser@buildingid.nl', 'algemeen.inspector.email')}
+                        
+                        {renderFormCell('Certificaatnummer', data.algemeen?.inspector?.certificaathouder || '5923.3337.5020', 'algemeen.inspector.certificaathouder')}
+                        {renderFormCell('Certificaathouder', data.algemeen?.inspector?.gebruiker || '-', 'algemeen.inspector.gebruiker')}
                         <div />
-                        {renderFormCell('Opnamedatum', data.algemeen?.inspector?.opnamedatum || '06 December 2024', 'algemeen.inspector.opnamedatum', false, 'text', undefined, true)}
-                        {renderFormCell('Invoerdatum', data.algemeen?.inspector?.invoerdatum || '23 February 2025', 'algemeen.inspector.invoerdatum', false, 'text', undefined, true)}
+
+                        {renderFormCell('Opnamedatum', data.algemeen?.inspector?.opnamedatum || '', 'algemeen.inspector.opnamedatum', false, 'date')}
+                        {renderFormCell('Invoerdatum', data.algemeen?.inspector?.invoerdatum || '', 'algemeen.inspector.invoerdatum', false, 'date')}
                         <div />
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-1 print:break-inside-avoid">
-                    <h3 className="text-xs font-black text-primary mb-1.5 uppercase tracking-wide">BID Intern</h3>
+                  <div className="pt-6 print:break-inside-avoid">
+                    <h3 className="text-xs font-black text-primary mb-3 uppercase tracking-wide flex items-center justify-between font-sans">
+                      <span>BID Intern</span>
+
+                    </h3>
                     <div className="border border-outline-variant/10 rounded-2xl bg-white p-4.5 shadow-2xs">
                       <div className="grid grid-cols-1 md:grid-cols-3 print:grid-cols-3 gap-x-6 gap-y-4">
                         {renderFormCell('Volledige naam', data.algemeen?.bidIntern?.fullName || '-', 'algemeen.bidIntern.fullName')}
@@ -1710,30 +1733,27 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                   </div>
                 </div>
 
-                <div className="space-y-4 pt-2">
-                  <div className="border-b border-neutral-250 pb-1 flex justify-between items-center">
-                    <h2 className="text-sm font-black text-primary uppercase tracking-wider">Algemeen</h2>
+                <div className="space-y-6 pt-2">
+                  <div className="border-b border-neutral-250 pb-3 mb-3 flex justify-between items-center">
+                    <h2 className="text-sm font-black text-primary uppercase tracking-wider font-sans">Algemeen</h2>
                   </div>
 
                   <div className="print:break-inside-avoid">
-                    <h3 className="text-xs font-black text-primary mb-1.5 uppercase tracking-wide">General details</h3>
+                    <h3 className="text-xs font-black text-primary mb-3 uppercase tracking-wide font-sans">General details</h3>
                     <div className="border-t border-r border-b border-l-4 border-l-primary border-outline-variant/10 rounded-2xl bg-white p-4.5 shadow-2xs">
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 print:grid-cols-4 gap-4">
-                        {renderFormCell('Complex', data.algemeen?.woning?.technischComplex || '1690', 'algemeen.woning.technischComplex')}
-                        {renderFormCell('Financieel complex', data.algemeen?.woning?.financieelComplex || '-', 'algemeen.woning.financieelComplex')}
-                        {renderFormCell('Gemeente', data.algemeen?.woning?.gemeent || 'Almere', 'algemeen.woning.gemeent')}
-                        {renderFormCell('Adress', data.algemeen?.woning?.adres || 'Finstraat 1', 'algemeen.woning.adres')}
-
                         {renderFormCell('Bouwfase', data.algemeen?.woning?.bouwfase || 'Bestaande bouw', 'algemeen.woning.bouwfase', false, 'select', ['Bestaande bouw', 'Nieuwbouw', 'Renovatie'])}
                         {renderFormCell('Opnametype', data.algemeen?.woning?.opname || 'Basisopname', 'algemeen.woning.opname', false, 'select', ['Basisopname', 'Detailopname'])}
+                        {renderFormCell('Adress', data.algemeen?.woning?.adres || 'Finstraat 1', 'algemeen.woning.adres')}
                         {renderFormCell('Postcode', data.algemeen?.woning?.postcode || '1317JA', 'algemeen.woning.postcode')}
-                        {renderFormCell('Plaats', data.algemeen?.woning?.plaats || 'Almere stad', 'algemeen.woning.plaats')}
 
+                        {renderFormCell('Plaats', data.algemeen?.woning?.plaats || 'Almere stad', 'algemeen.woning.plaats')}
                         {renderFormCell('Pand ID', data.algemeen?.woning?.pandId || '003410000029155', 'algemeen.woning.pandId')}
                         {renderFormCell('VBO ID', data.algemeen?.woning?.vboId || '0034010000010168', 'algemeen.woning.vboId')}
                         {renderFormCell('Wijk', data.algemeen?.woning?.wijk || 'Waterwijk', 'algemeen.woning.wijk')}
-                        {renderFormCell('SVB-Status', data.algemeen?.woning?.svbStatus || 'Continue exploitation', 'algemeen.woning.svbStatus', false, 'select', ['Continue exploitation', 'Sale', 'Demolition', 'Minor maintenance', 'Major maintenance', 'Otherwise'])}
 
+                        {renderFormCell('Gemeente', data.algemeen?.woning?.gemeent || 'Almere', 'algemeen.woning.gemeent')}
+                        {renderFormCell('SVB-Status', data.algemeen?.woning?.svbStatus || 'Continue exploitation', 'algemeen.woning.svbStatus', false, 'select', ['Continue exploitation', 'Sale', 'Demolition', 'Minor maintenance', 'Major maintenance', 'Otherwise'])}
                         {renderFormCell('Bron', data.algemeen?.woning?.bron || 'BAG', 'algemeen.woning.bron', false, 'select', ['BAG', 'Bouwtekening', 'Eigen opname'])}
                         <div />
                         <div />
@@ -1758,10 +1778,15 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
 
                         {data.algemeen?.technical?.leidingdoorvoeren === 'Ja' ? renderFormCell('Aantal', data.algemeen?.technical?.aantal || '-', 'algemeen.technical.aantal') : <div />}
                         {renderFormCell('Aantal AVR', data.algemeen?.technical?.avr || '-', 'algemeen.technical.avr')}
-                        {renderFormCell('GBO-T_1', data.algemeen?.technical?.gboTs?.[0] || '-', 'algemeen.technical.gboTs.0')}
-                        {renderFormCell('GBO-T_2', data.algemeen?.technical?.gboTs?.[1] || '-', 'algemeen.technical.gboTs.1')}
-
-                        {renderFormCell('GBO-T_3', data.algemeen?.technical?.gboTs?.[2] || '-', 'algemeen.technical.gboTs.2')}
+                        {data.algemeen?.technical?.gboTs && data.algemeen.technical.gboTs.length > 0 ? (
+                          data.algemeen.technical.gboTs.map((val: string, idx: number) => (
+                            <React.Fragment key={idx}>
+                              {renderFormCell(`GBO-T_${idx + 1}`, val || '-', `algemeen.technical.gboTs.${idx}`)}
+                            </React.Fragment>
+                          ))
+                        ) : (
+                          renderFormCell('GBO-T_1', '-', 'algemeen.technical.gboTs.0')
+                        )}
                         <div />
                         <div />
                         <div />
@@ -1829,15 +1854,15 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
               const activeInstallatieId = localStorage.getItem('installatie_active_id_current') || '1';
 
               return (
-                <div className={`space-y-10 ${isPrinting ? 'print-section' : ''}`}>
-                  <div className="border-b border-neutral-250 pb-2.5 flex justify-between items-center">
+                <div className={`space-y-8 ${isPrinting ? 'print-section' : ''}`}>
+                  <div className="border-b border-neutral-250 pb-2 mb-2 flex justify-between items-center">
                     <h2 className="text-sm font-black text-primary uppercase tracking-wider flex items-center gap-1.5 font-sans">
                       <span>Installaties</span>
                     </h2>
                     {onViewChange && (
                       <button
                         type="button"
-                        onClick={() => onViewChange('installatie')}
+                        onClick={() => setShowInstallatieModal(true)}
                         className="text-[10px] font-black text-primary hover:text-primary-dark flex items-center gap-1.5 cursor-pointer bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-xl uppercase tracking-wider transition-all no-print font-sans"
                       >
                         <Wind size={11} />
@@ -1847,7 +1872,9 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                   </div>
 
                   {installationsList.map((inst, index) => {
-                    const instDetails = { ...(inst.details || {}), ...(data.installations || {}) };
+                    const instDetails = (inst.id === activeInstallatieId && data.installations)
+                      ? { ...(inst.details || {}), ...(data.installations || {}) }
+                      : (inst.details || {});
 
                     const activeCategories = inst.activeCategories || ['Ventilatie', 'Verwarming', 'Tapwater', 'Koeling', 'Zonne-panelen'];
 
@@ -1901,16 +1928,12 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                 Installatie #{index + 1}
                               </span>
                             </div>
-                            {installationsList.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => setInstallationToDelete(inst.id)}
-                                className="p-1.5 hover:bg-red-50 text-neutral-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer mr-2 no-print"
-                                title="Verwijder installatie"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            )}
+                            <div className="flex items-center gap-1 no-print">
+                              <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); setShowInstallatieModal(true); }} className="bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs" title="Bewerken"><Pencil size={11} /></button>
+                              {installationsList.length > 1 && (
+                                <button type="button" onClick={() => setInstallationToDelete(inst.id)} className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs" title="Verwijderen"><Trash2 size={11} /></button>
+                              )}
+                            </div>
                           </div>
 
                           {/* 3.1 Ventilatie Card */}
@@ -1920,8 +1943,8 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               <h3 className="text-xs font-black text-primary mb-3 flex items-center justify-between gap-1.5 w-full uppercase tracking-wider font-sans">
                                 <span className="flex items-center gap-1.5"><Wind size={14} /> Ventilatie</span>
                                 <div className="flex items-center gap-1.5 no-print">
-                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Ventilatie'); localStorage.setItem('installatie_view_state', 'detail'); if (onViewChange) onViewChange('installatie'); }} className="p-1.5 hover:bg-blue-50 text-neutral-400 hover:text-blue-500 rounded-lg transition-colors cursor-pointer" title="Bewerken"><Pencil size={13} /></button>
-                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Ventilatie' }) }} className="p-1.5 hover:bg-red-50 text-neutral-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer" title="Verwijderen"><Trash2 size={13} /></button>
+                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Ventilatie'); localStorage.setItem('installatie_view_state', 'detail'); setShowInstallatieModal(true); }} className="bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs" title="Bewerken"><Pencil size={13} /></button>
+                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Ventilatie' }) }} className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs" title="Verwijderen"><Trash2 size={13} /></button>
                                 </div>
                               </h3>
                               <div className="grid grid-cols-2 gap-x-5 gap-y-3 mt-1">
@@ -1986,8 +2009,8 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               <h3 className="text-xs font-black text-primary mb-3 flex items-center justify-between gap-1.5 w-full uppercase tracking-wider font-sans">
                                 <span className="flex items-center gap-1.5"><Flame size={14} /> Verwarming</span>
                                 <div className="flex items-center gap-1.5 no-print">
-                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Verwarming'); localStorage.setItem('installatie_view_state', 'detail'); if (onViewChange) onViewChange('installatie'); }} className="p-1.5 hover:bg-blue-50 text-neutral-400 hover:text-blue-500 rounded-lg transition-colors cursor-pointer" title="Bewerken"><Pencil size={13} /></button>
-                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Verwarming' }) }} className="p-1.5 hover:bg-red-50 text-neutral-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer" title="Verwijderen"><Trash2 size={13} /></button>
+                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Verwarming'); localStorage.setItem('installatie_view_state', 'detail'); setShowInstallatieModal(true); }} className="bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs" title="Bewerken"><Pencil size={13} /></button>
+                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Verwarming' }) }} className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs" title="Verwijderen"><Trash2 size={13} /></button>
                                 </div>
                               </h3>
                               <div className="grid grid-cols-2 gap-x-5 gap-y-3 mt-1">
@@ -2034,8 +2057,8 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               <h3 className="text-xs font-black text-primary mb-3 flex items-center justify-between gap-1.5 w-full uppercase tracking-wider font-sans">
                                 <span className="flex items-center gap-1.5"><Droplet size={14} /> Tapwater</span>
                                 <div className="flex items-center gap-1.5 no-print">
-                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Tapwater'); localStorage.setItem('installatie_view_state', 'detail'); if (onViewChange) onViewChange('installatie'); }} className="p-1.5 hover:bg-blue-50 text-neutral-400 hover:text-blue-500 rounded-lg transition-colors cursor-pointer" title="Bewerken"><Pencil size={13} /></button>
-                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Tapwater' }) }} className="p-1.5 hover:bg-red-50 text-neutral-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer" title="Verwijderen"><Trash2 size={13} /></button>
+                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Tapwater'); localStorage.setItem('installatie_view_state', 'detail'); setShowInstallatieModal(true); }} className="bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs" title="Bewerken"><Pencil size={13} /></button>
+                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Tapwater' }) }} className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs" title="Verwijderen"><Trash2 size={13} /></button>
                                 </div>
                               </h3>
                               <div className="grid grid-cols-2 gap-x-5 gap-y-3 mt-1">
@@ -2073,8 +2096,8 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               <h3 className="text-xs font-black text-primary mb-3 flex items-center justify-between gap-1.5 w-full uppercase tracking-wider font-sans">
                                 <span className="flex items-center gap-1.5"><Snowflake size={14} /> Koeling</span>
                                 <div className="flex items-center gap-1.5 no-print">
-                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Koeling'); localStorage.setItem('installatie_view_state', 'detail'); if (onViewChange) onViewChange('installatie'); }} className="p-1.5 hover:bg-blue-50 text-neutral-400 hover:text-blue-500 rounded-lg transition-colors cursor-pointer" title="Bewerken"><Pencil size={13} /></button>
-                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Koeling' }) }} className="p-1.5 hover:bg-red-50 text-neutral-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer" title="Verwijderen"><Trash2 size={13} /></button>
+                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Koeling'); localStorage.setItem('installatie_view_state', 'detail'); setShowInstallatieModal(true); }} className="bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs" title="Bewerken"><Pencil size={13} /></button>
+                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Koeling' }) }} className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs" title="Verwijderen"><Trash2 size={13} /></button>
                                 </div>
                               </h3>
                               <div className="grid grid-cols-2 gap-x-5 gap-y-3 mt-1">
@@ -2105,8 +2128,8 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               <h3 className="text-xs font-black text-primary mb-3 flex items-center justify-between gap-1.5 w-full uppercase tracking-wider font-sans">
                                 <span className="flex items-center gap-1.5"><Sun size={14} /> Zonne-panelen</span>
                                 <div className="flex items-center gap-1.5 no-print">
-                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Zonne-panelen'); localStorage.setItem('installatie_view_state', 'detail'); if (onViewChange) onViewChange('installatie'); }} className="p-1.5 hover:bg-blue-50 text-neutral-400 hover:text-blue-500 rounded-lg transition-colors cursor-pointer" title="Bewerken"><Pencil size={13} /></button>
-                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Zonne-panelen' }) }} className="p-1.5 hover:bg-red-50 text-neutral-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer" title="Verwijderen"><Trash2 size={13} /></button>
+                                  <button type="button" onClick={() => { localStorage.setItem('installatie_active_id_current', inst.id); localStorage.setItem('installatie_selected_category', 'Zonne-panelen'); localStorage.setItem('installatie_view_state', 'detail'); setShowInstallatieModal(true); }} className="bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs" title="Bewerken"><Pencil size={13} /></button>
+                                  <button type="button" onClick={() => { setCategoryToDelete({ instId: inst.id, cat: 'Zonne-panelen' }) }} className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs" title="Verwijderen"><Trash2 size={13} /></button>
                                 </div>
                               </h3>
                               <div className="grid grid-cols-2 gap-x-5 gap-y-3 mt-1">
@@ -2314,7 +2337,10 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                         )}
                                       </div>
                                       <div className="flex items-center gap-2 shrink-0">
-                                        {renderFlagCycleClicker(`constructie_row_${item.id}`)}
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[8px] font-black text-neutral-900 tracking-wider leading-none select-none">{fieldRoles[`constructie_row_${item.id}`] || 'INS'}</span>
+                                          {renderFlagCycleClicker(`constructie_row_${item.id}`)}
+                                        </div>
                                         <div className="flex items-center gap-1">
                                           <button
                                             type="button"
@@ -2332,9 +2358,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                           <button
                                             type="button"
                                             onClick={() => {
-                                              if (window.confirm('Weet je zeker dat je deze constructie wilt verwijderen?')) {
-                                                onChange('constructies', (data.constructies || []).filter((c: any) => c.id !== item.id));
-                                              }
+                                              setConstructieToDelete(item.id);
                                             }}
                                             className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs"
                                             title="Verwijderen"
@@ -2617,6 +2641,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
               ];
 
               const handleBouwkundigRowChange = (originalIdx: number, field: string, value: string) => {
+                setFieldFlagGreen(`bouwkundig_${originalIdx}`);
                 const current = data.bouwkundigRows || defaultBouwkundigRows;
                 if (originalIdx >= 0 && originalIdx < current.length) {
                   const updated = [...current];
@@ -2754,6 +2779,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               }) || [];
 
                               const handleKozijnChange = (kId: string, kField: string, kVal: string) => {
+                                setFieldFlagGreen(`library_${kId}`);
                                 const currentKozijnen = data.kozijnen || [];
                                 const updated = currentKozijnen.map(k => {
                                   if (k.id === kId) {
@@ -2801,7 +2827,10 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
-                                      {renderFlagCycleClicker(`bouwkundig_${originalIdx}`)}
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-[8px] font-black text-neutral-900 tracking-wider leading-none select-none">{fieldRoles[`bouwkundig_${originalIdx}`] || 'INS'}</span>
+                                        {renderFlagCycleClicker(`bouwkundig_${originalIdx}`)}
+                                      </div>
                                         <div className="flex items-center gap-1">
                                           <button
                                             type="button"
@@ -2821,11 +2850,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                           <button
                                             type="button"
                                             onClick={() => {
-                                              if (window.confirm('Weet je zeker dat je dit item wilt verwijderen?')) {
-                                                const newRows = [...allBouwkundig];
-                                                newRows.splice(originalIdx, 1);
-                                                onChange('bouwkundigRows', newRows);
-                                              }
+                                              setBouwkundigToDelete(originalIdx);
                                             }}
                                             className="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-full p-1.5 transition cursor-pointer flex items-center justify-center print:hidden shadow-xs"
                                             title="Verwijderen"
@@ -3169,7 +3194,10 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                                     </span>
                                                   </div>
                                                   <div className="flex items-center gap-2 shrink-0">
-                                                    {renderFlagCycleClicker(`library_${k.id}`)}
+                                                    <div className="flex items-center gap-1.5">
+                                                      <span className="text-[8px] font-black text-neutral-900 tracking-wider leading-none select-none">{fieldRoles[`library_${k.id}`] || 'INS'}</span>
+                                                      {renderFlagCycleClicker(`library_${k.id}`)}
+                                                    </div>
                                                     <div className="flex items-center gap-1">
                                                       <button
                                                         type="button"
@@ -3651,6 +3679,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
         onChangeData={onChange}
         flagKey={editingConstructieRow ? `constructie_row_${editingConstructieRow.id}` : undefined}
         onFlagChange={setFieldFlag}
+        onFieldEdit={setFieldFlagGreen}
       />
 
       <BouwkundigEditModal
@@ -3683,6 +3712,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
         onChangeData={onChange}
         flagKey={editingBouwkundigIndex !== null ? `bouwkundig_${editingBouwkundigIndex}` : undefined}
         onFlagChange={setFieldFlag}
+        onFieldEdit={setFieldFlagGreen}
       />
 
       <KozijnEditModal
@@ -3706,6 +3736,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
         onChangeData={onChange}
         flagKey={editingKozijnRow ? `library_${editingKozijnRow.id}` : undefined}
         onFlagChange={setFieldFlag}
+        onFieldEdit={setFieldFlagGreen}
       />
       <ConfirmModal
         isOpen={categoryToDelete !== null}
@@ -3739,6 +3770,62 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
         title="Weet je het zeker?"
         message="Weet je zeker dat je deze gehele installatie wilt verwijderen?"
       />
+      <ConfirmModal
+        isOpen={constructieToDelete !== null}
+        onClose={() => setConstructieToDelete(null)}
+        onConfirm={() => {
+          if (constructieToDelete !== null) {
+            const allConstructies = data.constructies || [];
+            const updated = allConstructies.filter((c: any) => c.id !== constructieToDelete);
+            onChange('constructies', updated as any);
+          }
+          setConstructieToDelete(null);
+        }}
+        title="Weet je het zeker?"
+        message="Weet je zeker dat je deze constructie wilt verwijderen?"
+      />
+      <ConfirmModal
+        isOpen={bouwkundigToDelete !== null}
+        onClose={() => setBouwkundigToDelete(null)}
+        onConfirm={() => {
+          if (bouwkundigToDelete !== null) {
+            const current = data.bouwkundigRows || defaultBouwkundigRows;
+            const updated = current.filter((_: any, idx: number) => idx !== bouwkundigToDelete);
+            onChange('bouwkundigRows', updated as any);
+          }
+          setBouwkundigToDelete(null);
+        }}
+        title="Weet je het zeker?"
+        message="Weet je zeker dat je dit bouwkundig element wilt verwijderen?"
+      />
+      {showInstallatieModal && createPortal(
+        <div className="fixed inset-0 z-[4000] flex items-center justify-center bg-black/40 font-sans" onClick={() => setShowInstallatieModal(false)}>
+          <div
+            className="bg-white shadow-2xl overflow-y-auto rounded-2xl"
+            style={{ width: '70%', maxHeight: '90vh' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between rounded-t-2xl">
+              <h2 className="font-sans font-black text-lg tracking-tight text-on-background">Installatie Bewerken</h2>
+              <button
+                onClick={() => setShowInstallatieModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-xl transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4">
+              <InstallatieView
+                data={data}
+                onChange={onChange}
+                isModal={true}
+                onFieldEdit={setFieldFlagGreen}
+              />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

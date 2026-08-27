@@ -15,7 +15,7 @@ const LocalSelect: React.FC<any> = (props) => {
 export const getCalculatedUValue = (row: ConstructionRow) => {
   if (row.type === 'Deur') {
     if (row.glas?.includes('super')) return '1.00';
-    if (row.glas?.includes('geïsoleerd')) return '2.00';
+    if (row.glas?.includes('geÃ¯soleerd')) return '2.00';
     return '3.40';
   }
   if (row.type === 'Paneel') {
@@ -50,6 +50,7 @@ interface ConstructieEditModalProps {
   data?: InspectionData;
   flagKey?: string;
   onFlagChange?: (key: string, val: 'red' | 'yellow' | 'green' | null) => void;
+  onFieldEdit?: (key: string) => void;
   onChangeData?: (path: string, val: any) => void;
 }
 
@@ -62,10 +63,21 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
   data,
   flagKey,
   onFlagChange,
-  onChangeData
+  onChangeData,
+  onFieldEdit
 }) => {
   const { t } = useLanguage();
+  
+
   const [editingRow, setEditingRow] = useState<ConstructionRow | null>(null);
+
+  const updateField = (updates: Partial<ConstructionRow>) => {
+    if (!editingRow) return;
+    setEditingRow({ ...editingRow, ...updates });
+    if (flagKey && onFieldEdit) {
+      onFieldEdit(flagKey);
+    }
+  };
   
   const [globalPhotoModalOpen, setGlobalPhotoModalOpen] = useState(false);
   const globalFileInputRef = useRef<HTMLInputElement>(null);
@@ -116,11 +128,9 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
         ctx.drawImage(img, 0, 0, width, height);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
         
-        setEditingRow({
-          ...editingRow,
-          photos: [...(editingRow.photos || []), dataUrl].filter((p, i, arr) => arr.indexOf(p) === i),
+        updateField({ photos: [...(editingRow.photos || []), dataUrl].filter((p, i, arr) => arr.indexOf(p) === i),
           photoUrl: dataUrl
-        });
+         });
       };
       img.src = rawDataUrl;
     };
@@ -176,7 +186,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
             <AppInputField
               type="text"
               value={editingRow.naam || ''}
-              onChange={(e) => setEditingRow({ ...editingRow, naam: e.target.value })}
+              onChange={(e) => updateField({ naam: e.target.value  })}
               placeholder="Bijv. Voordeur, Achterdeur..."
             />
           </div>
@@ -186,7 +196,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
               <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">{t('structural.type')}</label>
               <LocalSelect
                 value={editingRow.dakType || 'Hellend dak'}
-                onChange={(e: any) => setEditingRow({ ...editingRow, dakType: e.target.value })}
+                onChange={(e: any) => updateField({ dakType: e.target.value  })}
               >
                 <option value="Hellend dak">Hellend dak</option>
                 <option value="Plat dak">Plat dak</option>
@@ -198,7 +208,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
             <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">{t('structural.input')}</label>
             <LocalSelect
               value={editingRow.invoer || 'Beslisschema'}
-              onChange={(e: any) => setEditingRow({ ...editingRow, invoer: e.target.value })}
+              onChange={(e: any) => updateField({ invoer: e.target.value  })}
             >
               <option value="Beslisschema">{t('structural.decisionTree')}</option>
               <option value="Kwaliteitsverklaring">{t('structural.qualityDeclaration')}</option>
@@ -211,7 +221,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
               <AppInputField
                 type="text"
                 value={editingRow.merk || ''}
-                onChange={(e) => setEditingRow({ ...editingRow, merk: e.target.value })}
+                onChange={(e) => updateField({ merk: e.target.value  })}
                 placeholder="Voer merk & type in..."
               />
             </div>
@@ -222,7 +232,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
               <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">frameType</label>
               <LocalSelect
                 value={editingRow.kozijn || 'Hout'}
-                onChange={(e: any) => setEditingRow({ ...editingRow, kozijn: e.target.value })}
+                onChange={(e: any) => updateField({ kozijn: e.target.value  })}
               >
                 <option value="Hout">Hout</option>
                 <option value="Kunststof">Kunststof</option>
@@ -237,7 +247,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
               <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">glassType</label>
               <LocalSelect
                 value={editingRow.glas || 'Enkel glas'}
-                onChange={(e: any) => setEditingRow({ ...editingRow, glas: e.target.value })}
+                onChange={(e: any) => updateField({ glas: e.target.value  })}
               >
                 <option value="Enkel glas">Enkel glas (U = 5.20, g = 0.85)</option>
                 <option value="Dubbel glas">Dubbel glas (U = 3.00, g = 0.75)</option>
@@ -257,7 +267,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
                   type="text"
                   className="py-1.5 text-xs font-mono font-bold"
                   value={editingRow.uNiet || ''}
-                  onChange={(e) => setEditingRow({ ...editingRow, uNiet: e.target.value })}
+                  onChange={(e) => updateField({ uNiet: e.target.value  })}
                 />
               </div>
               <div>
@@ -266,7 +276,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
                   type="text"
                   className="py-1.5 text-xs font-mono font-bold"
                   value={editingRow.uGren || ''}
-                  onChange={(e) => setEditingRow({ ...editingRow, uGren: e.target.value })}
+                  onChange={(e) => updateField({ uGren: e.target.value  })}
                 />
               </div>
               <div>
@@ -275,7 +285,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
                   type="text"
                   className="py-1.5 text-xs font-mono font-bold"
                   value={editingRow.g || ''}
-                  onChange={(e) => setEditingRow({ ...editingRow, g: e.target.value })}
+                  onChange={(e) => updateField({ g: e.target.value  })}
                 />
               </div>
             </div>
@@ -286,7 +296,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
               <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Insulation present</label>
               <LocalSelect
                 value={editingRow.isolatie || 'Nee'}
-                onChange={(e: any) => setEditingRow({ ...editingRow, isolatie: e.target.value })}
+                onChange={(e: any) => updateField({ isolatie: e.target.value  })}
               >
                 <option value="Ja">Ja</option>
                 <option value="Nee">Nee</option>
@@ -301,7 +311,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
               <AppInputField
                 type="number"
                 value={editingRow.dikte || ''}
-                onChange={(e) => setEditingRow({ ...editingRow, dikte: e.target.value })}
+                onChange={(e) => updateField({ dikte: e.target.value  })}
                 placeholder={t('structural.thicknessPlaceholder')}
               />
             </div>
@@ -313,7 +323,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
               <AppInputField
                 type="text"
                 value={editingRow.bouwjaar || ''}
-                onChange={(e) => setEditingRow({ ...editingRow, bouwjaar: e.target.value })}
+                onChange={(e) => updateField({ bouwjaar: e.target.value  })}
                 placeholder={t('structural.yearBuiltPlaceholder')}
               />
             </div>
@@ -324,7 +334,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
             <AppFlagPicker
               value={editingRow.flag}
               onChange={(val) => {
-                setEditingRow({ ...editingRow, flag: val || undefined });
+                updateField({ flag: val || undefined  });
                 if (flagKey && onFlagChange) {
                   onFlagChange(flagKey, val || null);
                 }
@@ -340,7 +350,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
                 step="0.01"
                 className="font-mono font-bold text-center"
                 value={editingRow.uWaarde || ''}
-                onChange={(e) => setEditingRow({ ...editingRow, uWaarde: e.target.value })}
+                onChange={(e) => updateField({ uWaarde: e.target.value  })}
                 placeholder={editingRow.invoer === 'Beslisschema' ? getCalculatedUValue(editingRow) : "Bijv. 1.6"}
               />
             </div>
@@ -354,7 +364,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
                 step="0.01"
                 className="font-mono font-bold text-center"
                 value={editingRow.rc || ''}
-                onChange={(e) => setEditingRow({ ...editingRow, rc: e.target.value })}
+                onChange={(e) => updateField({ rc: e.target.value  })}
                 placeholder={editingRow.invoer === 'Beslisschema' ? getCalculatedRcValue(editingRow) : "Bijv. 2.5"}
               />
             </div>
@@ -408,8 +418,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
                             type="button"
                             onClick={() => {
                               const next = allPhotos.filter((_, i) => i !== idx);
-                              setEditingRow({
-                                ...editingRow,
+                              updateField({
                                 photos: next,
                                 photoUrl: next[0] || undefined,
                                 photoTag: next.length > 0 ? `[${editingRow.type}] ${editingRow.naam}` : undefined
@@ -442,8 +451,7 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
           initialPhotoUrls={[...(editingRow.photos || []), ...(editingRow.photoUrl ? [editingRow.photoUrl] : [])].filter((p, i, arr) => p && arr.indexOf(p) === i)}
           onSelect={(dataUrls) => {
             const newPhotos = dataUrls || [];
-            setEditingRow({
-              ...editingRow,
+            updateField({
               photos: newPhotos,
               photoUrl: newPhotos.length > 0 ? newPhotos[0] : '',
               photoTag: newPhotos.length > 0 ? `[${editingRow.type}] ${editingRow.naam}` : undefined
@@ -455,3 +463,4 @@ export const ConstructieEditModal: React.FC<ConstructieEditModalProps> = ({
     </>
   );
 };
+

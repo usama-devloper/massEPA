@@ -547,8 +547,31 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
         current[keys[keys.length - 1]] = val;
       };
 
+      let roleToSave = 'SYS';
+      if (userProfile?.role === 'INSPECTOR') roleToSave = 'INS';
+      else if (userProfile?.role === 'BEWONER') roleToSave = 'BWO';
+      else if (userProfile?.role === 'BACK_OFFICE') roleToSave = 'SYS';
+      else if (userProfile?.role) {
+        if (userProfile.role.includes('INSPECTOR')) roleToSave = 'INS';
+        else if (userProfile.role.includes('BEWONER')) roleToSave = 'BWO';
+      }
+      const clientId = prev.clientId || 'default';
+      let rolesChanged = false;
+      let rolesData: Record<string, string> = {};
+      try {
+        rolesData = JSON.parse(localStorage.getItem(`field_roles_${clientId}`) || '{}');
+      } catch (e) { }
+
+      const trackRole = (p: string) => {
+        if (p.startsWith('algemeen.')) {
+          rolesData[p] = roleToSave;
+          rolesChanged = true;
+        }
+      };
+
       if (typeof pathOrUpdates === 'string') {
         applyUpdate(pathOrUpdates, value || '');
+        trackRole(pathOrUpdates);
         if (pathOrUpdates === 'algemeen.woning.adres') applyUpdate('algemeen.bewoner.adres', value || '');
         if (pathOrUpdates === 'algemeen.woning.postcode') applyUpdate('algemeen.bewoner.postcode', value || '');
         if (pathOrUpdates === 'algemeen.woning.plaats') applyUpdate('algemeen.bewoner.plaats', value || '');
@@ -558,6 +581,7 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
       } else {
         Object.entries(pathOrUpdates).forEach(([path, val]) => {
           applyUpdate(path, val);
+          trackRole(path);
           if (path === 'algemeen.woning.adres') applyUpdate('algemeen.bewoner.adres', val);
           if (path === 'algemeen.woning.postcode') applyUpdate('algemeen.bewoner.postcode', val);
           if (path === 'algemeen.woning.plaats') applyUpdate('algemeen.bewoner.plaats', val);
@@ -567,9 +591,15 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
         });
       }
 
+      if (rolesChanged) {
+        try {
+          localStorage.setItem(`field_roles_${clientId}`, JSON.stringify(rolesData));
+        } catch (e) { }
+      }
+
       return newData;
     });
-  }, []);
+  }, [userProfile?.role]);
 
   const handleAddGboT = React.useCallback(() => {
     setData((prev) => ({
@@ -668,6 +698,7 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
       case 'inventory':
         return (
           <InventoryView
+            userRole={userProfile?.role || ''}
             userName={userProfile?.full_name || userName}
             onStartAudit={async (clientRecord) => {
               // Extract city: last word of address string
@@ -796,7 +827,6 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
             kozijnen={data.kozijnen}
             constructies={data.constructies}
             onChange={handleKozijnChange}
-            onChangeData={handleDataChange}
           />
         );
       case 'geometry-overstek':
@@ -841,6 +871,8 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
             data={data}
             onChange={handleDataChange}
             onViewChange={setCurrentView}
+            currentUserName={userProfile?.full_name || userName}
+            currentUserRole={userProfile?.role || 'BACK_OFFICE'}
           />
         );
       case 'settings':
@@ -878,8 +910,8 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
                       type="button"
                       onClick={() => setLocale(id)}
                       className={`text-left rounded-2xl border-2 p-4 transition-all hover:shadow-md cursor-pointer ${selected
-                          ? 'border-primary ring-2 ring-primary/20 shadow-sm'
-                          : 'border-gray-100 hover:border-gray-200'
+                        ? 'border-primary ring-2 ring-primary/20 shadow-sm'
+                        : 'border-gray-100 hover:border-gray-200'
                         }`}
                     >
                       <div className="flex items-center justify-between gap-2">
@@ -913,8 +945,8 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
                       type="button"
                       onClick={() => setThemeId(id)}
                       className={`text-left rounded-2xl border-2 p-4 transition-all hover:shadow-md cursor-pointer ${selected
-                          ? 'border-primary ring-2 ring-primary/20 shadow-sm'
-                          : 'border-gray-100 hover:border-gray-200'
+                        ? 'border-primary ring-2 ring-primary/20 shadow-sm'
+                        : 'border-gray-100 hover:border-gray-200'
                         }`}
                     >
                       <div className="flex items-center justify-between gap-2 mb-3">

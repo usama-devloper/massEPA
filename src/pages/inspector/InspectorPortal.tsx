@@ -539,6 +539,7 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
       case 'inventory':
         return (
           <InventoryView 
+            userRole="INSPECTOR"
             userName={userProfile?.full_name || userName}
             onStartAudit={async (clientRecord) => {
               const addressParts = (clientRecord.address || '').trim().split(/\s+/);

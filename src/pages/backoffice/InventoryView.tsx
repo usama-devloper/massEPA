@@ -17,6 +17,7 @@ interface AuditItem {
 interface InventoryViewProps {
   onStartAudit: (client: ClientRecord) => void;
   userName: string;
+  userRole?: string;
   onViewChange?: (view: string) => void;
 }
 
@@ -28,7 +29,8 @@ const SAMPLE_INSPECTORS = [
   'Kees van Dijk'
 ];
 
-export const InventoryView: React.FC<InventoryViewProps> = ({ onStartAudit, userName, onViewChange }) => {
+export const InventoryView: React.FC<InventoryViewProps> = ({ onStartAudit, userName, onViewChange, userRole }) => {
+  const isInspectorRole = userRole?.toUpperCase() === 'INSPECTOR' || userRole?.toUpperCase() === 'INS';
   const { t } = useLanguage();
   const tr = (key: string, fallback: string) => {
     const val = t(key);
@@ -337,79 +339,81 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onStartAudit, user
             </div>
 
             {/* Vertical Separator */}
-            <div className="h-5 w-px bg-outline-variant/10 mx-1 hidden min-[480px]:block" />
+            {!isInspectorRole && <div className="h-5 w-px bg-outline-variant/10 mx-1 hidden min-[480px]:block" />}
 
             {/* Inspector Filter Dropdown Selector */}
-            <div className="relative">
-              <button 
-                type="button"
-                onClick={() => {
-                  setIsInspectorDropdownOpen(!isInspectorDropdownOpen);
-                  setIsCityDropdownOpen(false);
-                  setIsTimeDropdownOpen(false);
-                }}
-                className={`flex items-center justify-between gap-2 px-4 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer select-none ${
-                  selectedInspectorFilter 
-                    ? 'border-primary bg-primary/10 text-primary' 
-                    : 'border-outline-variant/15 bg-white text-on-surface-variant/60 hover:bg-gray-50'
-                }`}
-              >
-                <span>
-                  {selectedInspectorFilter === null && tr('inventory.filterInspector', 'Filter op inspecteur')}
-                  {selectedInspectorFilter === 'unassigned' && tr('inventory.unassigned', 'Niet toegewezen')}
-                  {selectedInspectorFilter !== null && selectedInspectorFilter !== 'unassigned' && selectedInspectorFilter}
-                </span>
-                <ChevronDown size={13} className={`text-on-surface-variant/40 transition-transform ${isInspectorDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {isInspectorDropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setIsInspectorDropdownOpen(false)} />
-                  <div className="absolute left-0 mt-1.5 w-52 bg-white border border-outline-variant/10 rounded-xl shadow-lg py-1 z-50 animate-in fade-in slide-in-from-top-1 duration-100">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedInspectorFilter(null);
-                        setIsInspectorDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-xs font-bold hover:bg-gray-50 transition-colors cursor-pointer ${
-                        selectedInspectorFilter === null ? 'text-primary bg-primary/5' : 'text-on-surface-variant/70'
-                      }`}
-                    >
-                      {tr('inventory.allInspectors', 'Alle inspecteurs')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedInspectorFilter('unassigned');
-                        setIsInspectorDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-xs font-bold hover:bg-gray-50 transition-colors cursor-pointer ${
-                        selectedInspectorFilter === 'unassigned' ? 'text-primary bg-primary/5' : 'text-amber-700 bg-amber-50/40'
-                      }`}
-                    >
-                      {tr('inventory.unassigned', 'Niet toegewezen')}
-                    </button>
-                    <div className="my-1 border-t border-outline-variant/10" />
-                    {SAMPLE_INSPECTORS.map(insp => (
+            {!isInspectorRole && (
+              <div className="relative">
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setIsInspectorDropdownOpen(!isInspectorDropdownOpen);
+                    setIsCityDropdownOpen(false);
+                    setIsTimeDropdownOpen(false);
+                  }}
+                  className={`flex items-center justify-between gap-2 px-4 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer select-none ${
+                    selectedInspectorFilter 
+                      ? 'border-primary bg-primary/10 text-primary' 
+                      : 'border-outline-variant/15 bg-white text-on-surface-variant/60 hover:bg-gray-50'
+                  }`}
+                >
+                  <span>
+                    {selectedInspectorFilter === null && tr('inventory.filterInspector', 'Filter op inspecteur')}
+                    {selectedInspectorFilter === 'unassigned' && tr('inventory.unassigned', 'Niet toegewezen')}
+                    {selectedInspectorFilter !== null && selectedInspectorFilter !== 'unassigned' && selectedInspectorFilter}
+                  </span>
+                  <ChevronDown size={13} className={`text-on-surface-variant/40 transition-transform ${isInspectorDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {isInspectorDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsInspectorDropdownOpen(false)} />
+                    <div className="absolute left-0 mt-1.5 w-52 bg-white border border-outline-variant/10 rounded-xl shadow-lg py-1 z-50 animate-in fade-in slide-in-from-top-1 duration-100">
                       <button
-                        key={insp}
                         type="button"
                         onClick={() => {
-                          setSelectedInspectorFilter(insp);
+                          setSelectedInspectorFilter(null);
                           setIsInspectorDropdownOpen(false);
                         }}
                         className={`w-full text-left px-4 py-2 text-xs font-bold hover:bg-gray-50 transition-colors cursor-pointer ${
-                          selectedInspectorFilter === insp ? 'text-primary bg-primary/5' : 'text-on-surface-variant/70'
+                          selectedInspectorFilter === null ? 'text-primary bg-primary/5' : 'text-on-surface-variant/70'
                         }`}
                       >
-                        {insp}
+                        {tr('inventory.allInspectors', 'Alle inspecteurs')}
                       </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedInspectorFilter('unassigned');
+                          setIsInspectorDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-xs font-bold hover:bg-gray-50 transition-colors cursor-pointer ${
+                          selectedInspectorFilter === 'unassigned' ? 'text-primary bg-primary/5' : 'text-amber-700 bg-amber-50/40'
+                        }`}
+                      >
+                        {tr('inventory.unassigned', 'Niet toegewezen')}
+                      </button>
+                      <div className="my-1 border-t border-outline-variant/10" />
+                      {SAMPLE_INSPECTORS.map(insp => (
+                        <button
+                          key={insp}
+                          type="button"
+                          onClick={() => {
+                            setSelectedInspectorFilter(insp);
+                            setIsInspectorDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 text-xs font-bold hover:bg-gray-50 transition-colors cursor-pointer ${
+                            selectedInspectorFilter === insp ? 'text-primary bg-primary/5' : 'text-on-surface-variant/70'
+                          }`}
+                        >
+                          {insp}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Wis Filters Link */}
@@ -488,26 +492,28 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onStartAudit, user
 
                 <div className="flex items-center gap-3 shrink-0 flex-wrap sm:flex-nowrap">
                   {/* Assign Inspector Selector Dropdown */}
-                  <div className="flex flex-col min-w-[170px]">
-                    <label className="text-[9px] font-black uppercase text-on-surface-variant/40 tracking-wider mb-1">
-                      {tr('inventory.assignInspector', 'Toegewezen Inspecteur')}
-                    </label>
-                    <div className="relative">
-                      <select
-                        value={assignedInspectors[audit.id] || ''}
-                        onChange={(e) => handleAssignInspector(audit.id, e.target.value)}
-                        className="w-full bg-white border border-outline-variant/20 hover:border-primary/40 rounded-xl px-3 py-2 text-xs font-bold text-on-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer shadow-2xs appearance-none pr-8 transition-colors"
-                      >
-                        <option value="">-- Selecteer Inspecteur --</option>
-                        {SAMPLE_INSPECTORS.map((insp) => (
-                          <option key={insp} value={insp}>
-                            {insp}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant/50 pointer-events-none" />
+                  {!isInspectorRole && (
+                    <div className="flex flex-col min-w-[170px]">
+                      <label className="text-[9px] font-black uppercase text-on-surface-variant/40 tracking-wider mb-1">
+                        {tr('inventory.assignInspector', 'Toegewezen Inspecteur')}
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={assignedInspectors[audit.id] || ''}
+                          onChange={(e) => handleAssignInspector(audit.id, e.target.value)}
+                          className="w-full bg-white border border-outline-variant/20 hover:border-primary/40 rounded-xl px-3 py-2 text-xs font-bold text-on-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer shadow-2xs appearance-none pr-8 transition-colors"
+                        >
+                          <option value="">-- Selecteer Inspecteur --</option>
+                          {SAMPLE_INSPECTORS.map((insp) => (
+                            <option key={insp} value={insp}>
+                              {insp}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant/50 pointer-events-none" />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Audit trigger button (styled forest green of massEPA) */}
                   <button

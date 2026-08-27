@@ -136,7 +136,7 @@ export function DashboardPage({
     { name: t('dashboard.categories.algemeen'), icon: dashboardCategoryIcon(Step.ALGEMEEN), step: Step.ALGEMEEN, progress: 0, subtext: '0/5 fields' },
     { name: t('dashboard.categories.upload'), icon: dashboardCategoryIcon(Step.UPLOAD), step: Step.UPLOAD, progress: 0, subtext: '0/2 sections' },
     { name: t('dashboard.categories.insulation'), icon: dashboardCategoryIcon(Step.INSULATION_DETAILS), step: Step.INSULATION_DETAILS, progress: 0, subtext: '0/4 cats' },
-    { name: t('dashboard.categories.installatie'), icon: dashboardCategoryIcon(Step.INSTALLATIE), step: Step.INSTALLATIE, progress: 0, subtext: '0/8 sec' },
+    { name: t('dashboard.categories.installatie'), icon: dashboardCategoryIcon(Step.INSTALLATIE), step: Step.INSTALLATIE, progress: 0, subtext: '0/5 sec' },
     { name: t('dashboard.categories.photos'), icon: dashboardCategoryIcon(Step.PHOTO_CAPTURE), step: Step.PHOTO_CAPTURE, progress: 0, subtext: '0/4 items' },
   ]);
 
@@ -161,13 +161,28 @@ export function DashboardPage({
       try {
         const parsed = JSON.parse(algemeenData);
         let filledFields = 0;
+        let totalFields = 5;
         if (parsed.buildingType && parsed.buildingType !== '') filledFields++;
         if (parsed.position && parsed.position !== '') filledFields++;
         if (parsed.location && parsed.location !== '') filledFields++;
-        if (parsed.numberOfFloors && parsed.numberOfFloors !== null) filledFields++;
+        if (parsed.numberOfFloors !== null && parsed.numberOfFloors !== undefined) filledFields++;
         if (parsed.hasFloorPlans !== undefined && parsed.hasFloorPlans !== null) filledFields++;
-        const progress = Math.round((filledFields / 5) * 100);
-        patch[Step.ALGEMEEN] = { progress, subtext: `${filledFields}/5 fields` };
+        
+        const isApt = parsed.buildingType === 'Woning in een appartementencomplex' || parsed.buildingType === 'Woning in een appartementencomplex met niet zelfstandige wooneenheden met eigen adressen';
+        if (isApt) {
+            totalFields++;
+            if (parsed.whichFloor && parsed.whichFloor !== '') filledFields++;
+        }
+        
+        const showBasement = !isApt || parsed.whichFloor === 'Begane grond';
+        if (showBasement) {
+            totalFields += 2;
+            if (parsed.hasKelder !== null && parsed.hasKelder !== undefined) filledFields++;
+            if (parsed.hasKruipruimte !== null && parsed.hasKruipruimte !== undefined) filledFields++;
+        }
+
+        const progress = Math.round((filledFields / totalFields) * 100);
+        patch[Step.ALGEMEEN] = { progress, subtext: `${filledFields}/${totalFields} fields` };
       } catch {
         /* ignore */
       }
@@ -241,13 +256,15 @@ export function DashboardPage({
             completedCategories++;
           }
         }
-        const progress =
-          selectedCategories.length > 0
-            ? Math.round((completedCategories / selectedCategories.length) * 100)
-            : 0;
+        
+        const isDone = parsed.hasNewInsulation === false || (selectedCategories.length > 0 && completedCategories === selectedCategories.length);
+        const progress = isDone ? 100 : (selectedCategories.length > 0 ? Math.round((completedCategories / selectedCategories.length) * 100) : 0);
+        const displayTotal = parsed.hasNewInsulation === false ? 4 : (selectedCategories.length > 0 ? selectedCategories.length : 4);
+        const displayCompleted = parsed.hasNewInsulation === false ? 4 : completedCategories;
+        
         patch[Step.INSULATION_DETAILS] = {
           progress,
-          subtext: `${completedCategories}/${selectedCategories.length} cats`,
+          subtext: `${displayCompleted}/${displayTotal} cats`,
         };
       } catch {
         /* ignore */
@@ -263,6 +280,7 @@ export function DashboardPage({
         const isSectionDone = (id: string): boolean => {
           switch (id) {
             case 'ventilation':
+              if (parsed.ventilationType === 'natural') return true;
               return parsed.ventilationCo2 !== null && parsed.ventilationCo2 !== undefined;
             case 'heating':
               return !!(parsed.heatingSystemType && parsed.heatingLocation);
@@ -276,10 +294,10 @@ export function DashboardPage({
               return false;
           }
         };
-        const totalSections = selected.length;
+        const totalSections = selected.length > 0 ? selected.length : 5;
         const sectionsCompleted = selected.filter(isSectionDone).length;
         const progress =
-          totalSections > 0 ? Math.round((sectionsCompleted / totalSections) * 100) : 0;
+          selected.length > 0 ? Math.round((sectionsCompleted / selected.length) * 100) : 0;
         patch[Step.INSTALLATIE] = {
           progress,
           subtext: `${sectionsCompleted}/${totalSections} sec`,

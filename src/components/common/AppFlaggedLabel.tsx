@@ -18,25 +18,25 @@ export const AppFlaggedLabel: React.FC<AppFlaggedLabelProps> = ({
 
   if (value === 'red') {
     labelNode = (
-      <span className="bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full font-black text-[10px] uppercase tracking-wider block w-fit">
+      <span className="bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full font-black text-[10px] uppercase tracking-wider block w-fit font-sans leading-none">
         {label}
       </span>
     );
   } else if (value === 'yellow') {
     labelNode = (
-      <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-black text-[10px] uppercase tracking-wider block w-fit">
+      <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-black text-[10px] uppercase tracking-wider block w-fit font-sans leading-none">
         {label}
       </span>
     );
   } else if (value === 'green') {
     labelNode = (
-      <span className="bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-black text-[10px] uppercase tracking-wider block w-fit">
+      <span className="bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-black text-[10px] uppercase tracking-wider block w-fit font-sans leading-none">
         {label}
       </span>
     );
   } else {
     labelNode = (
-      <span className="text-on-surface-variant/70 font-bold text-[10px] uppercase tracking-wider leading-tight">
+      <span className="text-on-surface-variant/70 font-bold text-[10px] uppercase tracking-wider leading-tight font-sans">
         {label}
       </span>
     );

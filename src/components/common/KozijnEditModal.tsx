@@ -20,6 +20,7 @@ interface KozijnEditModalProps {
   data?: InspectionData;
   flagKey?: string;
   onFlagChange?: (key: string, val: 'red' | 'yellow' | 'green' | null) => void;
+  onFieldEdit?: (key: string) => void;
   onChangeData?: (path: string, val: any) => void;
 }
 
@@ -31,10 +32,19 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
   data,
   flagKey,
   onFlagChange,
-  onChangeData
+  onChangeData,
+  onFieldEdit
 }) => {
   const { t } = useLanguage();
   const [editingRow, setEditingRow] = useState<KozijnRow & { photos?: string[], photoUrl?: string } | null>(null);
+
+  const updateField = (updates: Partial<KozijnRow & { photos?: string[], photoUrl?: string }>) => {
+    if (!editingRow) return;
+    setEditingRow({ ...editingRow, ...updates });
+    if (flagKey && onFieldEdit) {
+      onFieldEdit(flagKey);
+    }
+  };
   const [isGevelDropdownOpen, setIsGevelDropdownOpen] = useState(false);
   const [globalPhotoModalOpen, setGlobalPhotoModalOpen] = useState(false);
   const globalFileInputRef = useRef<HTMLInputElement>(null);
@@ -98,11 +108,9 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
         ctx.drawImage(img, 0, 0, width, height);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
         
-        setEditingRow({
-          ...editingRow,
-          photos: [...(editingRow.photos || []), dataUrl].filter((p, i, arr) => arr.indexOf(p) === i),
+        updateField({ photos: [...(editingRow.photos || []), dataUrl].filter((p, i, arr) => arr.indexOf(p) === i),
           photoUrl: dataUrl
-        });
+         });
       };
       img.src = rawDataUrl;
     };
@@ -144,7 +152,7 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
               <AppInputField
                 type="text"
                 value={editingRow.naam || ''}
-                onChange={(e) => setEditingRow({ ...editingRow, naam: e.target.value })}
+                onChange={(e) => updateField({ naam: e.target.value  })}
                 placeholder="Bijv. W1, Deur voor..."
               />
             </div>
@@ -193,7 +201,7 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
                                 } else {
                                   currentGevels = currentGevels.filter(cg => cg.toLowerCase() !== gName.toLowerCase());
                                 }
-                                setEditingRow({ ...editingRow, gevel: currentGevels.join(', ') });
+                                updateField({ gevel: currentGevels.join(', ')  });
                               }}
                             />
                             <span className="text-on-background text-[11px] leading-tight select-none">{gName}</span>
@@ -217,7 +225,7 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
                 onChange={(e) => {
                   const w = parseFloat(e.target.value) || 0;
                   const h = parseFloat(editingRow.height || '0') || 0;
-                  setEditingRow({ ...editingRow, width: e.target.value, area: w > 0 && h > 0 ? (w * h).toFixed(2) : editingRow.area });
+                  updateField({ width: e.target.value, area: w > 0 && h > 0 ? (w * h).toFixed(2) : editingRow.area  });
                 }}
                 placeholder="0.00"
               />
@@ -231,7 +239,7 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
                 onChange={(e) => {
                   const h = parseFloat(e.target.value) || 0;
                   const w = parseFloat(editingRow.width || '0') || 0;
-                  setEditingRow({ ...editingRow, height: e.target.value, area: w > 0 && h > 0 ? (w * h).toFixed(2) : editingRow.area });
+                  updateField({ height: e.target.value, area: w > 0 && h > 0 ? (w * h).toFixed(2) : editingRow.area  });
                 }}
                 placeholder="0.00"
               />
@@ -239,12 +247,12 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Area (m²)</label>
+            <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Area (mÂ²)</label>
             <AppInputField
               type="number"
               step="0.01"
               value={editingRow.area || ''}
-              onChange={(e) => setEditingRow({ ...editingRow, area: e.target.value })}
+              onChange={(e) => updateField({ area: e.target.value  })}
               placeholder="0.00"
             />
           </div>
@@ -253,7 +261,7 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
             <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Constructie</label>
             <LocalSelect
               value={editingRow.constructieId || ''}
-              onChange={(e: any) => setEditingRow({ ...editingRow, constructieId: e.target.value })}
+              onChange={(e: any) => updateField({ constructieId: e.target.value  })}
             >
               <option value="">- Selecteer Constructie -</option>
               {(data?.constructies || []).filter(c => ['Raam', 'Deur', 'Paneel'].includes(c.type)).map(c => (
@@ -267,7 +275,7 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
             <AppFlagPicker
               value={editingRow.flag}
               onChange={(val) => {
-                setEditingRow({ ...editingRow, flag: val || undefined });
+                updateField({ flag: val || undefined  });
                 if (flagKey && onFlagChange) {
                   onFlagChange(flagKey, val || null);
                 }
@@ -323,11 +331,9 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
                             type="button"
                             onClick={() => {
                               const next = allPhotos.filter((_, i) => i !== idx);
-                              setEditingRow({
-                                ...editingRow,
-                                photos: next,
+                              updateField({ photos: next,
                                 photoUrl: next[0] || undefined
-                              });
+                               });
                             }}
                             className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-red-600 text-white rounded-md opacity-100 lg:opacity-0 lg:group-hover/photo:opacity-100 transition-all cursor-pointer"
                             title="Verwijder foto"
@@ -356,11 +362,9 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
           initialPhotoUrls={[...(editingRow.photos || []), ...(editingRow.photoUrl ? [editingRow.photoUrl] : [])].filter((p, i, arr) => p && arr.indexOf(p) === i)}
           onSelect={(dataUrls) => {
             const newPhotos = dataUrls || [];
-            setEditingRow({
-              ...editingRow,
-              photos: newPhotos,
+            updateField({ photos: newPhotos,
               photoUrl: newPhotos.length > 0 ? newPhotos[0] : ''
-            });
+             });
           }}
           onUpload={handleGlobalUploadAction}
         />
@@ -368,3 +372,4 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
     </>
   );
 };
+

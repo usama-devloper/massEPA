@@ -271,6 +271,7 @@
     padding-bottom: 0.5rem;
     font-size: 0.875rem;
     font-weight: 600;
+    font-family: inherit;
     border: 1px solid transparent;
     width: 100%;
     min-width: 0;

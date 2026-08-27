@@ -46,6 +46,7 @@ interface BouwkundigEditModalProps {
   onChangeData?: (path: string, value: any) => void;
   flagKey?: string;
   onFlagChange?: (key: string, val: 'red' | 'yellow' | 'green' | null) => void;
+  onFieldEdit?: (key: string) => void;
 }
 
 export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
@@ -56,10 +57,21 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
   data,
   onChangeData,
   flagKey,
-  onFlagChange
+  onFlagChange,
+  onFieldEdit
 }) => {
   const { t } = useLanguage();
+  
+
   const [editingRow, setEditingRow] = useState<BouwkundigRow | null>(null);
+
+  const updateField = (updates: Partial<BouwkundigRow>) => {
+    if (!editingRow) return;
+    setEditingRow({ ...editingRow, ...updates });
+    if (flagKey && onFieldEdit) {
+      onFieldEdit(flagKey);
+    }
+  };
   
   const [globalPhotoModalOpen, setGlobalPhotoModalOpen] = useState(false);
   const globalFileInputRef = useRef<HTMLInputElement>(null);
@@ -110,11 +122,9 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
         ctx.drawImage(img, 0, 0, width, height);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
         
-        setEditingRow({
-          ...editingRow,
-          photos: [...(editingRow.photos || []), dataUrl].filter((p, i, arr) => arr.indexOf(p) === i),
+        updateField({ photos: [...(editingRow.photos || []), dataUrl].filter((p, i, arr) => arr.indexOf(p) === i),
           photoUrl: dataUrl
-        });
+         });
       };
       img.src = rawDataUrl;
     };
@@ -155,7 +165,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
             <AppInputField
               type="text"
               value={editingRow.naam || ''}
-              onChange={(e) => setEditingRow({ ...editingRow, naam: e.target.value })}
+              onChange={(e) => updateField({ naam: e.target.value  })}
               placeholder="Bijv. Voorgevel, Begane Grondvloer..."
             />
           </div>
@@ -164,7 +174,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
             <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Constructie</label>
             <LocalSelect
               value={editingRow.constructieId || ''}
-              onChange={(e: any) => setEditingRow({ ...editingRow, constructieId: e.target.value })}
+              onChange={(e: any) => updateField({ constructieId: e.target.value  })}
             >
               <option value="">- Selecteer Constructie -</option>
               {(data?.constructies || []).filter(c => c.type === editingRow.type).map(c => (
@@ -178,7 +188,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
               <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Gevel type</label>
               <LocalSelect
                 value={editingRow.gevel || '-'}
-                onChange={(e: any) => setEditingRow({ ...editingRow, gevel: e.target.value })}
+                onChange={(e: any) => updateField({ gevel: e.target.value  })}
               >
                 <option value="Voorgevel">Voorgevel</option>
                 <option value="Achtergevel">Achtergevel</option>
@@ -195,7 +205,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
               <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Orientation</label>
               <LocalSelect
                 value={editingRow.orientation || '-'}
-                onChange={(e: any) => setEditingRow({ ...editingRow, orientation: e.target.value })}
+                onChange={(e: any) => updateField({ orientation: e.target.value  })}
               >
                 {['N', 'NO', 'O', 'ZO', 'Z', 'ZW', 'W', 'NW', 'Horizontaal', '-'].map(opt => (
                   <option key={opt} value={opt}>{opt}</option>
@@ -208,7 +218,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
             <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Grenst aan</label>
             <LocalSelect
               value={editingRow.grenstAan || '-'}
-              onChange={(e: any) => setEditingRow({ ...editingRow, grenstAan: e.target.value })}
+              onChange={(e: any) => updateField({ grenstAan: e.target.value  })}
             >
               {(() => {
                 let grenstOptions = ['Buitenlucht'];
@@ -232,11 +242,9 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
                   const val = e.target.value;
                   const w = parseFloat(val.replace(',', '.') || '0');
                   const h = parseFloat(editingRow.hoogte?.replace(',', '.') || '0');
-                  setEditingRow({ 
-                    ...editingRow, 
-                    breedte: val,
+                  updateField({ breedte: val,
                     oppervlakte: (w > 0 && h > 0) ? (w * h).toFixed(2) : editingRow.oppervlakte
-                  });
+                   });
                 }}
               />
             </div>
@@ -249,11 +257,9 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
                   const val = e.target.value;
                   const h = parseFloat(val.replace(',', '.') || '0');
                   const w = parseFloat(editingRow.breedte?.replace(',', '.') || '0');
-                  setEditingRow({ 
-                    ...editingRow, 
-                    hoogte: val,
+                  updateField({ hoogte: val,
                     oppervlakte: (w > 0 && h > 0) ? (w * h).toFixed(2) : editingRow.oppervlakte
-                  });
+                   });
                 }}
               />
             </div>
@@ -266,7 +272,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
                 <AppInputField
                   type="text"
                   value={editingRow.perimeter || ''}
-                  onChange={(e) => setEditingRow({ ...editingRow, perimeter: e.target.value })}
+                  onChange={(e) => updateField({ perimeter: e.target.value  })}
                 />
               </div>
               <div>
@@ -279,12 +285,12 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
           )}
 
           <div>
-            <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Oppervlakte (m²)</label>
+            <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Oppervlakte (mÂ²)</label>
             <AppInputField
               type="text"
               className="font-mono font-bold"
               value={editingRow.oppervlakte || ''}
-              onChange={(e) => setEditingRow({ ...editingRow, oppervlakte: e.target.value })}
+              onChange={(e) => updateField({ oppervlakte: e.target.value  })}
             />
           </div>
 
@@ -294,7 +300,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
               <AppInputField
                 type="text"
                 value={editingRow.hellingshoek || ''}
-                onChange={(e) => setEditingRow({ ...editingRow, hellingshoek: e.target.value })}
+                onChange={(e) => updateField({ hellingshoek: e.target.value  })}
               />
             </div>
           )}
@@ -304,7 +310,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
             <AppFlagPicker
               value={editingRow.flag}
               onChange={(val) => {
-                setEditingRow({ ...editingRow, flag: val || undefined });
+                updateField({ flag: val || undefined  });
                 if (flagKey && onFlagChange) {
                   onFlagChange(flagKey, val || null);
                 }
@@ -355,7 +361,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
                         />
                         <div className="flex flex-col">
                           <span className="text-on-background text-[10px] leading-tight">{k.naam}</span>
-                          <span className="text-[9px] text-on-surface-variant/50 font-semibold leading-tight">{k.width} m x {k.height} m (Area: {k.area} m²)</span>
+                          <span className="text-[9px] text-on-surface-variant/50 font-semibold leading-tight">{k.width} m x {k.height} m (Area: {k.area} mÂ²)</span>
                         </div>
                       </label>
                     );
@@ -413,8 +419,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
                             type="button"
                             onClick={() => {
                               const next = allPhotos.filter((_, i) => i !== idx);
-                              setEditingRow({
-                                ...editingRow,
+                              updateField({
                                 photos: next,
                                 photoUrl: next[0] || undefined,
                                 photoTag: next.length > 0 ? `[${editingRow.type}] ${editingRow.naam}` : undefined
@@ -447,8 +452,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
           initialPhotoUrls={[...(editingRow.photos || []), ...(editingRow.photoUrl ? [editingRow.photoUrl] : [])].filter((p, i, arr) => p && arr.indexOf(p) === i)}
           onSelect={(dataUrls) => {
             const newPhotos = dataUrls || [];
-            setEditingRow({
-              ...editingRow,
+            updateField({
               photos: newPhotos,
               photoUrl: newPhotos.length > 0 ? newPhotos[0] : '',
               photoTag: newPhotos.length > 0 ? `[${editingRow.type}] ${editingRow.naam}` : undefined
@@ -460,3 +464,4 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
     </>
   );
 };
+

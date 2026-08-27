@@ -5,7 +5,14 @@
 		},
 		{
 			"path": "../mEpaAdmin/backend"
+		},
+		{
+			"path": "../massEPA_live"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"workbench.editor.autoLockGroups": {
+			"workbench.editor.chatSession": true
+		}
+	}
 }

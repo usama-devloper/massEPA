@@ -581,7 +581,7 @@ const ConstructieView: React.FC<ConstructieViewProps> = ({ data, onChange, allow
           const newPhotoUrl = newPhotos.length > 0 ? newPhotos[0] : '';
           
           if (source === 'table') {
-            onChange(constructies.map(r => r.id === id ? { ...r, photos: newPhotos, photoUrl: newPhotoUrl } : r));
+            onChange(allConstructies.map(r => r.id === id ? { ...r, photos: newPhotos, photoUrl: newPhotoUrl } : r));
           } else if (source === 'modal' && editingRow && editingRow.id === id) {
             setEditingRow({
               ...editingRow,
