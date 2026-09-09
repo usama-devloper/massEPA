@@ -960,7 +960,10 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                                 </div>
                               </td>
                               <td className="px-4 py-3.5 text-center" onClick={e => e.stopPropagation()}>
-                                <div className="flex justify-center">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <span className="text-[9px] font-black text-neutral-500 tracking-wider leading-none">
+                                    SYS
+                                  </span>
                                   <AppFlagPicker
                                     value={flags[`bouwkundig_${originalIdx}`]}
                                     onChange={(val) => toggleFlag(`bouwkundig_${originalIdx}`, val)}
@@ -1089,7 +1092,10 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                                 </div>
                               </td>
                               <td className="px-4 py-3.5 text-center" onClick={e => e.stopPropagation()}>
-                                <div className="flex justify-center">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <span className="text-[9px] font-black text-neutral-500 tracking-wider leading-none">
+                                    SYS
+                                  </span>
                                   <AppFlagPicker
                                     value={flags[`bouwkundig_${originalIdx}`]}
                                     onChange={(val) => toggleFlag(`bouwkundig_${originalIdx}`, val)}
@@ -1230,7 +1236,10 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                                 </div>
                               </td>
                               <td className="px-4 py-3.5 text-center" onClick={e => e.stopPropagation()}>
-                                <div className="flex justify-center">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <span className="text-[9px] font-black text-neutral-500 tracking-wider leading-none">
+                                    SYS
+                                  </span>
                                   <AppFlagPicker
                                     value={flags[`bouwkundig_${originalIdx}`]}
                                     onChange={(val) => toggleFlag(`bouwkundig_${originalIdx}`, val)}
@@ -1361,7 +1370,10 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                                 </div>
                               </td>
                               <td className="px-4 py-3.5 text-center" onClick={e => e.stopPropagation()}>
-                                <div className="flex justify-center">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <span className="text-[9px] font-black text-neutral-500 tracking-wider leading-none">
+                                    SYS
+                                  </span>
                                   <AppFlagPicker
                                     value={flags[`bouwkundig_${originalIdx}`]}
                                     onChange={(val) => toggleFlag(`bouwkundig_${originalIdx}`, val)}
@@ -1472,8 +1484,11 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                             <td className="px-4 py-3.5 font-semibold text-on-surface-variant">{row.zonwering ? translateOverstekOption(row.zonwering, t) : '-'}</td>
 
                             <td className="px-4 py-3.5 text-center" onClick={e => e.stopPropagation()}>
-                              <div className="flex justify-center">
-                                <AppFlagPicker
+                              <div className="flex items-center justify-center gap-1.5">
+                                  <span className="text-[9px] font-black text-neutral-500 tracking-wider leading-none">
+                                    SYS
+                                  </span>
+                                  <AppFlagPicker
                                   value={flags[`overstek_${idx}`]}
                                   onChange={(val) => toggleFlag(`overstek_${idx}`, val)}
                                   size="sm"
@@ -1636,8 +1651,11 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
                               })()}
                             </td>
                             <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
-                              <div className="flex justify-center">
-                                <AppFlagPicker
+                              <div className="flex items-center justify-center gap-1.5">
+                                  <span className="text-[9px] font-black text-neutral-500 tracking-wider leading-none">
+                                    SYS
+                                  </span>
+                                  <AppFlagPicker
                                   value={flags[`library_${kz.id}`]}
                                   onChange={(val) => toggleFlag(`library_${kz.id}`, val)}
                                   size="sm"

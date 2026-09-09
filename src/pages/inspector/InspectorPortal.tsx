@@ -4,7 +4,7 @@ import { TopBar } from '../../components/common/TopBar';
 import { InspectionData, ViewType, User } from '../backoffice/backofficeTypes';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
-import { 
+import {
   Check, Languages, Palette, Camera, X, Loader2,
   FileDigit, ClipboardList
 } from 'lucide-react';
@@ -221,13 +221,13 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialUser, onClose,
         role: initialUser?.role || 'INSPECTOR',
         profile_picture: avatar,
       };
-      
+
       localStorage.setItem('user_name', fullName);
       localStorage.setItem('user_email', email);
       if (avatar) {
         localStorage.setItem('user_avatar', avatar);
       }
-      
+
       setSuccess(true);
       setTimeout(() => {
         onSaved(updatedUser);
@@ -266,21 +266,21 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialUser, onClose,
               {fullName ? fullName.substring(0, 1).toUpperCase() : 'I'}
             </div>
           )}
-          
+
           <label className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
             <Camera size={16} className="mb-0.5" />
             <span className="font-bold text-[8px] uppercase tracking-wide">Wijzigen</span>
-            <input 
-              type="file" 
-              accept="image/*" 
-              onChange={handleAvatarChange} 
-              className="hidden" 
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              className="hidden"
             />
           </label>
         </div>
         {avatar && (
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={() => setAvatar('')}
             className="text-[10px] font-bold text-red-500 hover:text-red-700 mt-1.5 transition-colors cursor-pointer"
           >
@@ -416,6 +416,7 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
 
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Load profile locally
   useEffect(() => {
@@ -445,20 +446,20 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
     if (data.clientId) {
       idbPut(`mepa_inspection_data_${data.clientId}`, data).catch(console.error);
     }
-    
+
     const syncRegistry = async () => {
       try {
         const registry = await loadClientsRegistry();
-        const idx = registry.clients.findIndex(c => 
+        const idx = registry.clients.findIndex(c =>
           (data.clientId && c.id === data.clientId) ||
           (data.algemeen.bewoner.email && c.email === data.algemeen.bewoner.email) ||
           (data.algemeen.bewoner.persoon && c.fullName === data.algemeen.bewoner.persoon) ||
           (data.algemeen.bewoner.adres && c.address.includes(data.algemeen.bewoner.adres))
         );
-        
+
         if (idx !== -1) {
           const client = registry.clients[idx];
-          
+
           let updatedAddress = client.address;
           if (data.algemeen.bewoner.adres) {
             const parts = data.algemeen.bewoner.adres.trim().split(/\s+/);
@@ -497,7 +498,7 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
   const handleDataChange = React.useCallback((pathOrUpdates: string | Record<string, string>, value?: string) => {
     setData((prev) => {
       const newData = JSON.parse(JSON.stringify(prev));
-      
+
       const applyUpdate = (path: string, val: string) => {
         const keys = path.split('.');
         let current: any = newData;
@@ -529,7 +530,7 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
           if (path === 'algemeen.bewoner.plaats') applyUpdate('algemeen.woning.plaats', val);
         });
       }
-      
+
       return newData;
     });
   }, []);
@@ -538,7 +539,7 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
     switch (currentView) {
       case 'inventory':
         return (
-          <InventoryView 
+          <InventoryView
             userRole="INSPECTOR"
             userName={userProfile?.full_name || userName}
             onStartAudit={async (clientRecord) => {
@@ -625,11 +626,10 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
                       key={id}
                       type="button"
                       onClick={() => setLocale(id)}
-                      className={`text-left rounded-2xl border-2 p-4 transition-all hover:shadow-md cursor-pointer ${
-                        selected
+                      className={`text-left rounded-2xl border-2 p-4 transition-all hover:shadow-md cursor-pointer ${selected
                           ? 'border-primary ring-2 ring-primary/20 shadow-sm'
                           : 'border-gray-100 hover:border-gray-200'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-display font-black text-base text-on-background">
@@ -661,11 +661,10 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
                       key={id}
                       type="button"
                       onClick={() => setThemeId(id)}
-                      className={`text-left rounded-2xl border-2 p-4 transition-all hover:shadow-md cursor-pointer ${
-                        selected
+                      className={`text-left rounded-2xl border-2 p-4 transition-all hover:shadow-md cursor-pointer ${selected
                           ? 'border-primary ring-2 ring-primary/20 shadow-sm'
                           : 'border-gray-100 hover:border-gray-200'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <span className="font-display font-black text-base text-on-background">
@@ -710,18 +709,32 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
 
   return (
     <div className="flex h-screen overflow-hidden bg-background relative font-sans text-on-background">
-      <BackOfficeSidebar 
-        currentView={currentView} 
-        onViewChange={setCurrentView} 
-        onLogout={onLogout}
-        userName={userProfile?.full_name || userName}
-        items={inspectorNavItems}
-        subtitle="Inspector"
-      />
-      
+      {/* Mobile Sidebar Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[3800] md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      <div className={`${isMobileMenuOpen ? 'fixed inset-y-0 left-0 z-[3900] flex' : 'hidden md:flex'} h-full transition-transform duration-300`}>
+        <BackOfficeSidebar
+          currentView={currentView}
+          onViewChange={(view) => {
+            setCurrentView(view);
+            setIsMobileMenuOpen(false);
+          }}
+          onLogout={onLogout}
+          userName={userProfile?.full_name || userName}
+          items={inspectorNavItems}
+          subtitle="Inspector"
+        />
+      </div>
+
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         <TopBar
-          showMenu={false}
+          showMenu={true}
+          onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           showUserMenu={true}
           userName={userProfile?.full_name || userName}
           profilePhoto={userProfile?.profile_picture}
@@ -735,9 +748,9 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
               </span>
             ) : currentView !== 'inventory' ? (
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest font-display">Project:</span>
-                  <span className="text-xs font-black text-slate-800 bg-slate-100 px-3 py-1.5 rounded-xl shadow-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="hidden sm:inline text-xs font-bold text-slate-400 uppercase tracking-widest font-display shrink-0">Project:</span>
+                  <span className="text-[10px] sm:text-xs font-black text-slate-800 bg-slate-100 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl shadow-xs truncate max-w-[140px] sm:max-w-xs">
                     #INS-2024-001 | {data.algemeen.woning.adres || 'Hoofdstraat 123'}, {data.algemeen.woning.plaats || 'Amsterdam'}
                   </span>
                 </div>
@@ -750,9 +763,9 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
           }
         />
 
-        <main 
+        <main
           style={{ paddingTop: 'var(--app-topbar-height)' }}
-          className="flex-1 p-6 bg-[#f4f7f5] h-full overflow-y-auto"
+          className={`flex-1 ${currentView === 'invoersheet' ? 'p-0 md:p-0' : 'p-6'} bg-[#f4f7f5] h-full overflow-y-auto`}
         >
           <div className="w-full h-full max-w-screen-2xl mx-auto flex flex-col">
             {renderView()}
@@ -762,14 +775,14 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
 
       {isEditProfileOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div 
-            className="absolute inset-0 bg-black/40 backdrop-blur-xs" 
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-xs"
             onClick={() => setIsEditProfileOpen(false)}
           />
           <div className="relative bg-white rounded-2xl border border-slate-200/80 shadow-2xl w-full max-w-md p-6 z-10 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
               <h3 className="font-black text-slate-800 text-xs uppercase tracking-wider">Profiel bewerken</h3>
-              <button 
+              <button
                 type="button"
                 onClick={() => setIsEditProfileOpen(false)}
                 className="p-1 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-all cursor-pointer"
@@ -777,9 +790,9 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
                 <X size={16} />
               </button>
             </div>
-            
-            <EditProfileForm 
-              initialUser={userProfile} 
+
+            <EditProfileForm
+              initialUser={userProfile}
               onClose={() => setIsEditProfileOpen(false)}
               onSaved={(updatedUser) => {
                 setUserProfile(updatedUser);

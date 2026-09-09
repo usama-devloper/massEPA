@@ -271,16 +271,21 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">{t('structural.flagStatus') || 'FLAG / STATUS'}</label>
-            <AppFlagPicker
-              value={editingRow.flag}
-              onChange={(val) => {
-                updateField({ flag: val || undefined  });
-                if (flagKey && onFlagChange) {
-                  onFlagChange(flagKey, val || null);
-                }
-              }}
-            />
+            <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1">{t('structural.flagStatus') || 'FLAG / STATUS'}</label>
+            <div className="flex items-center gap-1.5 mt-1 ml-0.5">
+              <span className="text-[9px] font-black text-neutral-500 tracking-wider leading-none">
+                SYS
+              </span>
+              <AppFlagPicker
+                value={editingRow.flag}
+                onChange={(val) => {
+                  updateField({ flag: val || undefined  });
+                  if (flagKey && onFlagChange) {
+                    onFlagChange(flagKey, val || null);
+                  }
+                }}
+              />
+            </div>
           </div>
 
           <div>

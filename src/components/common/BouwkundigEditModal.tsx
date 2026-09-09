@@ -306,16 +306,21 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
           )}
 
           <div>
-            <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Vlag / Status</label>
-            <AppFlagPicker
-              value={editingRow.flag}
-              onChange={(val) => {
-                updateField({ flag: val || undefined  });
-                if (flagKey && onFlagChange) {
-                  onFlagChange(flagKey, val || null);
-                }
-              }}
-            />
+            <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1">Vlag / Status</label>
+            <div className="flex items-center gap-1.5 mt-1 ml-0.5">
+              <span className="text-[9px] font-black text-neutral-500 tracking-wider leading-none">
+                SYS
+              </span>
+              <AppFlagPicker
+                value={editingRow.flag}
+                onChange={(val) => {
+                  updateField({ flag: val || undefined  });
+                  if (flagKey && onFlagChange) {
+                    onFlagChange(flagKey, val || null);
+                  }
+                }}
+              />
+            </div>
           </div>
 
           {editingRow.type !== 'Vloer' && (
@@ -327,7 +332,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
                 ) : (
                   data.kozijnen.map((k: any) => {
                     const linkedTo = k.gevel ? k.gevel.split(',').map((s: string) => s.trim().toLowerCase()) : [];
-                    const targets = [editingRow.naam, editingRow.gevel, initialRow?.id].filter(Boolean).map((s: string) => s!.toString().trim().toLowerCase());
+                    const targets = [editingRow.naam, editingRow.gevel, initialRow?.id].filter(Boolean).map((s: any) => s!.toString().trim().toLowerCase());
                     const isLinked = Boolean(targets.some(t => linkedTo.includes(t)));
                     
                     return (

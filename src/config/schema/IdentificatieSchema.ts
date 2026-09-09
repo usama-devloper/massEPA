@@ -1,0 +1,55 @@
+import { FieldConfig } from './InstallatiesSchema';
+
+export const IdentificatieSchema: Record<string, FieldConfig[]> = {
+  Bewoner: [
+    { id: 'persoon', label: 'Name', type: 'text', defaultValue: 'Mevrouw S. van Wessum', span: 2 },
+    { id: 'telefoon', label: 'Contact', type: 'text', defaultValue: '+621354340', span: 1 },
+    { id: 'email', label: 'Email', type: 'text', defaultValue: 'ssjonker@gmail.com', span: 2 },
+    { id: 'adres', label: 'Adress', type: 'text', defaultValue: '', span: 2 },
+    { id: 'postcode', label: 'Postcode', type: 'text', defaultValue: '', span: 1 },
+    { id: 'plaats', label: 'Plaats', type: 'text', defaultValue: '', span: 1 },
+  ],
+  Inspecteur: [
+    { id: 'adviseur', label: 'Inspecteur Name', type: 'text', defaultValue: 'Mevrouw S. van Wessum', span: 2 },
+    { id: 'adres', label: 'Adress', type: 'text', defaultValue: '', span: 2 },
+    { id: 'postcode', label: 'Postcode', type: 'text', defaultValue: '', span: 1 },
+    { id: 'plaats', label: 'Plaats', type: 'text', defaultValue: '', span: 1 },
+    { id: 'telefoon', label: 'Telephone', type: 'text', defaultValue: '', span: 1 },
+    { id: 'email', label: 'Email', type: 'text', defaultValue: 'joep.esser@buildingid.nl', span: 2 },
+    { id: 'certificaathouder', label: 'Certificaatnummer', type: 'text', defaultValue: '5923.3337.5020', span: 2 },
+    { id: 'gebruiker', label: 'Certificaathouder', type: 'text', defaultValue: '', span: 2 },
+    { id: 'opnamedatum', label: 'Opnamedatum', type: 'date', defaultValue: '', span: 1 },
+    { id: 'invoerdatum', label: 'Invoerdatum', type: 'date', defaultValue: '', span: 1 },
+  ],
+  BidIntern: [
+    { id: 'fullName', label: 'Volledige naam', type: 'text', defaultValue: '', span: 2 },
+    { id: 'phoneNumber', label: 'Telefoonnummer', type: 'text', defaultValue: '', span: 1 },
+    { id: 'email', label: 'E-mailadres', type: 'text', defaultValue: '', span: 2 },
+    { id: 'contactAddress', label: 'Contactadres', type: 'text', defaultValue: '', span: 2 },
+  ],
+  Woning: [
+    { id: 'bouwfase', label: 'Bouwfase', type: 'select', options: ['Bestaande bouw', 'Nieuwbouw', 'Renovatie'], defaultValue: 'Bestaande bouw', span: 2 },
+    { id: 'opname', label: 'Opnametype', type: 'select', options: ['Basisopname', 'Detailopname'], defaultValue: 'Basisopname', span: 2 },
+    { id: 'adres', label: 'Adress', type: 'text', defaultValue: 'Finstraat 1', span: 2 },
+    { id: 'postcode', label: 'Postcode', type: 'text', defaultValue: '1317JA', span: 1 },
+    { id: 'plaats', label: 'Plaats', type: 'text', defaultValue: 'Almere stad', span: 1 },
+    { id: 'pandId', label: 'Pand ID', type: 'text', defaultValue: '003410000029155', span: 2 },
+    { id: 'vboId', label: 'VBO ID', type: 'text', defaultValue: '0034010000010168', span: 2 },
+    { id: 'wijk', label: 'Wijk', type: 'text', defaultValue: 'Waterwijk', span: 1 },
+    { id: 'gemeent', label: 'Gemeente', type: 'text', defaultValue: 'Almere', span: 1 },
+    { id: 'svbStatus', label: 'SVB-Status', type: 'select', options: ['Continue exploitation', 'Sale', 'Demolition', 'Minor maintenance', 'Major maintenance', 'Otherwise'], defaultValue: 'Continue exploitation', span: 2 },
+    { id: 'bron', label: 'Bron', type: 'select', options: ['BAG', 'Bouwtekening', 'Eigen opname'], defaultValue: 'BAG', span: 2 },
+  ],
+  Technical: [
+    { id: 'gebouwtype', label: 'Gebouwtype', type: 'select', options: ['Detached house', 'Apartment building unit', 'Detached house (non-self-contained units)', 'Apartment (non-self-contained units)'], defaultValue: 'Detached house', span: 2 },
+    { id: 'subtype', label: 'Subtype', type: 'select', options: ['detached', 'endTerrace', 'midTerrace', 'semiDetached'], defaultValue: 'midTerrace', span: 2 },
+    { id: 'daktype', label: 'Daktype', type: 'select', options: ['pitchedRoof', 'partlyFlat', 'flatRoof'], defaultValue: 'pitchedRoof', span: 2 },
+    { id: 'ligging', label: 'Ligging', type: 'select', options: ['groundFloorUnit', 'middleFloor', 'topFloor', 'groundWithRoof'], defaultValue: 'groundFloorUnit', span: 2 },
+    { id: 'gebouwhoogte', label: 'Gebouwhoogte', type: 'text', defaultValue: '', span: 1 },
+    { id: 'floorConstructieType', label: 'Vloer constructietype', type: 'select', options: ['Licht', 'Middel', 'Zwaar'], defaultValue: 'Licht', span: 1 },
+    { id: 'wallConstructieType', label: 'Wand constructietype', type: 'select', options: ['Licht', 'Middel', 'Zwaar'], defaultValue: 'Licht', span: 1 },
+    { id: 'leidingdoorvoeren', label: 'Leidingdoorvoeren', type: 'select', options: ['Onbekend', 'Ja', 'Nee'], defaultValue: 'Onbekend', span: 1 },
+    { id: 'aantal', label: 'Aantal', type: 'text', defaultValue: '', span: 1, showIf: (v) => v.leidingdoorvoeren === 'Ja' },
+    { id: 'avr', label: 'Aantal AVR', type: 'text', defaultValue: '', span: 1 },
+  ]
+};

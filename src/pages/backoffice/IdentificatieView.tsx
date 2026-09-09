@@ -47,21 +47,32 @@ const useInspectorFlags = (data: InspectionData) => {
     } else if (status === 'green') {
       labelNode = <span className="bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-black text-[10px] uppercase tracking-wider block w-fit">{label}</span>;
     } else {
-      labelNode = <span className="text-on-surface-variant/70 font-bold text-[10px] uppercase tracking-wider leading-tight">{label}</span>;
+      labelNode = <span className="text-on-surface-variant/70 font-bold text-[10px] uppercase tracking-wider leading-tight block mb-0.5">{label}</span>;
     }
+    
+    // Default role for Identificatie fields
+    const roleBadge = 'SYS';
+    
     return (
-      <div className="flex flex-col gap-1 w-full md:w-40 shrink-0 select-none">
+      <div className="py-1 w-full md:w-[160px] shrink-0 select-none">
         {labelNode}
-        <div className="flex items-center gap-0.5 w-16 h-2 rounded overflow-hidden mt-0.5">
-          <button type="button" onClick={() => toggleFlag(fieldKey, 'red')}
-            className={`flex-1 h-full cursor-pointer transition-all duration-150 ${status === 'red' ? 'bg-red-600' : 'bg-red-200/30 hover:bg-red-200/60'}`}
-            title="Action required / Missing" />
-          <button type="button" onClick={() => toggleFlag(fieldKey, 'yellow')}
-            className={`flex-1 h-full cursor-pointer transition-all duration-150 ${status === 'yellow' ? 'bg-amber-500' : 'bg-amber-200/30 hover:bg-amber-200/60'}`}
-            title="Needs review" />
-          <button type="button" onClick={() => toggleFlag(fieldKey, 'green')}
-            className={`flex-1 h-full cursor-pointer transition-all duration-150 ${status === 'green' ? 'bg-green-600' : 'bg-green-200/30 hover:bg-green-200/60'}`}
-            title="Verified / OK" />
+        <div className="flex items-center gap-1.5 mt-1 ml-0.5">
+          {roleBadge && (
+            <span className="text-[9px] font-black text-neutral-500 tracking-wider leading-none">
+              {roleBadge}
+            </span>
+          )}
+          <div className="flex items-center gap-0.5 w-16 h-2.5 rounded overflow-hidden">
+            <button type="button" onClick={() => toggleFlag(fieldKey, 'red')}
+              className={`flex-1 h-full cursor-pointer transition-all duration-150 ${status === 'red' ? 'bg-red-600' : 'bg-red-200/30 hover:bg-red-200/60'}`}
+              title="Action required / Missing" />
+            <button type="button" onClick={() => toggleFlag(fieldKey, 'yellow')}
+              className={`flex-1 h-full cursor-pointer transition-all duration-150 ${status === 'yellow' ? 'bg-amber-500' : 'bg-amber-200/30 hover:bg-amber-200/60'}`}
+              title="Needs review" />
+            <button type="button" onClick={() => toggleFlag(fieldKey, 'green')}
+              className={`flex-1 h-full cursor-pointer transition-all duration-150 ${status === 'green' ? 'bg-green-600' : 'bg-green-200/30 hover:bg-green-200/60'}`}
+              title="Verified / OK" />
+          </div>
         </div>
       </div>
     );

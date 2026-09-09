@@ -461,7 +461,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onStartAudit, user
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 + index * 0.05 }}
-                className="w-full bg-white border border-outline-variant/10 rounded-2xl p-5 hover:border-primary/20 hover:shadow-md transition-all flex items-center justify-between group shadow-sm"
+                className="w-full bg-white border border-outline-variant/10 rounded-2xl p-5 hover:border-primary/20 hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group shadow-sm"
               >
                 <div className="flex items-center gap-4">
                   {/* Decorative Icon */}
@@ -490,10 +490,10 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onStartAudit, user
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 shrink-0 flex-wrap sm:flex-nowrap">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full md:w-auto">
                   {/* Assign Inspector Selector Dropdown */}
                   {!isInspectorRole && (
-                    <div className="flex flex-col min-w-[170px]">
+                    <div className="flex flex-col flex-1 sm:flex-none sm:min-w-[170px]">
                       <label className="text-[9px] font-black uppercase text-on-surface-variant/40 tracking-wider mb-1">
                         {tr('inventory.assignInspector', 'Toegewezen Inspecteur')}
                       </label>
@@ -531,7 +531,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onStartAudit, user
                       }
                       onStartAudit(audit.rawRecord);
                     }}
-                    className="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white text-xs font-black rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-sm uppercase tracking-wider shrink-0 active:scale-[0.98] self-end sm:self-auto"
+                    className="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white text-xs font-black rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm uppercase tracking-wider active:scale-[0.98] w-full sm:w-auto"
                   >
                     <span>{t('inventory.startAudit')}</span>
                   </button>

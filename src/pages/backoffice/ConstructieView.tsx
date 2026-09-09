@@ -519,7 +519,10 @@ const ConstructieView: React.FC<ConstructieViewProps> = ({ data, onChange, allow
                   </DataTable.Cell>
 
                   <DataTable.Cell className="text-center" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-center">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span className="text-[9px] font-black text-neutral-500 tracking-wider leading-none">
+                        SYS
+                      </span>
                       <AppFlagPicker
                         value={row.flag}
                         onChange={(val) => handleUpdateFlag(row, val || undefined)}
@@ -852,7 +855,11 @@ export const KozijnView: React.FC<KozijnViewProps> = ({ data, kozijnen, construc
                       })()}
                     </DataTable.Cell>
                     <DataTable.Cell className="text-center w-24" onClick={e => e.stopPropagation()}>
-                      <div className="flex items-center gap-0.5 w-16 h-[12px] bg-slate-100 border border-slate-200 rounded-[4px] overflow-hidden p-[1px] gap-[1px] shadow-xs mx-auto">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="text-[9px] font-black text-neutral-500 tracking-wider leading-none">
+                          SYS
+                        </span>
+                        <div className="flex items-center gap-0.5 w-16 h-[12px] bg-slate-100 border border-slate-200 rounded-[4px] overflow-hidden p-[1px] gap-[1px] shadow-xs mx-auto">
                         <button
                           type="button"
                           onClick={() => toggleFlag(row.id, 'red')}
@@ -873,6 +880,7 @@ export const KozijnView: React.FC<KozijnViewProps> = ({ data, kozijnen, construc
                           className={`h-full flex-1 rounded-[2.5px] transition-all duration-150 cursor-pointer ${flags[row.id] === 'green' ? 'bg-green-600 shadow-xs scale-y-110' : 'bg-green-100 hover:bg-green-250'}`}
                           title="Verified / Correct"
                         />
+                      </div>
                       </div>
                     </DataTable.Cell>
                     <DataTable.Cell className="text-center w-16" onClick={e => e.stopPropagation()}>

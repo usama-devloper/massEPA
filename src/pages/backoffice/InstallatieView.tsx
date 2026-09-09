@@ -677,7 +677,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {installations.map((inst) => (
             <div key={inst.id} className="w-full flex flex-col gap-2">
               {/* Installation Summary Card */}
@@ -850,9 +850,9 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
           <h2 className="text-sm font-black text-on-background uppercase tracking-tight">{t('installations.editAllInstallations')}</h2>
         </div>
 
-        <div className="bg-white border border-outline-variant/10 rounded-2xl overflow-x-auto shadow-sm">
-          <table className="w-full min-w-[800px] border-collapse">
-            <thead>
+        <div className="bg-white border border-outline-variant/10 rounded-2xl overflow-hidden shadow-sm">
+          <table className="w-full block md:table border-collapse">
+            <thead className="hidden md:table-header-group">
               <tr className="bg-gray-50 border-b border-outline-variant/10">
                 <th className="px-4 py-3 text-left text-[11px] font-black text-on-surface-variant/60 uppercase tracking-wider">{t('installations.name')}</th>
                 <th className="px-4 py-3 text-left text-[11px] font-black text-on-surface-variant/60 uppercase tracking-wider">{t('installations.system')}</th>
@@ -860,30 +860,33 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                 <th className="px-4 py-3 text-center text-[11px] font-black text-on-surface-variant/60 uppercase tracking-wider">{t('installations.actions')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-outline-variant/5">
+            <tbody className="block md:table-row-group divide-y divide-outline-variant/5">
               {installations.map((inst) => (
-                <tr key={inst.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-3">
+                <tr key={inst.id} className="block md:table-row border-b md:border-none border-gray-100 hover:bg-gray-50/50 transition-colors p-4 md:p-0">
+                  <td className="block md:table-cell px-2 py-2 md:px-4 md:py-3">
+                    <span className="md:hidden text-[9px] font-black text-on-surface-variant/40 uppercase tracking-wider block mb-1">{t('installations.name')}</span>
                     <div className="text-xs font-bold text-on-background">
                       {getFullName(inst)}
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="block md:table-cell px-2 py-2 md:px-4 md:py-3">
+                    <span className="md:hidden text-[9px] font-black text-on-surface-variant/40 uppercase tracking-wider block mb-1">{t('installations.system')}</span>
                     <LocalSelect className="w-full px-3 py-1.5 text-xs bg-gray-50 border border-outline-variant/15 rounded-lg focus:ring-2 focus:ring-primary outline-none font-semibold cursor-pointer">
                       <option value="Individueel">{t('installations.systemTypes.individual')}</option>
                       <option value="Collectief">{t('installations.systemTypes.collective')}</option>
                       <option value="Stadsverwarming">{t('installations.generatorTypes.thirdPartyHeat')}</option>
                     </LocalSelect>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="block md:table-cell px-2 py-2 md:px-4 md:py-3">
+                    <span className="md:hidden text-[9px] font-black text-on-surface-variant/40 uppercase tracking-wider block mb-1">{t('installations.deviceCount')}</span>
                     <input
                       type="number"
-                      className="w-24 px-3 py-1.5 text-xs bg-gray-50 border border-outline-variant/15 rounded-lg focus:ring-2 focus:ring-primary outline-none font-bold"
+                      className="w-full md:w-24 px-3 py-1.5 text-xs bg-gray-50 border border-outline-variant/15 rounded-lg focus:ring-2 focus:ring-primary outline-none font-bold"
                       defaultValue="1"
                     />
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-center gap-1.5">
+                  <td className="block md:table-cell px-2 py-2 md:px-4 md:py-3 border-t border-gray-100 mt-2 md:mt-0 md:border-none">
+                    <div className="flex items-center justify-start md:justify-center gap-1.5 pt-2 md:pt-0">
                       <button
                         type="button"
                         onClick={() => handleCopyInstallatie(inst.id)}
@@ -1197,7 +1200,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                     <span className="text-[9px] bg-primary/10 text-primary px-2 py-0.5 rounded-md font-black uppercase tracking-wide">{t('installations.heating.generator1')}</span>
                   </div>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       <FieldGroup label={renderLabelWithFlags('verwarmSpecsBcrg', t('installations.heating.installationYear'))}>
                         <input
                           type="number"
@@ -1293,7 +1296,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                         )}
                       </>
                     )}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       <FieldGroup label={renderLabelWithFlags('verwarmHrKlasse', t('installations.heating.hrClass'))}>
                         <LocalSelect
                           label={t('installations.heating.hrClass')}
@@ -1447,7 +1450,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                 <div className="bg-gray-50/50 p-5 rounded-2xl border border-outline-variant/10 space-y-4">
                   <h3 className="text-xs font-black text-on-surface-variant/50 uppercase tracking-widest">{t('installations.tapwater.systemGenerator')}</h3>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       <FieldGroup label={renderLabelWithFlags('tapTypeOpwekker', t('installations.tapwater.generatorType'))}>
                         <LocalSelect
                           label={t('installations.tapwater.generatorType')}
@@ -1505,7 +1508,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                 <div className="bg-gray-50/50 p-5 rounded-2xl border border-outline-variant/10 space-y-4">
                   <h3 className="text-xs font-black text-on-surface-variant/50 uppercase tracking-widest">{t('installations.tapwater.distribution')}</h3>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       <FieldGroup label={renderLabelWithFlags('tapAfgifteKeuken', t('installations.tapwater.kitchenDelivery'))}>
                         <LocalSelect
                           label={t('installations.tapwater.kitchenDelivery')}
@@ -1541,7 +1544,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                         </LocalSelect>
                       </FieldGroup>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       <FieldGroup label={renderLabelWithFlags('tapCirculatieleiding', t('installations.tapwater.circulationPipe'))}>
                         <LocalSelect
                           label={t('installations.tapwater.circulationPipe')}
@@ -1667,7 +1670,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                       </LocalSelect>
                     </FieldGroup>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       <FieldGroup label={renderLabelWithFlags('ventSpecsBcrg', t('installations.heating.installationYear'))}>
                         <input
                           type="number"
@@ -1771,7 +1774,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                       </FieldGroup>
 
                       {ventSysteemType === 'D' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                           <FieldGroup label={renderLabelWithFlags('ventBypass', t('installations.ventilation.bypassPresent'))}>
                             <LocalSelect
                               label={t('installations.ventilation.bypassPresent')}
@@ -1842,7 +1845,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                       )}
 
                       {ventilatorSelection === 'Onbekend' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                           <FieldGroup label={renderLabelWithFlags('ventMotorType', t('installations.ventilation.motorType'))}>
                             <LocalSelect
                               label={t('installations.ventilation.motorType')}
@@ -1964,7 +1967,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                         <option value="Met indirecte verdamping">{t('installations.cooling.expIndirect')}</option>
                       </LocalSelect>
                     </FieldGroup>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       <FieldGroup label={renderLabelWithFlags('koelDistributiemedium', t('installations.cooling.medium'))}>
                         <LocalSelect
                           label={t('installations.cooling.medium')}
@@ -2136,7 +2139,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                 <div className="bg-white p-5 rounded-2xl border border-outline-variant/10 shadow-sm">
                   <h3 className="text-xs font-black text-on-surface-variant/50 uppercase tracking-widest mb-3">{t('installations.solar.configuration')}</h3>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       <FieldGroup label={renderLabelWithFlags('zonWattpiekvermogen', pvType.includes('PV') ? t('installations.solar.power') : t('installations.solar.area'))}>
                         <input
                           type="number"
@@ -2154,7 +2157,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                         />
                       </FieldGroup>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       <FieldGroup label={renderLabelWithFlags('zonOrientatie', t('installations.solar.orientation'))}>
                         <LocalSelect
                           label={t('installations.solar.orientation')}

@@ -17,8 +17,8 @@ interface AppSelectProps {
   disabled?: boolean;
   className?: string;
   id?: string;
-  /** muted = gray-50 (wizard default); white = insulation-style fields */
-  variant?: 'muted' | 'white';
+  /** muted = gray-50 (wizard default); white = insulation-style fields; compact = 34px height for backoffice grids */
+  variant?: 'muted' | 'white' | 'compact';
   searchable?: boolean;
   needsConfirmation?: boolean;
   onOpen?: () => void;
@@ -257,7 +257,7 @@ export function AppSelect({
     e.currentTarget.releasePointerCapture(e.pointerId);
   };
 
-  const triggerBg = variant === 'white' ? 'bg-white' : 'bg-gray-100';
+  const triggerBg = variant === 'white' ? 'bg-white' : variant === 'compact' ? 'bg-transparent border-none' : 'bg-gray-100';
   const showInputTrigger = isSearchable && !isMobile;
 
   let validationBorder = '';
@@ -506,14 +506,18 @@ export function AppSelect({
                 });
               }
             }}
-            className={`flex w-full min-w-[140px] items-center justify-between gap-2 rounded-xl border px-3 py-2 pr-10 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60 font-semibold ${
+            className={`flex w-full items-center justify-between gap-2 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60 font-semibold ${
+              variant === 'compact'
+                ? 'p-0 pr-6 text-xs text-on-background border-none'
+                : 'min-w-[140px] px-3 py-2 pr-10 text-sm rounded-xl border'
+            } ${
               open
                 ? 'border-primary ring-2 ring-primary/20'
                 : validationStatus
                   ? validationBorder
                   : needsConfirmation
                     ? 'border-red-400 ring-2 ring-red-100'
-                    : `border-transparent ${triggerBg}`
+                    : variant === 'compact' ? 'border-transparent' : `border-transparent ${triggerBg}`
             }`}
           >
             <span className={`block truncate whitespace-nowrap ${showPlaceholder ? 'text-gray-400 font-normal' : 'text-gray-900'}`}>
@@ -540,7 +544,7 @@ export function AppSelect({
               }
             }
           }}
-          className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 disabled:opacity-60"
+          className={`absolute top-1/2 flex -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 disabled:opacity-60 ${variant === "compact" ? "right-0 h-4 w-4" : "right-2 h-8 w-8"}`}
         >
           <ChevronDown
             size={18}
