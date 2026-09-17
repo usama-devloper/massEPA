@@ -6,7 +6,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import {
   Check, Languages, Palette, Camera, X, Loader2,
-  FileDigit, ClipboardList
+  FileDigit, ClipboardList, LayoutDashboard, ArrowLeft
 } from 'lucide-react';
 import { LOCALES, type Locale } from '../../i18n/types';
 import { THEME_ORDER, THEME_PRESETS, type ThemeId } from '../../theme/themePresets';
@@ -16,6 +16,7 @@ import { idbPut, idbGet } from '../../storage/idbKv';
 // Import subviews
 import InventoryView from '../backoffice/InventoryView';
 import InvoersheetView from '../backoffice/InvoersheetView';
+import { BackOfficeDashboard } from '../backoffice/BackOfficeDashboard';
 
 const INITIAL_DATA: InspectionData = {
   algemeen: {
@@ -377,8 +378,11 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
 
   const inspectorNavItems: SidebarItem[] = [
     { id: 'inventory', labelKey: 'nav.inventory', labelDefault: 'Inventory', icon: ClipboardList },
+    { id: 'dashboard', labelKey: 'nav.dashboard', labelDefault: 'Overview', icon: LayoutDashboard },
     { id: 'invoersheet', labelKey: 'nav.invoersheet', labelDefault: 'Invoersheet', icon: FileDigit },
   ];
+
+  const [invoersheetActiveTab, setInvoersheetActiveTab] = useState<'p1' | 'p2' | 'p3' | 'p4'>('p1');
 
   const [data, setData] = useState<InspectionData>(INITIAL_DATA);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -535,6 +539,51 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
     });
   }, []);
 
+  const [scrollTarget, setScrollTarget] = useState<any>(null);
+
+  const handleNavigateFromDashboard = (viewTarget: any, item?: any) => {
+    if (viewTarget === 'inventory') {
+      setCurrentView('inventory');
+      return;
+    }
+    if (viewTarget === 'settings') {
+      setCurrentView('settings');
+      return;
+    }
+    if (viewTarget === 'dashboard') {
+      setCurrentView('dashboard');
+      return;
+    }
+
+    if (item) {
+      setScrollTarget(item);
+    }
+
+    // Map targets to corresponding Invoersheet tabs
+    if (
+      viewTarget === 'algemeen' ||
+      viewTarget === 'identificatie' ||
+      viewTarget === 'bewoner' ||
+      viewTarget === 'inspector' ||
+      viewTarget === 'bid-intern'
+    ) {
+      setInvoersheetActiveTab('p1');
+    } else if (viewTarget === 'installatie') {
+      setInvoersheetActiveTab('p2');
+    } else if (viewTarget === 'constructie') {
+      setInvoersheetActiveTab('p3');
+    } else if (
+      viewTarget === 'geometry' ||
+      viewTarget === 'woningdossier' ||
+      String(viewTarget).startsWith('geometry-') ||
+      String(viewTarget).startsWith('bouwkundig')
+    ) {
+      setInvoersheetActiveTab('p4');
+    }
+
+    setCurrentView('invoersheet');
+  };
+
   const renderView = () => {
     switch (currentView) {
       case 'inventory':
@@ -580,8 +629,17 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
                   }
                 }));
               }
-              setCurrentView('invoersheet');
+              // Navigate to dashboard overview after selecting client
+              setCurrentView('dashboard');
             }}
+          />
+        );
+      case 'dashboard':
+        return (
+          <BackOfficeDashboard
+            data={data}
+            onViewChange={handleNavigateFromDashboard}
+            isInspector={true}
           />
         );
       case 'invoersheet':
@@ -590,6 +648,9 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
             data={data}
             onChange={handleDataChange}
             onViewChange={setCurrentView}
+            initialTab={invoersheetActiveTab}
+            onTabChange={setInvoersheetActiveTab}
+            scrollTarget={scrollTarget}
           />
         );
       case 'settings':
@@ -765,7 +826,7 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
 
         <main
           style={{ paddingTop: 'var(--app-topbar-height)' }}
-          className={`flex-1 ${currentView === 'invoersheet' ? 'p-0 md:p-0' : 'p-6'} bg-[#f4f7f5] h-full overflow-y-auto`}
+          className={`flex-1 ${currentView === 'invoersheet' ? 'p-0 md:p-0' : 'p-6'} bg-[#f4f7f5] h-full ${currentView === 'geometry' || currentView.startsWith('bouwkundig') || currentView.startsWith('geometry-') ? 'overflow-hidden' : 'overflow-y-auto'}`}
         >
           <div className="w-full h-full max-w-screen-2xl mx-auto flex flex-col">
             {renderView()}

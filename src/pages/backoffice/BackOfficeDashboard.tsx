@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Save, ChevronDown, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Save, ChevronDown, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { InspectionData } from './backofficeTypes';
 
 interface BackOfficeDashboardProps {
   data: InspectionData;
-  onViewChange: (view: any) => void;
+  onViewChange: (view: any, item?: any) => void;
+  isInspector?: boolean;
 }
 
-export const BackOfficeDashboard: React.FC<BackOfficeDashboardProps> = ({ data, onViewChange }) => {
+export const BackOfficeDashboard: React.FC<BackOfficeDashboardProps> = ({ data, onViewChange, isInspector }) => {
   const { t, locale } = useLanguage();
 
   const [expandedColors, setExpandedColors] = useState<Record<string, boolean>>({
@@ -350,12 +351,17 @@ export const BackOfficeDashboard: React.FC<BackOfficeDashboardProps> = ({ data, 
         if (keyPart.includes('_')) {
           const instId = keyPart.split('_')[0];
           localStorage.setItem('installatie_active_id', instId);
+        } else {
+          localStorage.setItem('installatie_active_id', '1');
         }
       } else if (item.viewTarget === 'constructie') {
         localStorage.setItem('constructie_active_tab', item.subTabTarget);
       }
     }
-    onViewChange(item.viewTarget);
+    try {
+      localStorage.setItem('invoersheet_scroll_target', JSON.stringify(item));
+    } catch {}
+    onViewChange(item.viewTarget, item);
   };
 
   const calculateAlgemeenPercentage = (): number => {
@@ -405,38 +411,74 @@ export const BackOfficeDashboard: React.FC<BackOfficeDashboardProps> = ({ data, 
 
         {/* Title */}
         <div className="pb-2">
-          <h1 className="text-3xl font-black text-on-background tracking-tight">
+          {isInspector && (
+            <button 
+              onClick={() => onViewChange('inventory')}
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 mb-2 transition-colors md:hidden"
+            >
+              <ArrowLeft size={16} />
+              <span>{locale === 'en' ? 'Back to inventory' : 'Terug naar inventaris'}</span>
+            </button>
+          )}
+          <h1 className="text-2xl sm:text-3xl font-black text-on-background tracking-tight truncate">
             {t('nav.dashboard') || 'Overzicht'}
           </h1>
         </div>
 
+        {/* Primary Action Button for Inspector */}
+        {isInspector && (
+          <button
+            onClick={() => onViewChange('invoersheet')}
+            className="w-full mb-6 flex items-center justify-between bg-white border border-outline-variant/20 p-3 sm:p-4 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-md hover:border-primary/30 transition-all active:scale-[0.99] group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <ChevronRight size={20} />
+              </div>
+              <div className="text-left">
+                <div className="font-black text-on-background text-[15px] leading-tight group-hover:text-primary transition-colors">
+                  {locale === 'en' ? 'Open Invoersheet' : 'Open Invoersheet'}
+                </div>
+                <div className="text-xs font-medium text-gray-400 mt-0.5">
+                  {locale === 'en' ? 'Start entering data' : 'Start met gegevens invullen'}
+                </div>
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-primary/10 transition-colors shrink-0">
+              <ArrowLeft size={16} className="text-gray-400 group-hover:text-primary transition-colors rotate-180" />
+            </div>
+          </button>
+        )}
+
         {/* Dashboard stats grids */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:shadow-md transition-shadow">
-            <div className="text-4xl font-display font-black text-primary mb-2">A++</div>
-            <div className="text-[10px] text-on-surface-variant/50 uppercase tracking-widest font-bold text-center">
-              {t('dashboard.energyLabelPrelim') || 'Energy Label'}
+        {!isInspector && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:shadow-md transition-shadow">
+              <div className="text-4xl font-display font-black text-primary mb-2">A++</div>
+              <div className="text-[10px] text-on-surface-variant/50 uppercase tracking-widest font-bold text-center">
+                {t('dashboard.energyLabelPrelim') || 'Energy Label'}
+              </div>
+            </div>
+            <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:shadow-md transition-shadow">
+              <div className="text-4xl font-display font-black text-on-surface-variant/80 mb-2">72.4</div>
+              <div className="text-[10px] text-on-surface-variant/50 uppercase tracking-widest font-bold text-center">
+                EP1 (kWh/m²)
+              </div>
+            </div>
+            <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:shadow-md transition-shadow">
+              <div className="text-4xl font-display font-black text-on-surface-variant/80 mb-2">94.2</div>
+              <div className="text-[10px] text-on-surface-variant/50 uppercase tracking-widest font-bold text-center">
+                EP2 (kWh/m²)
+              </div>
+            </div>
+            <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:shadow-md transition-shadow">
+              <div className="text-4xl font-display font-black text-emerald-600 mb-2">82%</div>
+              <div className="text-[10px] text-on-surface-variant/50 uppercase tracking-widest font-bold text-center">
+                EP3
+              </div>
             </div>
           </div>
-          <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:shadow-md transition-shadow">
-            <div className="text-4xl font-display font-black text-on-surface-variant/80 mb-2">72.4</div>
-            <div className="text-[10px] text-on-surface-variant/50 uppercase tracking-widest font-bold text-center">
-              EP1 (kWh/m²)
-            </div>
-          </div>
-          <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:shadow-md transition-shadow">
-            <div className="text-4xl font-display font-black text-on-surface-variant/80 mb-2">94.2</div>
-            <div className="text-[10px] text-on-surface-variant/50 uppercase tracking-widest font-bold text-center">
-              EP2 (kWh/m²)
-            </div>
-          </div>
-          <div className="bg-white p-6 border border-outline-variant/10 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:shadow-md transition-shadow">
-            <div className="text-4xl font-display font-black text-emerald-600 mb-2">82%</div>
-            <div className="text-[10px] text-on-surface-variant/50 uppercase tracking-widest font-bold text-center">
-              EP3
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Recent findings and Completion progress */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

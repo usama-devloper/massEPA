@@ -145,7 +145,7 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
         saveLabel={t('common.save')}
         cancelLabel={t('common.cancel')}
       >
-        <div className="space-y-4">
+        <div className="space-y-4 max-w-2xl mx-auto">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">{t('structural.name')}</label>
@@ -247,7 +247,7 @@ export const KozijnEditModal: React.FC<KozijnEditModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Area (mÂ²)</label>
+            <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Area (m²)</label>
             <AppInputField
               type="number"
               step="0.01"

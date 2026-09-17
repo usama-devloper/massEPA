@@ -22,7 +22,6 @@ export const AppFlagPicker: React.FC<AppFlagPickerProps> = ({
   return (
     <div 
       className={`flex items-center bg-slate-100 border border-slate-200/60 ${heightClass} ${roundedClass} overflow-hidden ${paddingClass} ${gapClass} shadow-xs select-none ${className}`}
-      onClick={(e) => e.stopPropagation()}
     >
       <button
         type="button"

@@ -61,7 +61,8 @@ const AlgemeenView: React.FC<AlgemeenViewProps> = ({ data, onChange, onAddGboT, 
       <AppFlaggedLabel
         label={label}
         value={flags[fieldKey]}
-        onChange={(val) => toggleFlag(fieldKey, val)}
+        onChange={(v) => toggleFlag(fieldKey, v)}
+        dataFieldKey={fieldKey}
       />
     );
   };

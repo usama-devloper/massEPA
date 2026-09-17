@@ -1,6 +1,6 @@
 // src/components/common/TopBar.tsx
 import { useEffect, useRef } from 'react';
-import { Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Menu, PanelLeftClose, PanelLeftOpen, ArrowLeft } from 'lucide-react';
 import { UserMenu } from './UserMenu';
 
 function syncTopBarHeight(el: HTMLElement | null) {
@@ -10,6 +10,7 @@ function syncTopBarHeight(el: HTMLElement | null) {
 
 interface TopBarProps {
   onMenuClick?: () => void;
+  onBack?: () => void;
   showMenu?: boolean;
   showUserMenu?: boolean;
   userName?: string;
@@ -26,6 +27,7 @@ interface TopBarProps {
 
 export const TopBar = ({
   onMenuClick,
+  onBack,
   showMenu = false,
   showUserMenu = false,
   userName = 'User',
@@ -61,13 +63,21 @@ export const TopBar = ({
       ref={headerRef}
       className="app-top-bar bg-surface px-4 sm:px-6 py-4 flex justify-between items-center border-b border-outline-variant/10 shadow-sm"
     >
-      <div className="flex items-center gap-4">
-        {/* Mobile menu button */}
-        {showMenu && (
-          <button type="button" onClick={onMenuClick} className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-all">
+      <div className="flex items-center gap-2 sm:gap-4">
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="md:hidden p-2 -ml-1 hover:bg-gray-100 active:bg-gray-200 rounded-xl transition-all cursor-pointer text-slate-700 flex items-center justify-center"
+            title="Terug"
+          >
+            <ArrowLeft size={22} />
+          </button>
+        ) : showMenu ? (
+          <button type="button" onClick={onMenuClick} className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-all cursor-pointer">
             <Menu size={24} />
           </button>
-        )}
+        ) : null}
 
         {/* Desktop sidebar toggle button */}
         {showMenu && onSidebarToggle && (

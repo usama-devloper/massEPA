@@ -214,7 +214,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
 
   const getFieldBorder = (fieldKey: string) => {
     const prefixedKey = activeInstallatieId ? `${activeInstallatieId}_${fieldKey}` : fieldKey;
-    const status = flags[prefixedKey];
+    const status = flags[prefixedKey] !== undefined ? flags[prefixedKey] : flags[fieldKey];
     if (status === 'red') return '!border-red-500 ring-2 ring-red-100 bg-red-50/20';
     if (status === 'yellow') return '!border-amber-500 ring-2 ring-amber-100 bg-amber-50/20';
     if (status === 'green') return '!border-green-500 ring-2 ring-green-100 bg-green-50/20';
@@ -223,16 +223,36 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
 
   const getSelectValidationStatus = (fieldKey: string) => {
     const prefixedKey = activeInstallatieId ? `${activeInstallatieId}_${fieldKey}` : fieldKey;
-    return flags[prefixedKey] || null;
+    return flags[prefixedKey] !== undefined ? flags[prefixedKey] : (flags[fieldKey] || null);
   };
 
   const renderLabelWithFlags = (fieldKey: string, label: string) => {
     const prefixedKey = activeInstallatieId ? `${activeInstallatieId}_${fieldKey}` : fieldKey;
+    // Fallback to legacy fieldKey if prefixedKey doesn't exist, to support old flags
+    const flagValue = flags[prefixedKey] !== undefined ? flags[prefixedKey] : flags[fieldKey];
+    
     return (
       <AppFlaggedLabel
         label={label}
-        value={flags[prefixedKey]}
-        onChange={(val) => toggleFlag(fieldKey, val)}
+        value={flagValue}
+        onChange={(v) => {
+          // Auto-migrate legacy flags on click
+          if (flags[fieldKey] !== undefined && activeInstallatieId) {
+            setFlags(prev => {
+              const next = { ...prev };
+              delete next[fieldKey];
+              if (next[prefixedKey] === v) {
+                delete next[prefixedKey];
+              } else {
+                next[prefixedKey] = v;
+              }
+              return next;
+            });
+          } else {
+            toggleFlag(fieldKey, v);
+          }
+        }}
+        dataFieldKey={fieldKey}
       />
     );
   };
@@ -301,9 +321,13 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
   useEffect(() => {
     const savedActiveId = localStorage.getItem('installatie_active_id');
     if (savedActiveId && installations.length > 0) {
-      const targetInst = installations.find(i => i.id === savedActiveId);
+      let targetInst = installations.find(i => i.id === savedActiveId);
+      if (!targetInst && installations.length > 0) {
+        targetInst = installations[0];
+      }
+      
       if (targetInst) {
-        setActiveInstallatieId(savedActiveId);
+        setActiveInstallatieId(targetInst.id);
         originalOnChange('installations', targetInst.details || {});
         setView('detail');
       }
@@ -987,21 +1011,28 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
         </div>
 
         {/* Category Tabs Switcher (Horizontal scrollable navbar) */}
-        <div className="flex items-center flex-wrap gap-2">
-          <div className="flex items-center gap-1 bg-gray-100 p-1.5 rounded-2xl w-full sm:w-fit overflow-x-auto flex-nowrap scrollbar-none border border-outline-variant/5">
-            {activeCategoriesList.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setSelectedCategory(prev => prev === cat.id ? '' : cat.id)}
-                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 whitespace-nowrap ${selectedCategory === cat.id
-                    ? 'bg-white text-primary font-black shadow-xs'
-                    : 'text-on-surface-variant/60 hover:text-on-surface hover:bg-white/50'
-                  }`}
-              >
-                {cat.label}
-              </button>
-            ))}
+        <div className="flex items-center flex-wrap gap-2 w-full">
+          <div className="relative w-full sm:w-auto flex-1 min-w-0">
+            <div className="flex items-center gap-1 bg-gray-100 p-1.5 rounded-2xl overflow-x-auto flex-nowrap scrollbar-none border border-outline-variant/5 pr-8 w-full">
+              {activeCategoriesList.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={(e) => {
+                    setSelectedCategory(prev => prev === cat.id ? '' : cat.id);
+                    e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                  }}
+                  className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 whitespace-nowrap ${selectedCategory === cat.id
+                      ? 'bg-white text-primary font-black shadow-xs'
+                      : 'text-on-surface-variant/60 hover:text-on-surface hover:bg-white/50'
+                    }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+            {/* Gradient fade indicator for scrollability */}
+            <div className="absolute top-0 right-0 bottom-0 w-12 bg-gradient-to-l from-gray-100 to-transparent pointer-events-none rounded-r-2xl border-r border-y border-transparent" />
           </div>
 
           {availableCategoriesList.length > 0 && (

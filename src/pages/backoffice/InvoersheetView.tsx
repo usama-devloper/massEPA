@@ -44,6 +44,9 @@ interface InvoersheetViewProps {
   onViewChange?: (view: any) => void;
   currentUserName?: string;
   currentUserRole?: string;
+  initialTab?: 'p1' | 'p2' | 'p3' | 'p4';
+  onTabChange?: (tab: 'p1' | 'p2' | 'p3' | 'p4') => void;
+  scrollTarget?: any;
 }
 const getDynamicGridClass = (span: 1 | 2 | undefined, label: string, value: string, index?: number, arr?: any[], dataObj?: any) => {
   // Mobile span is determined by hardcoded span OR text length
@@ -167,9 +170,89 @@ const DynamicMasonryImage = React.memo(({
   );
 });
 
-const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onViewChange, currentUserName, currentUserRole }) => {
+const InvoersheetView: React.FC<InvoersheetViewProps> = ({
+  data,
+  onChange,
+  onViewChange,
+  currentUserName,
+  currentUserRole,
+  initialTab,
+  onTabChange,
+  scrollTarget,
+}) => {
   const { t, locale } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'p1' | 'p2' | 'p3' | 'p4'>('p1');
+  const [activeTab, setActiveTab] = useState<'p1' | 'p2' | 'p3' | 'p4'>(initialTab || 'p1');
+
+  useEffect(() => {
+    if (initialTab && initialTab !== activeTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  const handleTabChange = (tab: 'p1' | 'p2' | 'p3' | 'p4') => {
+    setActiveTab(tab);
+    if (onTabChange) onTabChange(tab);
+  };
+
+  useEffect(() => {
+    let target = scrollTarget;
+    if (!target) {
+      try {
+        const stored = localStorage.getItem('invoersheet_scroll_target');
+        if (stored) target = JSON.parse(stored);
+      } catch {}
+    }
+
+    if (!target || !target.id) return;
+
+    const rawId: string = target.id;
+    const cleanFieldKey = rawId.includes('-') ? rawId.split('-').slice(1).join('-') : rawId;
+    const subKey = cleanFieldKey.includes('_') ? cleanFieldKey.split('_').slice(1).join('_') : cleanFieldKey;
+
+    let attempts = 0;
+    const maxAttempts = 15;
+
+    const tryScroll = () => {
+      attempts++;
+      const candidates = [
+        document.getElementById(`field-algemeen_woning_${cleanFieldKey}`),
+        document.getElementById(`field-algemeen_bewoner_${cleanFieldKey}`),
+        document.getElementById(`field-algemeen_inspector_${cleanFieldKey}`),
+        document.getElementById(`field-algemeen_technical_${cleanFieldKey}`),
+        document.getElementById(`field-algemeen_bidIntern_${cleanFieldKey}`),
+        document.getElementById(`field-inst_${cleanFieldKey}`),
+        document.getElementById(`field-${cleanFieldKey}`),
+        document.getElementById(cleanFieldKey),
+        document.getElementById(rawId),
+        document.getElementById(`constructie-${cleanFieldKey}`),
+        document.getElementById(`kozijn-${cleanFieldKey}`),
+        document.getElementById(cleanFieldKey.replace('_', '-')),
+        document.querySelector(`[data-field-key="${cleanFieldKey}"]`),
+        document.querySelector(`[data-field-key="${subKey}"]`),
+        document.querySelector(`[data-field-id*="${cleanFieldKey}"]`),
+        document.querySelector(`[data-field-id="${rawId}"]`),
+      ];
+
+      const targetEl = candidates.find(el => el != null) as HTMLElement | undefined;
+
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.classList.add('ring-4', 'ring-primary', 'ring-offset-2', 'bg-primary/10', 'transition-all', 'duration-500');
+        setTimeout(() => {
+          targetEl.classList.remove('ring-4', 'ring-primary', 'ring-offset-2', 'bg-primary/10');
+        }, 3500);
+
+        try {
+          localStorage.removeItem('invoersheet_scroll_target');
+        } catch {}
+      } else if (attempts < maxAttempts) {
+        setTimeout(tryScroll, 100);
+      }
+    };
+
+    const timer = setTimeout(tryScroll, 200);
+    return () => clearTimeout(timer);
+  }, [scrollTarget, activeTab]);
   const [categoryToDelete, setCategoryToDelete] = useState<{ instId: string; cat: string } | null>(null);
   const [installationToDelete, setInstallationToDelete] = useState<string | null>(null);
   const [showInstallatieModal, setShowInstallatieModal] = useState(false);
@@ -1453,9 +1536,16 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
     }
 
     const roleBadge = fieldRoles[pathOrLocalKey] || defaultRoleBadge;
+    const sanitizedId = pathOrLocalKey.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const fieldOnlyKey = pathOrLocalKey.split('.').pop() || pathOrLocalKey.split('_').pop() || '';
 
     return (
-      <div className="w-full flex flex-col">
+      <div
+        id={`field-${sanitizedId}`}
+        data-field-id={pathOrLocalKey}
+        data-field-key={fieldOnlyKey}
+        className="w-full flex flex-col transition-all duration-300 rounded-xl"
+      >
         <div className="flex items-center justify-between w-full mb-1.5">
           <label className="text-[9px] font-black text-on-surface-variant/90 tracking-wider block uppercase font-sans">
             {label}
@@ -1644,9 +1734,9 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
           {onViewChange && (
             <button
               type="button"
-              onClick={() => onViewChange('inventory')}
+              onClick={() => onViewChange('dashboard')}
               className="p-2 hover:bg-neutral-100 rounded-xl transition-colors cursor-pointer text-neutral-600 shrink-0"
-              title="Terug naar overzicht"
+              title={t('installations.backToOverview') || 'Terug naar overzicht'}
             >
               <ArrowLeft size={20} />
             </button>
@@ -1655,7 +1745,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
             <div className="flex overflow-x-auto whitespace-nowrap no-scrollbar bg-neutral-100 p-1 rounded-xl gap-0.5 text-[11px] font-black border border-neutral-250 uppercase tracking-wider h-full pr-8">
             <button
               type="button"
-              onClick={(e) => { setActiveTab('p1'); e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }}
+              onClick={(e) => { handleTabChange('p1'); e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }}
               className={`px-3 py-2 rounded-lg transition-all cursor-pointer ${activeTab === 'p1' ? 'bg-primary text-white shadow-xs' : 'text-neutral-600 hover:text-neutral-900'}`}
             >
               <span className="hidden sm:inline">Identificatie & Algemeen</span>
@@ -1663,21 +1753,21 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
             </button>
             <button
               type="button"
-              onClick={(e) => { setActiveTab('p2'); e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }}
+              onClick={(e) => { handleTabChange('p2'); e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }}
               className={`px-3 py-2 rounded-lg transition-all cursor-pointer ${activeTab === 'p2' ? 'bg-primary text-white shadow-xs' : 'text-neutral-600 hover:text-neutral-900'}`}
             >
               Installaties
             </button>
             <button
               type="button"
-              onClick={(e) => { setActiveTab('p3'); e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }}
+              onClick={(e) => { handleTabChange('p3'); e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }}
               className={`px-3 py-2 rounded-lg transition-all cursor-pointer ${activeTab === 'p3' ? 'bg-primary text-white shadow-xs' : 'text-neutral-600 hover:text-neutral-900'}`}
             >
               Constructies
             </button>
             <button
               type="button"
-              onClick={(e) => { setActiveTab('p4'); e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }}
+              onClick={(e) => { handleTabChange('p4'); e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }}
               className={`px-3 py-2 rounded-lg transition-all cursor-pointer ${activeTab === 'p4' ? 'bg-primary text-white shadow-xs' : 'text-neutral-600 hover:text-neutral-900'}`}
             >
               Bouwkundig
@@ -2255,7 +2345,13 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               }
 
                               return (
-                                <div key={item.id} className={`flex flex-col md:flex-row print:flex-row gap-6 w-full items-start ${cOuterWrapper}`}>
+                                <div
+                                  key={item.id}
+                                  id={`constructie-${item.id}`}
+                                  data-field-id={`constructie-${item.id}`}
+                                  data-field-key={item.id}
+                                  className={`flex flex-col md:flex-row print:flex-row gap-6 w-full items-start ${cOuterWrapper}`}
+                                >
                                   <div
                                     className={`rounded-2xl p-4 w-full md:w-[300px] print:w-[300px] shrink-0 shadow-none md:shadow-2xs flex flex-col justify-between hover:shadow-xs transition duration-200 print-card break-inside-avoid border border-outline-variant/10 bg-white`}
                                   >
@@ -2656,7 +2752,13 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                               }
 
                               return (
-                                <div key={item.id || item.naam || index} className="flex flex-col gap-4 mb-8">
+                                <div
+                                  key={item.id || item.naam || index}
+                                  id={`bouwkundig-${originalIdx}`}
+                                  data-field-id={`geometry-bouwkundig_${originalIdx}`}
+                                  data-field-key={`bouwkundig_${originalIdx}`}
+                                  className="flex flex-col gap-4 mb-8"
+                                >
                                   <div className={`flex flex-col md:flex-row print:flex-row gap-6 w-full items-start ${bOuterWrapper}`}>
                                     <div className={`rounded-2xl p-4 w-full md:w-[300px] print:w-[300px] shrink-0 shadow-none md:shadow-2xs flex flex-col border border-outline-variant/10 bg-white`}>
                                       <div className="flex justify-between items-start mb-3 gap-2">
@@ -2993,7 +3095,13 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({ data, onChange, onVie
                                             }
 
                                             return (
-                                              <div key={k.id} className={`rounded-2xl p-4 shadow-none md:shadow-2xs flex justify-between gap-4 relative group break-inside-avoid ${kBorderStyle}`}>
+                                              <div
+                                                key={k.id}
+                                                id={`kozijn-${k.id}`}
+                                                data-field-id={`kozijn-${k.id}`}
+                                                data-field-key={`library_${k.id}`}
+                                                className={`rounded-2xl p-4 shadow-none md:shadow-2xs flex justify-between gap-4 relative group break-inside-avoid ${kBorderStyle}`}
+                                              >
                                                 <div className="flex-1 flex flex-col">
                                                   <div className="flex justify-between items-start pb-2 border-b border-outline-variant/10 mb-4">
                                                     <div className="flex items-start gap-1 min-w-0 flex-1">

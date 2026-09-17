@@ -116,13 +116,20 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
   }, [flags, data?.clientId]);
 
   const toggleFlag = (fieldKey: string, status: 'red' | 'yellow' | 'green' | null) => {
+    const current = flags[fieldKey];
+    const nextStatus = current === status ? null : status;
+    
     setFlags(prev => {
-      const current = prev[fieldKey];
-      return {
-        ...prev,
-        [fieldKey]: current === status ? null : status
-      };
+      const updated = { ...prev };
+      if (nextStatus === null) delete updated[fieldKey];
+      else updated[fieldKey] = nextStatus;
+      return updated;
     });
+
+    const newGlobalFlags = { ...((data.installations as any)?.flags || {}) };
+    if (nextStatus === null) delete newGlobalFlags[fieldKey];
+    else newGlobalFlags[fieldKey] = nextStatus;
+    if (onChange) onChange('installations.flags', newGlobalFlags);
   };
 
   const setFieldFlag = (fieldKey: string, next: 'red' | 'yellow' | 'green' | null) => {
@@ -135,6 +142,11 @@ const GeometryView: React.FC<GeometryViewProps> = ({ data, onChange, forcedTab, 
       }
       return updated;
     });
+
+    const newGlobalFlags = { ...((data.installations as any)?.flags || {}) };
+    if (next === null) delete newGlobalFlags[fieldKey];
+    else newGlobalFlags[fieldKey] = next;
+    if (onChange) onChange('installations.flags', newGlobalFlags);
   };
 
   const activeTab = forcedTab || activeTabState;

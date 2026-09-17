@@ -8,7 +8,7 @@ import {
   Check, Languages, Palette, Camera, X, Loader2, Save,
   LayoutDashboard, Info, Ruler, Wrench, Triangle,
   ShieldCheck, Database, Layers, FileDigit, ClipboardList,
-  User as UserIcon
+  User as UserIcon, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, ArrowUp
 } from 'lucide-react';
 import { LOCALES, type Locale } from '../../i18n/types';
 import { THEME_ORDER, THEME_PRESETS, type ThemeId } from '../../theme/themePresets';
@@ -383,6 +383,17 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
   const { themeId, setThemeId } = useTheme();
   const { locale, setLocale, t } = useLanguage();
   const [currentView, setCurrentView] = useState<ViewType>('inventory');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mainRef = React.useRef<HTMLElement>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    if (e.currentTarget.scrollTop > 300) {
+      setShowScrollTop(true);
+    } else {
+      setShowScrollTop(false);
+    }
+  };
 
   const backOfficeNavItems: SidebarItem[] = [
     { id: 'inventory', labelKey: 'nav.inventory', labelDefault: 'Inventory', icon: ClipboardList },
@@ -419,6 +430,69 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
   ];
   const [data, setData] = useState<InspectionData>(INITIAL_DATA);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+
+  // Mobile Bottom Navigation Sequence
+  const mobileNavSequence: ViewType[] = [
+    'inventory',
+    'dashboard',
+    'bewoner',
+    'inspector',
+    'bid-intern',
+    'algemeen',
+    'installatie',
+    'constructie',
+    'bouwkundig-gevel',
+    'bouwkundig-vloer',
+    'bouwkundig-dak',
+    'geometry-kozijn',
+    'geometry-overstek',
+    'woningdossier',
+    'invoersheet'
+  ];
+
+  const getNormalizedView = (view: ViewType): string => {
+    if (view === 'identificatie') {
+      return 'bewoner';
+    }
+    return view;
+  };
+
+  const normalizedCurrent = getNormalizedView(currentView);
+  const currentIndex = mobileNavSequence.indexOf(normalizedCurrent as ViewType);
+  const hasNext = currentIndex !== -1 && currentIndex < mobileNavSequence.length - 1;
+  const hasPrev = currentIndex > 0;
+
+  const handleNext = () => {
+    if (hasNext) {
+      setCurrentView(mobileNavSequence[currentIndex + 1]);
+    }
+  };
+
+  const handlePrev = () => {
+    if (hasPrev) {
+      setCurrentView(mobileNavSequence[currentIndex - 1]);
+      setTimeout(() => mainRef.current?.scrollTo({ top: 0, behavior: 'instant' }), 0);
+    }
+  };
+
+  const getViewLabel = (viewId: ViewType): string => {
+    switch (viewId) {
+      case 'inventory': return t('nav.inventory') || 'Dossieroverzicht';
+      case 'dashboard': return t('nav.dashboard') || 'Dashboard';
+      case 'bewoner': return t('nav.identificatie') || 'Identificatie';
+      case 'algemeen': return t('nav.algemeen') || 'Algemeen';
+      case 'installatie': return t('nav.installatie') || 'Installaties & technical';
+      case 'constructie': return t('nav.constructie') || 'Constructie';
+      case 'bouwkundig-gevel': return t('nav.gevel') || 'Gevel';
+      case 'bouwkundig-vloer': return t('nav.vloer') || 'Vloer';
+      case 'bouwkundig-dak': return t('nav.dak') || 'Dak';
+      case 'geometry-kozijn': return t('nav.kozijn') || 'Kozijn & Glas';
+      case 'geometry-overstek': return t('nav.overstek') || 'Overstek';
+      case 'woningdossier': return t('nav.woningdossier') || 'WoningDossier';
+      case 'invoersheet': return t('nav.invoersheet') || 'Invoersheet';
+      default: return viewId;
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -665,6 +739,64 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
       return merged;
     });
   }, []);
+
+  useEffect(() => {
+    let target: any = null;
+    try {
+      const stored = localStorage.getItem('invoersheet_scroll_target');
+      if (stored) target = JSON.parse(stored);
+    } catch { }
+
+    if (!target || !target.id) return;
+
+    const rawId: string = target.id;
+    const cleanFieldKey = rawId.includes('-') ? rawId.split('-').slice(1).join('-') : rawId;
+    const subKey = cleanFieldKey.includes('_') ? cleanFieldKey.split('_').slice(1).join('_') : cleanFieldKey;
+
+    let attempts = 0;
+    const maxAttempts = 15;
+
+    const tryScroll = () => {
+      attempts++;
+      const candidates = [
+        document.getElementById(`field-algemeen_woning_${cleanFieldKey}`),
+        document.getElementById(`field-algemeen_bewoner_${cleanFieldKey}`),
+        document.getElementById(`field-algemeen_inspector_${cleanFieldKey}`),
+        document.getElementById(`field-algemeen_technical_${cleanFieldKey}`),
+        document.getElementById(`field-algemeen_bidIntern_${cleanFieldKey}`),
+        document.getElementById(`field-inst_${cleanFieldKey}`),
+        document.getElementById(`field-${cleanFieldKey}`),
+        document.getElementById(cleanFieldKey),
+        document.getElementById(rawId),
+        document.getElementById(`constructie-${cleanFieldKey}`),
+        document.getElementById(`kozijn-${cleanFieldKey}`),
+        document.getElementById(cleanFieldKey.replace('_', '-')),
+        document.querySelector(`[data-field-key="${cleanFieldKey}"]`),
+        document.querySelector(`[data-field-key="${subKey}"]`),
+        document.querySelector(`[data-field-id*="${cleanFieldKey}"]`),
+        document.querySelector(`[data-field-id="${rawId}"]`),
+      ];
+
+      const targetEl = candidates.find(el => el != null) as HTMLElement | undefined;
+
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.classList.add('ring-4', 'ring-primary', 'ring-offset-2', 'bg-primary/10', 'transition-all', 'duration-500', 'rounded-xl');
+        setTimeout(() => {
+          targetEl.classList.remove('ring-4', 'ring-primary', 'ring-offset-2', 'bg-primary/10', 'rounded-xl');
+        }, 3500);
+
+        try {
+          localStorage.removeItem('invoersheet_scroll_target');
+        } catch { }
+      } else if (attempts < maxAttempts) {
+        setTimeout(tryScroll, 100);
+      }
+    };
+
+    const timer = setTimeout(tryScroll, 200);
+    return () => clearTimeout(timer);
+  }, [currentView]);
 
   const renderPlaceholder = (title: string, description: string) => {
     return (
@@ -993,17 +1125,31 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
 
   return (
     <div className="flex h-screen overflow-hidden bg-background relative font-sans text-on-background">
-      <BackOfficeSidebar
-        currentView={currentView}
-        onViewChange={setCurrentView}
-        onLogout={onLogout}
-        userName={userProfile?.full_name || userName}
-        items={backOfficeNavItems}
-      />
+      {/* Mobile Sidebar Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[3800] md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      <div className={`${isMobileMenuOpen ? 'fixed inset-y-0 left-0 z-[3900] flex' : 'hidden md:flex'} h-full transition-transform duration-300`}>
+        <BackOfficeSidebar
+          currentView={currentView}
+          onViewChange={(view) => {
+            setCurrentView(view);
+            setIsMobileMenuOpen(false);
+          }}
+          onLogout={onLogout}
+          userName={userProfile?.full_name || userName}
+          items={backOfficeNavItems}
+        />
+      </div>
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         <TopBar
-          showMenu={false}
+          showMenu={true}
+          onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           showUserMenu={true}
           userName={userProfile?.full_name || userName}
           profilePhoto={userProfile?.profile_picture}
@@ -1017,9 +1163,9 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
               </span>
             ) : currentView !== 'inventory' ? (
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest font-display">Project:</span>
-                  <span className="text-xs font-black text-slate-800 bg-slate-100 px-3 py-1.5 rounded-xl shadow-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="hidden sm:inline text-xs font-bold text-slate-400 uppercase tracking-widest font-display shrink-0">Project:</span>
+                  <span className="text-[10px] sm:text-xs font-black text-slate-800 bg-slate-100 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl shadow-xs truncate max-w-[140px] sm:max-w-xs">
                     #INS-2024-001 | {data.algemeen.woning.adres || 'Hoofdstraat 123'}, {data.algemeen.woning.plaats || 'Amsterdam'}
                   </span>
                 </div>
@@ -1033,13 +1179,47 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
         />
 
         <main
+          ref={mainRef}
+          onScroll={handleScroll}
           style={{ paddingTop: 'var(--app-topbar-height)' }}
           className={`flex-1 p-6 bg-[#f4f7f5] h-full ${currentView === 'geometry' || currentView.startsWith('bouwkundig') || currentView.startsWith('geometry-') ? 'overflow-hidden' : 'overflow-y-auto'}`}
         >
-          <div className="w-full h-full max-w-screen-2xl mx-auto flex flex-col">
+          <div className={`w-full min-h-full max-w-screen-2xl mx-auto flex flex-col pt-2 ${hasNext ? 'max-md:pb-20' : ''}`}>
+            {hasPrev && (
+              <div className="md:hidden pb-6 shrink-0">
+                <button
+                  onClick={handlePrev}
+                  className="flex items-center gap-2 text-[10px] font-black text-gray-400 hover:text-gray-800 uppercase tracking-widest cursor-pointer"
+                >
+                  <ArrowLeft size={12} strokeWidth={3} /> BACK TO {getViewLabel(mobileNavSequence[currentIndex - 1])}
+                </button>
+              </div>
+            )}
+
             {renderView()}
           </div>
         </main>
+
+        {hasNext && (
+          <div className="md:hidden fixed bottom-6 right-6 z-[90]">
+            <button
+              onClick={handleNext}
+              className="bg-[#1e3c28] hover:bg-[#162d1e] text-white px-6 py-3 rounded-full font-black flex items-center justify-between gap-3 uppercase tracking-widest text-[10px] sm:text-xs shadow-xl shadow-[#1e3c28]/20 transition-all cursor-pointer"
+            >
+              <span>CONTINUE TO {getViewLabel(mobileNavSequence[currentIndex + 1])}</span>
+              <ArrowRight size={16} strokeWidth={2.5} />
+            </button>
+          </div>
+        )}
+
+        {showScrollTop && (
+          <button
+            onClick={() => mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="md:hidden fixed bottom-[88px] right-6 w-12 h-12 bg-[#1e3c28] hover:bg-[#162d1e] text-white rounded-full flex items-center justify-center shadow-lg z-[100] cursor-pointer transition-all"
+          >
+            <ArrowUp size={20} strokeWidth={2.5} />
+          </button>
+        )}
       </div>
 
       {isEditProfileOpen && (

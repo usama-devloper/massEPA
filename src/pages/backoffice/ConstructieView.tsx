@@ -216,8 +216,9 @@ const ConstructieView: React.FC<ConstructieViewProps> = ({ data, onChange, allow
     const currentRows = constructies.filter(r => r.type === activeTab);
     const rowToCopy = currentRows[idx];
     const newId = `c-${Date.now()}`;
-    const uniqueName = getUniqueCopyName(rowToCopy.naam, allConstructies.map(c => c.naam));
-    onChange([...allConstructies, { ...rowToCopy, id: newId, naam: uniqueName }]);
+    const uniqueName = getUniqueCopyName(rowToCopy.naam, constructies.map(c => c.naam));
+    const newRow = { ...rowToCopy, id: newId, naam: uniqueName };
+    onChange([...allConstructies, newRow]);
   };
 
   const handleDeleteRow = (idx: number) => {
@@ -248,20 +249,27 @@ const ConstructieView: React.FC<ConstructieViewProps> = ({ data, onChange, allow
       </div>
 
       {tabs.length > 1 && (
-        <div className="flex items-center gap-1 bg-gray-100 p-1.5 rounded-2xl w-full sm:w-fit overflow-x-auto flex-nowrap scrollbar-none border border-outline-variant/5">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 ${activeTab === tab
-                ? 'bg-primary/10 text-primary font-black shadow-sm'
-                : 'text-on-surface-variant/60 hover:bg-gray-250'
-                }`}
-            >
-              {getTabLabel(tab)}
-            </button>
-          ))}
+        <div className="relative w-full sm:w-fit min-w-0 shrink-0">
+          <div className="flex items-center gap-1 bg-gray-100 p-1.5 rounded-2xl overflow-x-auto flex-nowrap scrollbar-none border border-outline-variant/5 pr-8">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={(e) => { 
+                  setActiveTab(tab);
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }}
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 ${activeTab === tab
+                  ? 'bg-primary/10 text-primary font-black shadow-sm'
+                  : 'text-on-surface-variant/60 hover:bg-gray-200'
+                  }`}
+              >
+                {getTabLabel(tab)}
+              </button>
+            ))}
+          </div>
+          {/* Gradient fade indicator for scrollability */}
+          <div className="absolute top-0 right-0 bottom-0 w-12 bg-gradient-to-l from-gray-100 to-transparent pointer-events-none rounded-r-2xl border-r border-y border-transparent" />
         </div>
       )}
 
@@ -402,7 +410,7 @@ const ConstructieView: React.FC<ConstructieViewProps> = ({ data, onChange, allow
                         {row.isolatie === 'Ja' || row.isolatie === 'Yes' ? t('common.yes') : t('common.no')}
                       </DataTable.Cell>
                       <DataTable.Cell>{row.invoer === 'Beslisschema' ? '—' : (row.merk || '-')}</DataTable.Cell>
-                      <DataTable.Cell className="text-center font-mono">{row.dikte || '-'}</DataTable.Cell>
+                      <DataTable.Cell className="text-center font-mono">{(row.isolatie === 'Ja' || row.isolatie === 'Yes') ? (row.dikte || '-') : '—'}</DataTable.Cell>
                       <DataTable.Cell>{row.kozijn || '-'}</DataTable.Cell>
                     </>
                   )}
@@ -413,7 +421,7 @@ const ConstructieView: React.FC<ConstructieViewProps> = ({ data, onChange, allow
                         {row.isolatie === 'Ja' || row.isolatie === 'Yes' ? t('common.yes') : t('common.no')}
                       </DataTable.Cell>
                       <DataTable.Cell>{row.invoer === 'Beslisschema' ? '—' : (row.merk || '-')}</DataTable.Cell>
-                      <DataTable.Cell className="text-center font-mono">{row.dikte || '-'}</DataTable.Cell>
+                      <DataTable.Cell className="text-center font-mono">{(row.isolatie === 'Ja' || row.isolatie === 'Yes') ? (row.dikte || '-') : '—'}</DataTable.Cell>
                       <DataTable.Cell>{row.bouwjaar || '-'}</DataTable.Cell>
                       <DataTable.Cell className="text-center font-mono">{row.rc || '-'}</DataTable.Cell>
                     </>
@@ -425,7 +433,7 @@ const ConstructieView: React.FC<ConstructieViewProps> = ({ data, onChange, allow
                         {row.isolatie === 'Ja' || row.isolatie === 'Yes' ? t('common.yes') : t('common.no')}
                       </DataTable.Cell>
                       <DataTable.Cell>{row.invoer === 'Beslisschema' ? '—' : (row.merk || '-')}</DataTable.Cell>
-                      <DataTable.Cell className="text-center font-mono">{row.dikte || '-'}</DataTable.Cell>
+                      <DataTable.Cell className="text-center font-mono">{(row.isolatie === 'Ja' || row.isolatie === 'Yes') ? (row.dikte || '-') : '—'}</DataTable.Cell>
                       <DataTable.Cell>{row.bouwjaar || '-'}</DataTable.Cell>
                       <DataTable.Cell className="text-center font-mono">{row.rc || '-'}</DataTable.Cell>
                     </>
@@ -437,7 +445,7 @@ const ConstructieView: React.FC<ConstructieViewProps> = ({ data, onChange, allow
                         {row.isolatie === 'Ja' || row.isolatie === 'Yes' ? t('common.yes') : t('common.no')}
                       </DataTable.Cell>
                       <DataTable.Cell>{row.invoer === 'Beslisschema' ? '—' : (row.merk || '-')}</DataTable.Cell>
-                      <DataTable.Cell className="text-center font-mono">{row.dikte || '-'}</DataTable.Cell>
+                      <DataTable.Cell className="text-center font-mono">{(row.isolatie === 'Ja' || row.isolatie === 'Yes') ? (row.dikte || '-') : '—'}</DataTable.Cell>
                       <DataTable.Cell>{row.bouwjaar || '-'}</DataTable.Cell>
                       <DataTable.Cell className="text-center font-mono">{row.rc || '-'}</DataTable.Cell>
                     </>
@@ -544,6 +552,13 @@ const ConstructieView: React.FC<ConstructieViewProps> = ({ data, onChange, allow
         initialRow={editingRow}
         existingConstructies={constructies}
         data={data}
+        flagKey={editingRow?.id}
+        onFlagChange={(key, val) => {
+          if (editingRow) {
+            handleUpdateFlag(editingRow, val || undefined);
+            setEditingRow({ ...editingRow, flag: val || undefined });
+          }
+        }}
       />
 
       <PhotoViewerModal
@@ -707,13 +722,28 @@ export const KozijnView: React.FC<KozijnViewProps> = ({ data, kozijnen, construc
   }, [flags, data?.clientId]);
 
   const toggleFlag = (fieldKey: string, status: 'red' | 'yellow' | 'green' | null) => {
+    const current = flags[fieldKey];
+    const nextStatus = current === status ? null : status;
+    
     setFlags(prev => {
-      const current = prev[fieldKey];
-      return {
-        ...prev,
-        [fieldKey]: current === status ? null : status
-      };
+      const updated = { ...prev };
+      if (nextStatus === null) delete updated[fieldKey];
+      else updated[fieldKey] = nextStatus;
+      return updated;
     });
+
+    onChange(kozijnen.map(r => r.id === fieldKey ? { ...r, flag: nextStatus === null ? undefined : nextStatus } : r));
+  };
+
+  const setFlag = (fieldKey: string, nextStatus: 'red' | 'yellow' | 'green' | null) => {
+    setFlags(prev => {
+      const updated = { ...prev };
+      if (nextStatus === null) delete updated[fieldKey];
+      else updated[fieldKey] = nextStatus;
+      return updated;
+    });
+
+    onChange(kozijnen.map(r => r.id === fieldKey ? { ...r, flag: nextStatus === null ? undefined : nextStatus } : r));
   };
 
   const getUniqueCopyName = (originalName: string, existingNames: string[], suffixFormat?: string) => {
@@ -785,7 +815,7 @@ export const KozijnView: React.FC<KozijnViewProps> = ({ data, kozijnen, construc
           <DataTable minWidth="1000px">
             <DataTable.Head className="sticky top-0 z-20">
               <DataTable.Row className="bg-gray-50 border-b border-outline-variant/10">
-                <DataTable.HeaderCell className="bg-gray-50 min-w-[180px]">{t('kozijn.naam')}</DataTable.HeaderCell>
+                <DataTable.HeaderCell className="bg-gray-50">{t('kozijn.naam')}</DataTable.HeaderCell>
                 <DataTable.HeaderCell>{t('nav.gevel')}</DataTable.HeaderCell>
                 <DataTable.HeaderCell className="text-center">{t('kozijn.width')}</DataTable.HeaderCell>
                 <DataTable.HeaderCell className="text-center">{t('kozijn.height')}</DataTable.HeaderCell>
@@ -907,7 +937,7 @@ export const KozijnView: React.FC<KozijnViewProps> = ({ data, kozijnen, construc
         initialRow={editingKozijn}
         data={data}
         flagKey={editingKozijn ? `library_${editingKozijn.id}` : undefined}
-        onFlagChange={(key, val) => editingKozijn && toggleFlag(editingKozijn.id, val)}
+        onFlagChange={(key, val) => editingKozijn && setFlag(editingKozijn.id, val)}
       />
 
       {/* Global Photo Modal for KozijnView */}

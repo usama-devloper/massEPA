@@ -7,6 +7,7 @@ interface AppFlaggedLabelProps {
   onChange: (value: 'red' | 'yellow' | 'green' | null) => void;
   className?: string;
   role?: string;
+  dataFieldKey?: string;
 }
 
 export const AppFlaggedLabel: React.FC<AppFlaggedLabelProps> = ({
@@ -15,6 +16,7 @@ export const AppFlaggedLabel: React.FC<AppFlaggedLabelProps> = ({
   onChange,
   className = '',
   role = 'SYS',
+  dataFieldKey,
 }) => {
   let labelNode;
 
@@ -45,7 +47,7 @@ export const AppFlaggedLabel: React.FC<AppFlaggedLabelProps> = ({
   }
 
   return (
-    <div className={`py-1 w-full md:w-[160px] shrink-0 select-none ${className}`}>
+    <div className={`py-1 w-full md:w-[160px] shrink-0 select-none ${className}`} data-field-key={dataFieldKey}>
       {labelNode}
       <div className="flex items-center gap-1.5 mt-1 ml-0.5">
         {role && (

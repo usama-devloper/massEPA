@@ -285,7 +285,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
           )}
 
           <div>
-            <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Oppervlakte (mÂ²)</label>
+            <label className="block text-[10px] font-bold uppercase text-on-surface-variant/50 tracking-wider mb-1.5">Oppervlakte (m²)</label>
             <AppInputField
               type="text"
               className="font-mono font-bold"
@@ -366,7 +366,7 @@ export const BouwkundigEditModal: React.FC<BouwkundigEditModalProps> = ({
                         />
                         <div className="flex flex-col">
                           <span className="text-on-background text-[10px] leading-tight">{k.naam}</span>
-                          <span className="text-[9px] text-on-surface-variant/50 font-semibold leading-tight">{k.width} m x {k.height} m (Area: {k.area} mÂ²)</span>
+                          <span className="text-[9px] text-on-surface-variant/50 font-semibold leading-tight">{k.width} m x {k.height} m (Area: {k.area} m²)</span>
                         </div>
                       </label>
                     );
