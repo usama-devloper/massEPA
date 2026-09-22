@@ -471,7 +471,6 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
   const handlePrev = () => {
     if (hasPrev) {
       setCurrentView(mobileNavSequence[currentIndex - 1]);
-      setTimeout(() => mainRef.current?.scrollTo({ top: 0, behavior: 'instant' }), 0);
     }
   };
 
@@ -747,7 +746,10 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
       if (stored) target = JSON.parse(stored);
     } catch { }
 
-    if (!target || !target.id) return;
+    if (!target || !target.id) {
+      setTimeout(() => mainRef.current?.scrollTo({ top: 0, behavior: 'instant' }), 0);
+      return;
+    }
 
     const rawId: string = target.id;
     const cleanFieldKey = rawId.includes('-') ? rawId.split('-').slice(1).join('-') : rawId;
@@ -832,7 +834,7 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
           <InventoryView
             userRole={userProfile?.role || ''}
             userName={userProfile?.full_name || userName}
-            onStartAudit={async (clientRecord) => {
+            onStartAudit={async (clientRecord, inspectorName) => {
               // Extract city: last word of address string
               const addressParts = (clientRecord.address || '').trim().split(/\s+/);
               const city = addressParts.length > 1 ? addressParts[addressParts.length - 1] : '';
@@ -848,6 +850,9 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
               } catch (e) { }
 
               if (existingData) {
+                if (inspectorName) {
+                  existingData.algemeen.inspector.adviseur = inspectorName;
+                }
                 setData(existingData);
               } else {
                 setData(prev => ({
@@ -867,6 +872,10 @@ export const BackOfficePortal: React.FC<BackOfficePortalProps> = ({ onLogout, us
                       plaats: city,
                       email: clientRecord.email || '',
                       telefoon: clientRecord.phoneNumber || '',
+                    },
+                    inspector: {
+                      ...prev.algemeen.inspector,
+                      adviseur: inspectorName || prev.algemeen.inspector.adviseur || '',
                     }
                   }
                 }));

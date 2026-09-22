@@ -424,7 +424,7 @@ export function AppSelect({
                             onChange(opt.value);
                             close();
                           }}
-                          className={`w-full px-3 py-2.5 text-left text-sm hover:bg-primary/10 whitespace-nowrap ${
+                          className={`w-full px-3 py-2.5 text-left text-sm hover:bg-primary/10 whitespace-normal break-words ${
                             value === opt.value
                               ? 'bg-primary font-semibold text-white hover:bg-primary'
                               : 'text-gray-900'
@@ -520,7 +520,7 @@ export function AppSelect({
                     : variant === 'compact' ? 'border-transparent' : `border-transparent ${triggerBg}`
             }`}
           >
-            <span className={`block truncate whitespace-nowrap ${showPlaceholder ? 'text-gray-400 font-normal' : 'text-gray-900'}`}>
+            <span className={`block whitespace-normal break-words ${showPlaceholder ? 'text-gray-400 font-normal' : 'text-gray-900'}`}>
               {displayLabel}
             </span>
           </button>

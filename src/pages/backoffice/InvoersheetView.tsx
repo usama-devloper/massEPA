@@ -1599,7 +1599,7 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({
               </div>
             </>
           ) : (
-            <>
+            <div className="relative w-full flex-1">
               <input placeholder="-"
                 type={type === 'date' ? 'date' : 'text'}
                 value={displayVal}
@@ -1616,13 +1616,16 @@ const InvoersheetView: React.FC<InvoersheetViewProps> = ({
                     onChange(pathOrLocalKey, val);
                   }
                 }}
-                className={`w-full text-xs font-bold text-on-background bg-transparent border-none focus:outline-none focus:ring-0 leading-tight outline-none print:hidden font-sans ${isDash ? 'text-on-surface-variant/30 font-semibold' : ''
+                className={`w-full text-xs font-bold text-on-background bg-transparent border-none focus:outline-none focus:ring-0 leading-tight outline-none print:hidden font-sans ${type === 'date' ? 'appearance-none date-input-custom pr-6' : ''} ${isDash ? 'text-on-surface-variant/30 font-semibold' : ''
                   } ${readOnly ? 'cursor-default pointer-events-none opacity-80' : ''}`}
               />
+              {type === 'date' && (
+                <Calendar size={14} strokeWidth={2.5} className="absolute right-0 top-1/2 -translate-y-1/2 text-primary pointer-events-none print:hidden" />
+              )}
               <div className={`hidden print:block w-full text-xs font-bold leading-tight break-words whitespace-normal py-1 ${isDash ? 'text-on-surface-variant/30 font-semibold' : 'text-on-background'}`}>
                 {isDash ? "-" : displayVal}
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>

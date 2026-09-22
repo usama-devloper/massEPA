@@ -18,10 +18,10 @@ export const CollapsibleSection: React.FC<SectionProps> = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className={`mb-5 ${showHeader ? 'border border-outline-variant/10 rounded-2xl overflow-hidden bg-white shadow-sm' : ''}`}>
+    <div className={`mb-5 ${showHeader ? 'border border-outline-variant/10 rounded-2xl bg-white shadow-sm' : ''}`}>
       {showHeader && (
         <div 
-          className="bg-primary text-white px-5 py-4 flex items-center justify-between font-display font-black text-sm select-none cursor-pointer hover:bg-primary-dark transition-all duration-200"
+          className={`bg-primary text-white px-5 py-4 flex items-center justify-between font-display font-black text-sm select-none cursor-pointer hover:bg-primary-dark transition-all duration-200 ${isOpen ? 'rounded-t-2xl' : 'rounded-2xl'}`}
           onClick={() => setIsOpen(!isOpen)}
           aria-expanded={isOpen}
         >
@@ -32,11 +32,11 @@ export const CollapsibleSection: React.FC<SectionProps> = ({
       <AnimatePresence initial={false}>
         {isOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            initial={{ height: 0, opacity: 0, overflow: 'hidden' }}
+            animate={{ height: 'auto', opacity: 1, transitionEnd: { overflow: 'visible' } }}
+            exit={{ height: 0, opacity: 0, overflow: 'hidden' }}
             transition={{ duration: 0.2, ease: "easeInOut" }}
-            className="overflow-hidden bg-white"
+            className="bg-white rounded-b-2xl"
           >
             <div className="p-5 space-y-4">
               {children}

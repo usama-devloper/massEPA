@@ -1510,7 +1510,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
                             value={data.installations?.tapTypeToestel || 'Keukengeiser'}
                             onChange={(e) => onChange('installations.tapTypeToestel', e.target.value)}
                           >
-                            <option value="Keukengeiser">{t('installations.tapwater.kitchenKitchenGeyser') || t('installations.tapwater.kitchenGeyser')}</option>
+                            <option value="Keukengeiser">{t('installations.tapwater.kitchenGeyser')}</option>
                             <option value="Gasgestookt warmwatertoestel (Badgeiser)">{t('installations.tapwater.bathGeyser')}</option>
                             <option value="Gasgestookt combitoestel">{t('installations.tapwater.gasCombi')}</option>
                             <option value="(micro) WKK">{t('installations.tapwater.microChp')}</option>

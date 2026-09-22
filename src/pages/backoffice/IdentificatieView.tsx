@@ -1,4 +1,5 @@
 import React from 'react';
+import { Calendar } from 'lucide-react';
 import { CollapsibleSection, FieldGroup } from '../../components/ui/BackOfficeUI';
 import { InspectionData } from './backofficeTypes';
 import { useLanguage } from '../../context/LanguageContext';
@@ -252,20 +253,26 @@ export const InspectorView: React.FC<IdentificatieViewProps> = ({ data, onChange
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FieldGroup label={renderLabelWithFlags('opnamedatum', t('inspector.opnamedatum') || 'Opnamedatum')}>
-              <input
-                type="date"
-                className={`bg-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full border border-transparent transition-all font-semibold ${getFieldBorder('opnamedatum')}`}
-                value={data.algemeen.inspector.opnamedatum || ''}
-                onChange={(e) => onChange('algemeen.inspector.opnamedatum', e.target.value)}
-              />
+              <div className="relative w-full">
+                <input
+                  type="date"
+                  className={`appearance-none bg-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full border border-transparent transition-all font-semibold date-input-custom ${getFieldBorder('opnamedatum')}`}
+                  value={data.algemeen.inspector.opnamedatum || ''}
+                  onChange={(e) => onChange('algemeen.inspector.opnamedatum', e.target.value)}
+                />
+                <Calendar size={15} strokeWidth={2.5} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none" />
+              </div>
             </FieldGroup>
             <FieldGroup label={renderLabelWithFlags('invoerdatum', t('inspector.invoerdatum') || 'Invoerdatum')}>
-              <input
-                type="date"
-                className={`bg-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full border border-transparent transition-all font-semibold ${getFieldBorder('invoerdatum')}`}
-                value={data.algemeen.inspector.invoerdatum || ''}
-                onChange={(e) => onChange('algemeen.inspector.invoerdatum', e.target.value)}
-              />
+              <div className="relative w-full">
+                <input
+                  type="date"
+                  className={`appearance-none bg-gray-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full border border-transparent transition-all font-semibold date-input-custom ${getFieldBorder('invoerdatum')}`}
+                  value={data.algemeen.inspector.invoerdatum || ''}
+                  onChange={(e) => onChange('algemeen.inspector.invoerdatum', e.target.value)}
+                />
+                <Calendar size={15} strokeWidth={2.5} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none" />
+              </div>
             </FieldGroup>
           </div>
         </div>
