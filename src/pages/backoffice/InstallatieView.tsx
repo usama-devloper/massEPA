@@ -978,7 +978,7 @@ const InstallatieView: React.FC<InstallatieViewProps> = ({ data, onChange: props
       safeSaveInstallations(next);
 
       Object.keys(defaultCatDetails[catId]).forEach(k => {
-        onChange(`installations.${k}`, defaultCatDetails[catId][k]);
+        originalOnChange(`installations.${k}`, defaultCatDetails[catId][k]);
       });
     }
     setSelectedCategory(catId);

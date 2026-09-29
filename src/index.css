@@ -498,3 +498,19 @@
 .date-input-custom::-webkit-date-and-time-value {
   text-align: left;
 }
+
+/* Invoersheet V2 Custom Scrollbar */
+.invoersheet-v2 ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.invoersheet-v2 ::-webkit-scrollbar-track {
+  background: #eff4ff;
+}
+.invoersheet-v2 ::-webkit-scrollbar-thumb {
+  background: #c5c6ce;
+  border-radius: 3px;
+}
+.invoersheet-v2 ::-webkit-scrollbar-thumb:hover {
+  background: #75777e;
+}

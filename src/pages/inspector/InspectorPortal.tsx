@@ -17,6 +17,7 @@ import { idbPut, idbGet } from '../../storage/idbKv';
 import InventoryView from '../backoffice/InventoryView';
 import InvoersheetView from '../backoffice/InvoersheetView';
 import { BackOfficeDashboard } from '../backoffice/BackOfficeDashboard';
+import { InvoersheetV2View } from './invoersheetV2/InvoersheetV2View';
 
 const INITIAL_DATA: InspectionData = {
   algemeen: {
@@ -380,6 +381,7 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
     { id: 'inventory', labelKey: 'nav.inventory', labelDefault: 'Inventory', icon: ClipboardList },
     { id: 'dashboard', labelKey: 'nav.dashboard', labelDefault: 'Overview', icon: LayoutDashboard },
     { id: 'invoersheet', labelKey: 'nav.invoersheet', labelDefault: 'Invoersheet', icon: FileDigit },
+    { id: 'invoersheet-v2', labelKey: 'nav.invoersheetV2', labelDefault: 'Invoersheet V2', icon: FileDigit },
   ];
 
   const [invoersheetActiveTab, setInvoersheetActiveTab] = useState<'p1' | 'p2' | 'p3' | 'p4'>('p1');
@@ -653,6 +655,8 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
             scrollTarget={scrollTarget}
           />
         );
+      case 'invoersheet-v2':
+        return <InvoersheetV2View inspectionData={data} userProfile={userProfile} onGlobalDataChange={handleDataChange} />;
       case 'settings':
         return (
           <div className="max-w-4xl mx-auto space-y-6 font-sans py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -826,7 +830,7 @@ export const InspectorPortal: React.FC<InspectorPortalProps> = ({ onLogout, user
 
         <main
           style={{ paddingTop: 'var(--app-topbar-height)' }}
-          className={`flex-1 ${currentView === 'invoersheet' ? 'p-0 md:p-0' : 'p-6'} bg-[#f4f7f5] h-full ${currentView === 'geometry' || currentView.startsWith('bouwkundig') || currentView.startsWith('geometry-') ? 'overflow-hidden' : 'overflow-y-auto'}`}
+          className={`flex-1 ${currentView === 'invoersheet' || currentView === 'invoersheet-v2' ? 'p-0 md:p-0' : 'p-6'} bg-[#f4f7f5] h-full ${currentView === 'geometry' || currentView.startsWith('bouwkundig') || currentView.startsWith('geometry-') || currentView === 'invoersheet-v2' ? 'overflow-hidden' : 'overflow-y-auto'}`}
         >
           <div className="w-full h-full max-w-screen-2xl mx-auto flex flex-col">
             {renderView()}

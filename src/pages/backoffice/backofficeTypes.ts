@@ -111,6 +111,8 @@ export interface InspectionData {
     };
     technical: {
       gboTs: string[];
+      gboTsLength?: string[];
+      gboTsWidth?: string[];
       leidingdoorvoeren: string;
       aantal: string;
       avr: string;
@@ -128,6 +130,9 @@ export interface InspectionData {
   bouwkundigRows?: any[];
   kozijnenLibrary?: any[];
   allInstallations?: InstallatieRow[];
+  envelope?: any[];
+  facadesData?: any[];
+  interiorSpacesData?: any[];
   overstek: {
     overstekAanwezig: string;
     overstekDiepte: string;
@@ -217,6 +222,7 @@ export interface InspectionData {
     verwarmIdentiekeSystemen?: string;
     zonIdentiekeSystemen?: string;
   };
+  calcOverrides?: any;
 }
 
 export type ViewType =
@@ -232,6 +238,8 @@ export type ViewType =
   | 'geometry-overstek'
   | 'geometry-bouwkundig'
   | 'geometry-kozijn'
+  | 'invoersheet'
+  | 'invoersheet-v2'
   | 'bouwkundig-gevel'
   | 'bouwkundig-vloer'
   | 'bouwkundig-dak'
