@@ -24,10 +24,12 @@ import {
   ArrowUpRight,
   Trash2,
   Plus,
-  ChevronLeft
+  ChevronLeft,
+  FileText
 } from 'lucide-react';
 import { MediaViewerModal } from '../../../../../components/common/MediaViewerModal';
 import { useLanguage } from '../../../../../context/LanguageContext';
+import { PdfThumbnail } from '../../../../../components/common/PdfThumbnail';
 
 interface VisualsHouseInfoProps {
   dossier: ProjectDossier;
@@ -329,13 +331,12 @@ export const VisualsHouseInfo: React.FC<VisualsHouseInfoProps> = ({
         <div className="bg-primary text-white px-5 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
             <h3 className="font-display font-semibold text-sm tracking-wide">
-              {t('invoersheetV2.visualsHouseInfo.floorPlanTitle') || 'Floor plan (Bouwkundige Plattegrond Begane Grond & Verdieping)'}
+              {t('invoersheetV2.visualsHouseInfo.floorPlanTitle') || 'Floor plans & Elevation'}
             </h3>
           </div>
         </div>
 
-        <div className="p-6 bg-slate-50/50">
-          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs w-full min-h-[360px] max-h-[500px] overflow-y-auto">
+        <div className="p-5 flex-1 bg-white w-full overflow-y-auto min-h-[360px] max-h-[500px]">
           <div className={`grid gap-4 flex-1 ${
             floorPlanFiles.length === 0 ? 'grid-cols-1 h-[320px]' : 
             floorPlanFiles.length === 1 ? 'grid-cols-2 h-[320px]' : 
@@ -346,11 +347,7 @@ export const VisualsHouseInfo: React.FC<VisualsHouseInfoProps> = ({
               <div key={idx} className="w-full h-full rounded-lg overflow-hidden border border-slate-200 bg-white relative group flex items-center justify-center shadow-xs">
                 <div onClick={() => { setActiveModalIndex(idx); setModalZoom(1); }} className="w-full h-full cursor-pointer relative">
                   {file.isPdf ? (
-                    <iframe 
-                      src={`${file.url}#toolbar=0&navpanes=0&scrollbar=0`}
-                      className="w-full h-full border-0 pointer-events-none"
-                      title={`Floorplan PDF ${idx}`}
-                    />
+                    <PdfThumbnail url={file.url} altTitle={`Plattegrond ${idx + 1}`} />
                   ) : (
                     <img 
                       src={file.url} 
@@ -368,7 +365,7 @@ export const VisualsHouseInfo: React.FC<VisualsHouseInfoProps> = ({
                 
                 <button
                   onClick={(e) => removeFloorPlanFile(e, idx)}
-                  className="absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-md shadow-xs opacity-0 group-hover:opacity-100 transition z-10"
+                  className="absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-md shadow-xs opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition z-10"
                   title={t('invoersheetV2.visualsHouseInfo.delete') || 'Verwijder'}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -393,7 +390,6 @@ export const VisualsHouseInfo: React.FC<VisualsHouseInfoProps> = ({
                  </>
                )}
             </div>
-          </div>
           </div>
         </div>
       </div>

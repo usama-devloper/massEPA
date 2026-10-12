@@ -20,6 +20,7 @@ import {
   Check
 } from 'lucide-react';
 import { useLanguage } from '../../../../../context/LanguageContext';
+import { renderV1Field } from '../common/LegacyField';
 
 interface InstallationsProps {
   installations: InstallationSystem;
@@ -30,6 +31,11 @@ interface InstallationsProps {
   onUpdateSpacesCount?: (count: number) => void;
   interiorSpacesData?: any[];
   onUpdateInteriorSpacesData?: (data: any[]) => void;
+  flags?: Record<string, 'red' | 'yellow' | 'green' | null>;
+  onUpdateFlag?: (fieldKey: string, flag: 'red' | 'yellow' | 'green' | null) => void;
+  fieldRoles?: Record<string, string>;
+  onUpdateFieldRole?: (fieldKey: string, role: string) => void;
+  onAutoInspectField?: (fieldKey: string) => void;
 }
 
 export const Installations: React.FC<InstallationsProps> = ({
@@ -40,7 +46,12 @@ export const Installations: React.FC<InstallationsProps> = ({
   onNavigateToChapter,
   onUpdateSpacesCount,
   interiorSpacesData,
-  onUpdateInteriorSpacesData
+  onUpdateInteriorSpacesData,
+  flags,
+  onUpdateFlag,
+  fieldRoles,
+  onUpdateFieldRole,
+  onAutoInspectField
 }) => {
   const { t } = useLanguage();
   const [activeView, setActiveView] = useState<'interior_spaces' | 'calculator'>('interior_spaces');
@@ -58,6 +69,11 @@ export const Installations: React.FC<InstallationsProps> = ({
         onUpdateSpacesCount={onUpdateSpacesCount}
         interiorSpacesData={interiorSpacesData}
         onUpdateInteriorSpacesData={onUpdateInteriorSpacesData}
+        flags={flags}
+        onUpdateFlag={onUpdateFlag}
+        fieldRoles={fieldRoles}
+        onUpdateFieldRole={onUpdateFieldRole}
+        onAutoInspectField={onAutoInspectField}
       />
     );
   }
@@ -104,26 +120,26 @@ export const Installations: React.FC<InstallationsProps> = ({
           </div>
 
           <div className="space-y-3 text-xs">
-            <div>
-              <label className="block text-slate-700 font-medium mb-1">{t('invoersheetV2.installations.mainGeneratorType') || 'Type Hoofdopwekker'}</label>
-              <AppSelect
-                value={installations.heatingType}
-                onChange={(val) =>
-                  onUpdateInstallations({
-                    heatingType: val as InstallationSystem['heatingType']
-                  })
-                }
-                options={[
-                  { value: "Warmtepomp (Lucht/Water)", label: t('invoersheetV2.installations.generatorHeatPumpAirWater') || "Warmtepomp (Lucht/Water split)" },
-                  { value: "Warmtepomp (Bodem/Water)", label: t('invoersheetV2.installations.generatorHeatPumpGroundWater') || "Warmtepomp (Bodem/Water gesloten bron)" },
-                  { value: "Hybride Warmtepomp + HR-ketel", label: t('invoersheetV2.installations.generatorHybrid') || "Hybride Warmtepomp + HR-107 CV" },
-                  { value: "HR-107 CV-ketel", label: t('invoersheetV2.installations.generatorHR107') || "HR-107 Aardgas Combiketel" },
-                  { value: "Stadsverwarming", label: t('invoersheetV2.installations.generatorDistrictHeating') || "Stadsverwarming / Warmtenet" }
-                ]}
-                variant="white"
-                searchable={false}
-              />
-            </div>
+            {renderV1Field(
+              t('invoersheetV2.installations.mainGeneratorType') || 'Type Hoofdopwekker',
+              installations.heatingType,
+              'SYS',
+              flags?.['installations.heatingType'] || 'none',
+              (val) => onUpdateInstallations({ heatingType: val as InstallationSystem['heatingType'] }),
+              'select',
+              [
+                { value: "Warmtepomp (Lucht/Water)", label: t('invoersheetV2.installations.generatorHeatPumpAirWater') || "Warmtepomp (Lucht/Water split)" },
+                { value: "Warmtepomp (Bodem/Water)", label: t('invoersheetV2.installations.generatorHeatPumpGroundWater') || "Warmtepomp (Bodem/Water gesloten bron)" },
+                { value: "Hybride Warmtepomp + HR-ketel", label: t('invoersheetV2.installations.generatorHybrid') || "Hybride Warmtepomp + HR-107 CV" },
+                { value: "HR-107 CV-ketel", label: t('invoersheetV2.installations.generatorHR107') || "HR-107 Aardgas Combiketel" },
+                { value: "Stadsverwarming", label: t('invoersheetV2.installations.generatorDistrictHeating') || "Stadsverwarming / Warmtenet" }
+              ],
+              undefined,
+              flags?.['installations.heatingType'],
+              onUpdateFlag ? (val) => onUpdateFlag('installations.heatingType', val) : undefined,
+              fieldRoles?.['installations.heatingType'],
+              () => onAutoInspectField?.('installations.heatingType')
+            )}
 
             <div>
               <div className="flex items-center justify-between mb-1">
@@ -140,9 +156,10 @@ export const Installations: React.FC<InstallationsProps> = ({
                 max="5.5"
                 step="0.1"
                 value={installations.heatingEfficiencyCOP}
-                onChange={(e) =>
-                  onUpdateInstallations({ heatingEfficiencyCOP: parseFloat(e.target.value) })
-                }
+                onChange={(e) => {
+                  onUpdateInstallations({ heatingEfficiencyCOP: parseFloat(e.target.value) });
+                  onAutoInspectField?.('installations.heatingEfficiencyCOP');
+                }}
                 className="w-full accent-[#006a63]"
               />
               <div className="flex justify-between text-[10px] font-mono text-slate-400 mt-0.5">
@@ -175,32 +192,35 @@ export const Installations: React.FC<InstallationsProps> = ({
           </div>
 
           <div className="space-y-3 text-xs">
-            <div>
-              <label className="block text-slate-700 font-medium mb-1">{t('invoersheetV2.installations.dhwGenerator') || 'Tapwater Bereiding Toestel'}</label>
-              <AppSelect
-                value={installations.tapwaterType}
-                onChange={(val) =>
-                  onUpdateInstallations({
-                    tapwaterType: val as InstallationSystem['tapwaterType']
-                  })
-                }
-                options={[
-                  { value: "Geïntegreerde boiler warmtepomp", label: t('invoersheetV2.installations.dhwIntegratedBoilerHp') || "Geïntegreerde RVS boiler warmtepomp (180-230L)" },
-                  { value: "Combiketel HR", label: t('invoersheetV2.installations.dhwCombiBoilerHr') || "Aardgas Combiketel HR-klasse" },
-                  { value: "Zonneboiler + naverwarmer", label: t('invoersheetV2.installations.dhwSolarBoiler') || "Zonneboiler met collector op dak" },
-                  { value: "Elektrische boiler", label: t('invoersheetV2.installations.dhwElectricBoiler') || "Elektrische boiler direct gestookt" }
-                ]}
-                variant="white"
-                searchable={false}
-              />
-            </div>
+            {renderV1Field(
+              t('invoersheetV2.installations.dhwGenerator') || 'Tapwater Bereiding Toestel',
+              installations.tapwaterType,
+              'DHW',
+              flags?.['installations.tapwaterType'] || 'none',
+              (val) => onUpdateInstallations({ tapwaterType: val as InstallationSystem['tapwaterType'] }),
+              'select',
+              [
+                { value: "Geïntegreerde boiler warmtepomp", label: t('invoersheetV2.installations.dhwIntegratedBoilerHp') || "Geïntegreerde RVS boiler warmtepomp (180-230L)" },
+                { value: "Combiketel HR", label: t('invoersheetV2.installations.dhwCombiBoilerHr') || "Aardgas Combiketel HR-klasse" },
+                { value: "Zonneboiler + naverwarmer", label: t('invoersheetV2.installations.dhwSolarBoiler') || "Zonneboiler met collector op dak" },
+                { value: "Elektrische boiler", label: t('invoersheetV2.installations.dhwElectricBoiler') || "Elektrische boiler direct gestookt" }
+              ],
+              undefined,
+              flags?.['installations.tapwaterType'],
+              onUpdateFlag ? (val) => onUpdateFlag('installations.tapwaterType', val) : undefined,
+              fieldRoles?.['installations.tapwaterType'],
+              () => onAutoInspectField?.('installations.tapwaterType')
+            )}
 
             <div className="flex items-center space-x-3 pt-2">
               <input
                 type="checkbox"
                 id="solarBoilerCheck"
                 checked={installations.hasSolarBoiler}
-                onChange={(e) => onUpdateInstallations({ hasSolarBoiler: e.target.checked })}
+                onChange={(e) => {
+                  onUpdateInstallations({ hasSolarBoiler: e.target.checked });
+                  onAutoInspectField?.('installations.hasSolarBoiler');
+                }}
                 className="w-4 h-4 accent-[#006a63] rounded"
               />
               <label htmlFor="solarBoilerCheck" className="text-slate-700 font-medium cursor-pointer">
@@ -213,7 +233,10 @@ export const Installations: React.FC<InstallationsProps> = ({
                 type="checkbox"
                 id="coolingCheck"
                 checked={installations.coolingPresent}
-                onChange={(e) => onUpdateInstallations({ coolingPresent: e.target.checked })}
+                onChange={(e) => {
+                  onUpdateInstallations({ coolingPresent: e.target.checked });
+                  onAutoInspectField?.('installations.coolingPresent');
+                }}
                 className="w-4 h-4 accent-[#006a63] rounded"
               />
               <label htmlFor="coolingCheck" className="text-slate-700 font-medium cursor-pointer">
@@ -237,25 +260,25 @@ export const Installations: React.FC<InstallationsProps> = ({
           </div>
 
           <div className="space-y-3 text-xs">
-            <div>
-              <label className="block text-slate-700 font-medium mb-1">{t('invoersheetV2.installations.ventilationPrinciple') || 'Ventilatieprincipe (NEN 1087)'}</label>
-              <AppSelect
-                value={installations.ventilationType}
-                onChange={(val) =>
-                  onUpdateInstallations({
-                    ventilationType: val as InstallationSystem['ventilationType']
-                  })
-                }
-                options={[
-                  { value: "Balansventilatie met WTW (Systeem D)", label: t('invoersheetV2.installations.ventSystemD') || "Systeem D: Balansventilatie met warmteterugwinning (WTW)" },
-                  { value: "Mechanische afvoer (Systeem C)", label: t('invoersheetV2.installations.ventSystemC') || "Systeem C: Natuurlijke toevoer, mechanische afvoer" },
-                  { value: "Vraaggestuurde ventilatie CO2", label: t('invoersheetV2.installations.ventSystemCPlus') || "Systeem C+: Vraaggestuurd op CO2 en vochtsensoren" },
-                  { value: "Natuurlijke toevoer + afvoer (Systeem A)", label: t('invoersheetV2.installations.ventSystemA') || "Systeem A: Volledig natuurlijke ventilatie" }
-                ]}
-                variant="white"
-                searchable={false}
-              />
-            </div>
+            {renderV1Field(
+              t('invoersheetV2.installations.ventilationPrinciple') || 'Ventilatieprincipe (NEN 1087)',
+              installations.ventilationType,
+              'VENT',
+              flags?.['installations.ventilationType'] || 'none',
+              (val) => onUpdateInstallations({ ventilationType: val as InstallationSystem['ventilationType'] }),
+              'select',
+              [
+                { value: "Balansventilatie met WTW (Systeem D)", label: t('invoersheetV2.installations.ventSystemD') || "Systeem D: Balansventilatie met warmteterugwinning (WTW)" },
+                { value: "Mechanische afvoer (Systeem C)", label: t('invoersheetV2.installations.ventSystemC') || "Systeem C: Natuurlijke toevoer, mechanische afvoer" },
+                { value: "Vraaggestuurde ventilatie CO2", label: t('invoersheetV2.installations.ventSystemCPlus') || "Systeem C+: Vraaggestuurd op CO2 en vochtsensoren" },
+                { value: "Natuurlijke toevoer + afvoer (Systeem A)", label: t('invoersheetV2.installations.ventSystemA') || "Systeem A: Volledig natuurlijke ventilatie" }
+              ],
+              undefined,
+              flags?.['installations.ventilationType'],
+              onUpdateFlag ? (val) => onUpdateFlag('installations.ventilationType', val) : undefined,
+              fieldRoles?.['installations.ventilationType'],
+              () => onAutoInspectField?.('installations.ventilationType')
+            )}
 
             {installations.ventilationType.includes('WTW') && (
               <div>
@@ -272,9 +295,10 @@ export const Installations: React.FC<InstallationsProps> = ({
                   min="75"
                   max="98"
                   value={installations.wtwEfficiencyPct}
-                  onChange={(e) =>
-                    onUpdateInstallations({ wtwEfficiencyPct: parseInt(e.target.value) })
-                  }
+                  onChange={(e) => {
+                    onUpdateInstallations({ wtwEfficiencyPct: parseInt(e.target.value) });
+                    onAutoInspectField?.('installations.wtwEfficiencyPct');
+                  }}
                   className="w-full accent-teal-600"
                 />
                 <div className="flex justify-between text-[10px] font-mono text-slate-400 mt-0.5">
@@ -299,69 +323,95 @@ export const Installations: React.FC<InstallationsProps> = ({
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div>
-              <label className="block text-slate-700 font-medium mb-1">{t('invoersheetV2.installations.panelsCount') || 'Aantal Panelen'}</label>
-              <input
-                type="number"
-                min="0"
-                max="60"
-                value={installations.solarPvPanelsCount}
-                onChange={(e) =>
-                  onUpdateInstallations({ solarPvPanelsCount: parseInt(e.target.value) || 0 })
-                }
-                className="w-full font-mono font-bold px-3 py-2 bg-slate-50 border border-slate-300 rounded focus:bg-white focus:border-primary outline-none"
-              />
-            </div>
+          {(() => {
+            const pvSpans: Record<string, number> = {
+              panelsCount: 1,
+              wpPerPanel: 1,
+              orientation: 1,
+              inclination: 1
+            };
 
-            <div>
-              <label className="block text-slate-700 font-medium mb-1">{t('invoersheetV2.installations.powerPerPanel') || 'Vermogen per paneel (Wp)'}</label>
-              <input
-                type="number"
-                step="5"
-                value={installations.solarPvWpPerPanel}
-                onChange={(e) =>
-                  onUpdateInstallations({ solarPvWpPerPanel: parseInt(e.target.value) || 400 })
-                }
-                className="w-full font-mono font-bold px-3 py-2 bg-slate-50 border border-slate-300 rounded focus:bg-white focus:border-primary outline-none"
-              />
-            </div>
+            return (
+              <div className="grid grid-cols-2 gap-3 text-xs items-start">
+                <div className={`w-full ${pvSpans['panelsCount'] === 2 ? 'col-span-2' : 'col-span-1'}`}>
+                  {renderV1Field(
+                    t('invoersheetV2.installations.panelsCount') || 'Aantal Panelen',
+                    installations.solarPvPanelsCount,
+                    'PV',
+                    flags?.['installations.solarPvPanelsCount'] || 'none',
+                    (val) => onUpdateInstallations({ solarPvPanelsCount: parseInt(val as string) || 0 }),
+                    'number',
+                    undefined,
+                    undefined,
+                    flags?.['installations.solarPvPanelsCount'],
+                    onUpdateFlag ? (val) => onUpdateFlag('installations.solarPvPanelsCount', val) : undefined,
+                    fieldRoles?.['installations.solarPvPanelsCount'],
+                    () => onAutoInspectField?.('installations.solarPvPanelsCount'),
+                    'Bijv. 10'
+                  )}
+                </div>
 
-            <div>
-              <label className="block text-slate-700 font-medium mb-1">{t('invoersheetV2.installations.pvOrientation') || 'Oriëntatie PV'}</label>
-              <AppSelect
-                value={installations.solarPvOrientation}
-                onChange={(val) =>
-                  onUpdateInstallations({
-                    solarPvOrientation: val as InstallationSystem['solarPvOrientation']
-                  })
-                }
-                options={[
-                  { value: "Z", label: t('invoersheetV2.installations.southOptimal') || "Zuid (Optimaal)" },
-                  { value: "ZO", label: t('invoersheetV2.installations.southEast') || "Zuid-Oost" },
-                  { value: "ZW", label: t('invoersheetV2.installations.southWest') || "Zuid-West" },
-                  { value: "O", label: t('invoersheetV2.installations.east') || "Oost" },
-                  { value: "W", label: t('invoersheetV2.installations.west') || "West" }
-                ]}
-                variant="white"
-                searchable={false}
-              />
-            </div>
+                <div className={`w-full ${pvSpans['wpPerPanel'] === 2 ? 'col-span-2' : 'col-span-1'}`}>
+                  {renderV1Field(
+                    t('invoersheetV2.installations.powerPerPanel') || 'Vermogen per paneel (Wp)',
+                    installations.solarPvWpPerPanel,
+                    'PV',
+                    flags?.['installations.solarPvWpPerPanel'] || 'none',
+                    (val) => onUpdateInstallations({ solarPvWpPerPanel: parseInt(val as string) || 400 }),
+                    'number',
+                    undefined,
+                    undefined,
+                    flags?.['installations.solarPvWpPerPanel'],
+                    onUpdateFlag ? (val) => onUpdateFlag('installations.solarPvWpPerPanel', val) : undefined,
+                    fieldRoles?.['installations.solarPvWpPerPanel'],
+                    () => onAutoInspectField?.('installations.solarPvWpPerPanel'),
+                    'Bijv. 400'
+                  )}
+                </div>
 
-            <div>
-              <label className="block text-slate-700 font-medium mb-1">{t('invoersheetV2.installations.inclinationAngle') || 'Hellingshoek (°)'}</label>
-              <input
-                type="number"
-                min="0"
-                max="90"
-                value={installations.solarPvInclinationDeg}
-                onChange={(e) =>
-                  onUpdateInstallations({ solarPvInclinationDeg: parseInt(e.target.value) || 35 })
-                }
-                className="w-full font-mono px-3 py-2 bg-slate-50 border border-slate-300 rounded outline-none"
-              />
-            </div>
-          </div>
+                <div className={`w-full ${pvSpans['orientation'] === 2 ? 'col-span-2' : 'col-span-1'}`}>
+                  {renderV1Field(
+                    t('invoersheetV2.installations.pvOrientation') || 'Oriëntatie PV',
+                    installations.solarPvOrientation,
+                    'PV',
+                    flags?.['installations.solarPvOrientation'] || 'none',
+                    (val) => onUpdateInstallations({ solarPvOrientation: val as InstallationSystem['solarPvOrientation'] }),
+                    'select',
+                    [
+                      { value: "Z", label: t('invoersheetV2.installations.southOptimal') || "Zuid (Optimaal)" },
+                      { value: "ZO", label: t('invoersheetV2.installations.southEast') || "Zuid-Oost" },
+                      { value: "ZW", label: t('invoersheetV2.installations.southWest') || "Zuid-West" },
+                      { value: "O", label: t('invoersheetV2.installations.east') || "Oost" },
+                      { value: "W", label: t('invoersheetV2.installations.west') || "West" }
+                    ],
+                    undefined,
+                    flags?.['installations.solarPvOrientation'],
+                    onUpdateFlag ? (val) => onUpdateFlag('installations.solarPvOrientation', val) : undefined,
+                    fieldRoles?.['installations.solarPvOrientation'],
+                    () => onAutoInspectField?.('installations.solarPvOrientation')
+                  )}
+                </div>
+
+                <div className={`w-full ${pvSpans['inclination'] === 2 ? 'col-span-2' : 'col-span-1'}`}>
+                  {renderV1Field(
+                    t('invoersheetV2.installations.inclinationAngle') || 'Hellingshoek (°)',
+                    installations.solarPvInclinationDeg,
+                    'PV',
+                    flags?.['installations.solarPvInclinationDeg'] || 'none',
+                    (val) => onUpdateInstallations({ solarPvInclinationDeg: parseInt(val as string) || 35 }),
+                    'number',
+                    undefined,
+                    undefined,
+                    flags?.['installations.solarPvInclinationDeg'],
+                    onUpdateFlag ? (val) => onUpdateFlag('installations.solarPvInclinationDeg', val) : undefined,
+                    fieldRoles?.['installations.solarPvInclinationDeg'],
+                    () => onAutoInspectField?.('installations.solarPvInclinationDeg'),
+                    'Bijv. 35'
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="p-3 bg-amber-50 rounded-lg border border-amber-200/80 text-amber-950 text-[11px]">
             {t('invoersheetV2.installations.totalCalculatedPeak') || 'Totale berekende piekcapaciteit:'} <strong>{(totalWp / 1000).toFixed(2)} kWp</strong>. 

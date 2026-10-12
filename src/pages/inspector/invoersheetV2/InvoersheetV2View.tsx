@@ -63,6 +63,65 @@ export const InvoersheetV2View: React.FC<InvoersheetV2ViewProps> = ({ inspection
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
   const [spacesCount, setSpacesCount] = useState(8);
 
+  const clientId = inspectionData?.clientId || 'default';
+  const [flags, setFlags] = useState<Record<string, 'red' | 'yellow' | 'green' | null>>(() => {
+    try {
+      const saved = localStorage.getItem(`invoersheet_v2_flags_${clientId}`);
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  const [fieldRoles, setFieldRoles] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem(`invoersheet_v2_field_roles_${clientId}`);
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  const handleUpdateFlag = useCallback((fieldKey: string, flag: 'red' | 'yellow' | 'green' | null) => {
+    setFlags(prev => {
+      const updated: Record<string, 'red' | 'yellow' | 'green' | null> = { ...prev, [fieldKey]: flag };
+      try {
+        localStorage.setItem(`invoersheet_v2_flags_${clientId}`, JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    setHasUnsavedChanges(true);
+  }, [clientId]);
+
+  const handleUpdateFieldRole = useCallback((fieldKey: string, role: string) => {
+    setFieldRoles(prev => {
+      const updated: Record<string, string> = { ...prev, [fieldKey]: role };
+      try {
+        localStorage.setItem(`invoersheet_v2_field_roles_${clientId}`, JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    setHasUnsavedChanges(true);
+  }, [clientId]);
+
+  const handleAutoInspectField = useCallback((fieldKey: string) => {
+    setFieldRoles(prev => {
+      const updated: Record<string, string> = { ...prev, [fieldKey]: 'INS' };
+      try {
+        localStorage.setItem(`invoersheet_v2_field_roles_${clientId}`, JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    setFlags(prev => {
+      const updated: Record<string, 'red' | 'yellow' | 'green' | null> = { ...prev, [fieldKey]: 'green' };
+      try {
+        localStorage.setItem(`invoersheet_v2_flags_${clientId}`, JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    setHasUnsavedChanges(true);
+  }, [clientId]);
+
   const CHAPTER_ORDER: ChapterId[] = ['visuals', 'identification', 'envelope', 'installations'];
   
   const getNextChapter = (): ChapterId | null => {
@@ -166,7 +225,12 @@ export const InvoersheetV2View: React.FC<InvoersheetV2ViewProps> = ({ inspection
             gbo2: {
               l: inspectionData.algemeen?.technical?.gboTsLength?.[1] ?? '',
               w: inspectionData.algemeen?.technical?.gboTsWidth?.[1] ?? '',
-              a: inspectionData.algemeen?.technical?.gboTs?.[1] ?? '34.00',
+              a: inspectionData.algemeen?.technical?.gboTs?.[1] ?? '',
+            },
+            gbo3: {
+              l: inspectionData.algemeen?.technical?.gboTsLength?.[2] ?? '',
+              w: inspectionData.algemeen?.technical?.gboTsWidth?.[2] ?? '',
+              a: inspectionData.algemeen?.technical?.gboTs?.[2] ?? '',
             }
           },
           envelope: inspectionData.envelope || prev.envelope,
@@ -287,12 +351,12 @@ export const InvoersheetV2View: React.FC<InvoersheetV2ViewProps> = ({ inspection
     setHasUnsavedChanges(true);
 
     if (onGlobalDataChange) {
-      if (field === 'gbo1' || field === 'gbo2') {
-         const idx = field === 'gbo1' ? 0 : 1;
-         const valObj = value; // GboData
-         onGlobalDataChange(`algemeen.technical.gboTs.${idx}`, valObj.a);
-         onGlobalDataChange(`algemeen.technical.gboTsLength.${idx}`, valObj.l);
-         onGlobalDataChange(`algemeen.technical.gboTsWidth.${idx}`, valObj.w);
+      if (field === 'gbo1' || field === 'gbo2' || field === 'gbo3') {
+         const idx = field === 'gbo1' ? 0 : field === 'gbo2' ? 1 : 2;
+         const valObj = value || { l: '', w: '', a: '' };
+         onGlobalDataChange(`algemeen.technical.gboTs.${idx}`, valObj.a || '');
+         onGlobalDataChange(`algemeen.technical.gboTsLength.${idx}`, valObj.l || '');
+         onGlobalDataChange(`algemeen.technical.gboTsWidth.${idx}`, valObj.w || '');
       } else {
         const fieldMap: Record<string, string> = {
           vloerConstructie: 'algemeen.woning.floorConstructieType',
@@ -518,6 +582,11 @@ export const InvoersheetV2View: React.FC<InvoersheetV2ViewProps> = ({ inspection
                 });
                 setHasUnsavedChanges(true);
               }}
+              flags={flags}
+              onUpdateFlag={handleUpdateFlag}
+              fieldRoles={fieldRoles}
+              onUpdateFieldRole={handleUpdateFieldRole}
+              onAutoInspectField={handleAutoInspectField}
             />
           )}
 
@@ -533,6 +602,11 @@ export const InvoersheetV2View: React.FC<InvoersheetV2ViewProps> = ({ inspection
               onNavigateToChapter={setActiveChapter}
               projectAddress={`${dossier.bag.address || ''}, ${dossier.bag.city || ''}`.trim().replace(/^,|,$/g, '')}
               projectNumber={dossier.dossierNumber}
+              flags={flags}
+              onUpdateFlag={handleUpdateFlag}
+              fieldRoles={fieldRoles}
+              onUpdateFieldRole={handleUpdateFieldRole}
+              onAutoInspectField={handleAutoInspectField}
             />
           )}
 
@@ -546,6 +620,11 @@ export const InvoersheetV2View: React.FC<InvoersheetV2ViewProps> = ({ inspection
               usableAreaAg={dossier.bag.usableAreaAg}
               onNavigateToChapter={setActiveChapter}
               onUpdateSpacesCount={setSpacesCount}
+              flags={flags}
+              onUpdateFlag={handleUpdateFlag}
+              fieldRoles={fieldRoles}
+              onUpdateFieldRole={handleUpdateFieldRole}
+              onAutoInspectField={handleAutoInspectField}
             />
           )}
           </div>

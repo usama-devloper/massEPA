@@ -60,7 +60,7 @@ export const ChapterNav: React.FC<ChapterNavProps> = ({
       shortTitle: t('invoersheetV2.exterior.shortTitle') || 'Exterior',
       icon: Layers,
       badge: `${facadeCount} ${t('invoersheetV2.exterior.facades') || 'Gevels'}`,
-      badgeColor: 'bg-slate-200 text-slate-800'
+      badgeColor: 'bg-emerald-100 text-emerald-800'
     },
     {
       id: 'installations',
@@ -111,6 +111,12 @@ export const ChapterNav: React.FC<ChapterNavProps> = ({
     }
   };
 
+  const isChapterActive = (chapId: ChapterId) => {
+    if (activeChapter === chapId) return true;
+    if ((chapId === 'dossier' || chapId === 'identification') && (activeChapter === 'dossier' || activeChapter === 'identification')) return true;
+    return false;
+  };
+
   return (
     <div className="relative flex items-center bg-white border border-slate-200 rounded-xl shadow-sm w-fit max-w-full">
       {showLeftArrow && (
@@ -129,7 +135,7 @@ export const ChapterNav: React.FC<ChapterNavProps> = ({
       >
         <div className="flex items-center space-x-1 min-w-max">
         {chapters.map((chapter) => {
-          const isActive = activeChapter === chapter.id;
+          const isActive = isChapterActive(chapter.id);
           const Icon = chapter.icon;
 
           return (

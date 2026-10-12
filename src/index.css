@@ -514,3 +514,272 @@
 .invoersheet-v2 ::-webkit-scrollbar-thumb:hover {
   background: #75777e;
 }
+
+/* ─── Invoersheet V2 – Inline Field Styles ──────────────────────────────── */
+
+/**
+ * v2-inline-input
+ * A polished pill-border input for editable cells in the DossierOverview cards.
+ * At rest: very subtle slate tint + full border so the field boundary is visible.
+ * Hover: border lifts to slate-300 with a tiny brightness boost.
+ * Focus: primary-colored border + soft glow ring; background turns clean white.
+ */
+.v2-inline-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0.5rem 0.75rem;
+  background-color: #f9fafb;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 0.75rem;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  line-height: inherit;
+  outline: none !important;
+  box-shadow: none;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.v2-inline-input::placeholder {
+  color: #9ca3af;                      /* gray-400 */
+  font-weight: 400;
+}
+
+.v2-inline-input:hover {
+  background-color: #f3f4f6;          /* gray-100 */
+  border-color: rgba(0, 0, 0, 0.10);
+}
+
+.v2-inline-input:focus {
+  background-color: #ffffff;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+/* Date inputs: keep the calendar icon area tidy */
+.v2-inline-input[type="date"] {
+  cursor: pointer;
+}
+
+/**
+ * v2-inline-select-wrap
+ * Wraps the AppSelect compact variant so the trigger button inherits the same
+ * pill-border look as v2-inline-input — seamlessly matching text fields.
+ */
+.v2-inline-select-wrap {
+  position: relative;
+}
+
+.v2-inline-select-wrap > div {
+  position: relative;
+}
+
+/* The AppSelect compact button trigger */
+.v2-inline-select-wrap button[aria-haspopup="listbox"] {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 0.5rem 1.75rem 0.5rem 0.75rem;
+  background-color: #f9fafb;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  border-radius: 0.75rem;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  outline: none !important;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+  cursor: pointer;
+}
+
+.v2-inline-select-wrap button[aria-haspopup="listbox"]:hover {
+  background-color: #f3f4f6;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+.v2-inline-select-wrap button[aria-haspopup="listbox"][aria-expanded="true"],
+.v2-inline-select-wrap button[aria-haspopup="listbox"]:focus {
+  background-color: #ffffff;
+  border-color: var(--color-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+/* Chevron icon button inside the wrap */
+.v2-inline-select-wrap > div > button:last-child {
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;        /* the main button handles clicks */
+}
+
+/* ─── Invoersheet V2 – Global Field Border System ───────────────────────── */
+/*
+ * Scoped to .invoersheet-v2 so it only affects the V2 chapters and never
+ * bleeds into the rest of the app.
+ *
+ * Matches the style of the original InvoersheetView (v1):
+ *   • Rest    → gray-50 bg + near-invisible border (rgba(0,0,0,0.06)) + rounded-xl
+ *   • Hover   → gray-100 bg (border stays subtle)
+ *   • Focus   → white bg + primary green border + soft 3px glow ring
+ *
+ * Exceptions (below the base rule) keep their intentional special colours.
+ */
+
+/* ── Base rule ───────────────────────────────────────────────────────────── */
+.invoersheet-v2 input[type="text"]:not(.v2-exempt),
+.invoersheet-v2 input[type="number"]:not(.v2-exempt),
+.invoersheet-v2 input[type="date"]:not(.v2-exempt),
+.invoersheet-v2 input[type="email"]:not(.v2-exempt),
+.invoersheet-v2 input[type="tel"]:not(.v2-exempt),
+.invoersheet-v2 input[type="url"]:not(.v2-exempt),
+.invoersheet-v2 select:not(.v2-exempt),
+.invoersheet-v2 textarea:not(.v2-exempt) {
+  background-color: #f9fafb;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  border-radius: 0.75rem;
+  outline: none !important;
+  box-shadow: none;
+  /* Match old invoersheet field height */
+  min-height: 40px;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600 !important;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+/* Small dimension inputs (L × B × Area triplets) – keep compact height */
+.invoersheet-v2 input.w-12:not(.v2-exempt),
+.invoersheet-v2 input.w-14:not(.v2-exempt),
+.invoersheet-v2 input.w-16:not(.v2-exempt) {
+  min-height: 30px;
+  padding: 0.25rem 0.375rem;
+}
+
+.invoersheet-v2 input[type="text"]:not(.v2-exempt):hover,
+.invoersheet-v2 input[type="number"]:not(.v2-exempt):hover,
+.invoersheet-v2 input[type="date"]:not(.v2-exempt):hover,
+.invoersheet-v2 input[type="email"]:not(.v2-exempt):hover,
+.invoersheet-v2 input[type="tel"]:not(.v2-exempt):hover,
+.invoersheet-v2 input[type="url"]:not(.v2-exempt):hover,
+.invoersheet-v2 select:not(.v2-exempt):hover,
+.invoersheet-v2 textarea:not(.v2-exempt):hover {
+  background-color: #f3f4f6;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+.invoersheet-v2 input[type="text"]:not(.v2-exempt):focus,
+.invoersheet-v2 input[type="number"]:not(.v2-exempt):focus,
+.invoersheet-v2 input[type="date"]:not(.v2-exempt):focus,
+.invoersheet-v2 input[type="email"]:not(.v2-exempt):focus,
+.invoersheet-v2 input[type="tel"]:not(.v2-exempt):focus,
+.invoersheet-v2 input[type="url"]:not(.v2-exempt):focus,
+.invoersheet-v2 select:not(.v2-exempt):focus,
+.invoersheet-v2 textarea:not(.v2-exempt):focus {
+  background-color: #ffffff !important;
+  border-color: var(--color-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent) !important;
+}
+
+.invoersheet-v2 input::placeholder,
+.invoersheet-v2 textarea::placeholder {
+  color: #9ca3af;                           /* gray-400 */
+  font-weight: 400;
+}
+
+/* ── AppSelect compact trigger (all chapters) ───────────────────────────── */
+.invoersheet-v2 button[aria-haspopup="listbox"] {
+  background-color: #f9fafb;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  border-radius: 0.75rem;
+  outline: none !important;
+  min-height: 40px;
+  padding: 0.5rem 0.75rem !important;
+  font-weight: 600 !important;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.invoersheet-v2 button[aria-haspopup="listbox"]:hover {
+  background-color: #f3f4f6;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+.invoersheet-v2 button[aria-haspopup="listbox"][aria-expanded="true"],
+.invoersheet-v2 button[aria-haspopup="listbox"]:focus {
+  background-color: #ffffff;
+  border-color: var(--color-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+/* ── Exceptions: special-colour fields ──────────────────────────────────── */
+
+/* Emerald result / total fields (e.g. area total, Als/Ag result) */
+.invoersheet-v2 input.bg-emerald-50,
+.invoersheet-v2 input[class*="bg-emerald"] {
+  background-color: #ecfdf5 !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+.invoersheet-v2 input.bg-emerald-50:focus,
+.invoersheet-v2 input[class*="bg-emerald"]:focus {
+  background-color: #d1fae5 !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* Sky / blue-tinted read-only fields (U-value display etc.) */
+.invoersheet-v2 input.bg-sky-50,
+.invoersheet-v2 input[class*="bg-sky"] {
+  background-color: #f0f9ff !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+/* Range sliders — never apply pill borders */
+.invoersheet-v2 input[type="range"] {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* Checkboxes / radios — keep native look */
+.invoersheet-v2 input[type="checkbox"],
+.invoersheet-v2 input[type="radio"] {
+  background-color: revert !important;
+  border: revert !important;
+  border-radius: revert !important;
+  box-shadow: none !important;
+  width: auto !important;
+}
+
+/* Title / headline inline inputs — start transparent, gain bg on hover */
+.invoersheet-v2 input.font-bold.font-display,
+.invoersheet-v2 input[class*="font-display"] {
+  background-color: transparent !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 0.75rem;
+}
+
+.invoersheet-v2 input.font-bold.font-display:hover,
+.invoersheet-v2 input[class*="font-display"]:hover {
+  background-color: #f9fafb !important;
+  border-color: rgba(0, 0, 0, 0.10) !important;
+}

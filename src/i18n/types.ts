@@ -26,4 +26,4 @@ export function resolveMessage(locale: Locale, key: string): string {
   return typeof node === 'string' ? node : key;
 }
 
-// Dummy comment to force Vite HMR JSON cache invalidation (triggered manually) once again!!!
+// Dummy comment to force Vite HMR JSON cache invalidation (triggered manually) once again!!!!

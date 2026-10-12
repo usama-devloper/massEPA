@@ -35,43 +35,85 @@ const INTERIOR_EXAMPLE_BASE = '/images/examples/photos/interior/';
 const INTERIOR_EXAMPLE_FILES: Record<string, string> = {
   'WOONKAMER|Full room view': 'Woonkamer_Full room view.jpg',
   'WOONKAMER|Windows': 'Woonkamer_Window.jpg',
-  'WOONKAMER|Heating control panel': 'Woonkamer_Heating control panel.jpg',
-  'WOONKAMER|Ventilation panel': 'Woonkamer_Ventilatie panel.jpg',
+  'WOONKAMER|Heating control panel': 'Heating control panel.jpg',
+  'WOONKAMER|Ventilation panel': 'Ventilation panel.jpg',
+  'WOONKAMER|Heating system': 'Heating afgiftesystem.jpg',
+  'WOONKAMER|Heating afgiftesystem': 'Heating afgiftesystem.jpg',
+
   'SLAAPKAMER|Window': 'Slaapkamer_Window.jpg',
-  'SLAAPKAMER|Heating system': 'Slaapkamer_Heating system.jpg',
+  'SLAAPKAMER|Heating system': 'Heating afgiftesystem.jpg',
+  'SLAAPKAMER|Heating afgiftesystem': 'Heating afgiftesystem.jpg',
+  'SLAAPKAMER|Ventilation grill': 'Ventilation grill.jpg',
+
   'KEUKEN|Window': 'Keuken_Window.jpg',
   'KEUKEN|CO₂ sensor': 'Keuken_Co2 sensor.jpg',
+  'KEUKEN|Heating system': 'Heating afgiftesystem.jpg',
+  'KEUKEN|Heating afgiftesystem': 'Heating afgiftesystem.jpg',
+  'KEUKEN|Ventilation grill': 'Ventilation grill.jpg',
+
   'BADKAMER|Window': 'Badkamer_Window.jpg',
-  'BADKAMER|Heating system': 'Badkamer_Heating system.jpg',
+  'BADKAMER|Heating system': 'Heating afgiftesystem.jpg',
+  'BADKAMER|Heating afgiftesystem': 'Heating afgiftesystem.jpg',
+  'BADKAMER|Ventilation grill': 'Ventilation grill.jpg',
+
   'HAL|Doors': 'Hal_Doors.jpg',
   'HAL|Window': 'Hal_Window.jpg',
   'HAL|Crawl space': 'Hal_Kruipruimte.jpg',
-  'MK|Heating system - merk & type': 'MK_Heating systeem.jpg',
-  'MK|PV system - merk & type': 'MK_PV systeem.jpg',
+  'HAL|Heating system': 'Heating afgiftesystem.jpg',
+  'HAL|Heating afgiftesystem': 'Heating afgiftesystem.jpg',
+
+  'MK|Heating system - merk & type': 'Heating system - brand & type.jpeg',
+  'MK|Heating system - brand & type': 'Heating system - brand & type.jpeg',
+  'MK|PV system - merk & type': 'PV system - brand & type.jpg',
+  'MK|PV system - brand & type': 'PV system - brand & type.jpg',
+
   'WC|Window': 'WC_Window.jpg',
+  'WC|Heating system': 'Heating afgiftesystem.jpg',
+  'WC|Heating afgiftesystem': 'Heating afgiftesystem.jpg',
+  'WC|Ventilation grill': 'Ventilation grill.jpg',
+
   'BERGING|General View': 'Berging_General view.jpg',
+
   'TECHNICAL ROOM|General View': 'Technical_room_General view.jpg',
+  'TECHNICAL ROOM|Installation': 'Installation.jpg',
+
   'EETKAMER|Window': 'Eetkamer_Window.jpg',
+  'EETKAMER|Heating system': 'Heating afgiftesystem.jpg',
+  'EETKAMER|Heating afgiftesystem': 'Heating afgiftesystem.jpg',
+
   'AANBOUW|General View': 'Aanbouw_General view.jpg',
+
   'ZOLDER|General View': 'Zolder_General view.jpg',
   'ZOLDER|Roof windows': 'Zolder_Roof windows.jpg',
+  'ZOLDER|Heating system': 'Heating afgiftesystem.jpg',
+  'ZOLDER|Heating afgiftesystem': 'Heating afgiftesystem.jpg',
+
   'SERRE|General View': 'Serre_General view.jpg',
   'WASRUIMTE|General View': 'Wasruimte.jpg',
   'OVERLUIP|General View': 'Overloop_General view.jpg',
-  'WOONKAMER|Heating system': 'Slaapkamer_Heating system.jpg',
-  'KEUKEN|Heating system': 'Slaapkamer_Heating system.jpg',
-  'WC|Heating system': 'Slaapkamer_Heating system.jpg',
-  'ZOLDER|Heating system': 'Slaapkamer_Heating system.jpg',
-  'HAL|Heating system': 'Slaapkamer_Heating system.jpg',
-  'EETKAMER|Heating system': 'Slaapkamer_Heating system.jpg',
+};
+
+/** Category-level fallbacks when a specific room combination isn't explicitly listed */
+const CATEGORY_DEFAULT_FILES: Record<string, string> = {
+  'Heating control panel': 'Heating control panel.jpg',
+  'Ventilation panel': 'Ventilation panel.jpg',
+  'Ventilation grill': 'Ventilation grill.jpg',
+  'Installation': 'Installation.jpg',
+  'Heating system': 'Heating afgiftesystem.jpg',
+  'Heating afgiftesystem': 'Heating afgiftesystem.jpg',
+  'Heating system - merk & type': 'Heating system - brand & type.jpeg',
+  'Heating system - brand & type': 'Heating system - brand & type.jpeg',
+  'PV system - merk & type': 'PV system - brand & type.jpg',
+  'PV system - brand & type': 'PV system - brand & type.jpg',
 };
 
 export function photoInteriorExampleImageUrl(
   roomName: string,
   category: string,
 ): string | undefined {
-  const key = `${getPhotoCaptureRoomKey(roomName)}|${getPhotoCaptureCategoryBase(category)}`;
-  const filename = INTERIOR_EXAMPLE_FILES[key];
+  const categoryBase = getPhotoCaptureCategoryBase(category);
+  const key = `${getPhotoCaptureRoomKey(roomName)}|${categoryBase}`;
+  const filename = INTERIOR_EXAMPLE_FILES[key] ?? CATEGORY_DEFAULT_FILES[categoryBase];
   if (!filename) return undefined;
   return `${INTERIOR_EXAMPLE_BASE}${encodeURI(filename)}`;
 }

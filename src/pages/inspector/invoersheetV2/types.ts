@@ -126,7 +126,8 @@ export interface TechnicalDetailsInfo {
   aantal: string;
   avr: string;
   gbo1: GboData;
-  gbo2: GboData;
+  gbo2?: GboData;
+  gbo3?: GboData;
 }
 
 export interface ProjectDossier {

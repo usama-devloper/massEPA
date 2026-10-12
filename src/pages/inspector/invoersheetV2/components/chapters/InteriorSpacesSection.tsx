@@ -23,13 +23,24 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Snowflake
+  Snowflake,
+  DoorClosed,
+  FileText
 } from 'lucide-react';
 import { InstallationSystem } from '../../types';
 import { MediaViewerModal } from '../../../../../components/common/MediaViewerModal';
 import { AppSelect } from '../../../../../components/common/AppSelect';
+import { PdfThumbnail } from '../../../../../components/common/PdfThumbnail';
 import { fileToPersistedUrl } from '../../../../../utils/persistedFileUrl';
 import { Plus } from 'lucide-react';
+
+const isPdfUrl = (url: string) => {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return lower.endsWith('.pdf') || lower.startsWith('data:application/pdf') || lower.includes('.pdf');
+};
+
+import { renderV1Field } from '../common/LegacyField';
 
 const getSelectOptions = (category: string, label: string, facadesData?: any[], specs?: any[]): string[] | null => {
   const lbl = label.toLowerCase();
@@ -51,6 +62,9 @@ const getSelectOptions = (category: string, label: string, facadesData?: any[], 
   }
   if (lbl === 'natuurlijke ventilatie' || lbl === 'circulatieleiding aanwezig' || lbl === 'ventilatie' || lbl === 'dwtw') {
     return ['Ja', 'Nee'];
+  }
+  if (lbl === 'isolatie aanwezig' || lbl === 'insulation present') {
+    return ['Ja', 'Nee', 'Onbekend'];
   }
   if (lbl === 'bouwintegratie') {
     return ['Niet geventileerd: zonder luchtspouw', 'Matig geventileerd: met luchtspouw', 'Sterk geventileerd: open draagconstructie', 'Onbekend'];
@@ -183,6 +197,11 @@ interface InteriorSpacesSectionProps {
   onUpdateSpacesCount?: (count: number) => void;
   interiorSpacesData?: InteriorSpaceCard[];
   onUpdateInteriorSpacesData?: (data: InteriorSpaceCard[]) => void;
+  flags?: Record<string, 'red' | 'yellow' | 'green' | null>;
+  onUpdateFlag?: (fieldKey: string, flag: 'red' | 'yellow' | 'green' | null) => void;
+  fieldRoles?: Record<string, string>;
+  onUpdateFieldRole?: (fieldKey: string, role: string) => void;
+  onAutoInspectField?: (fieldKey: string) => void;
 }
 
 export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
@@ -194,11 +213,276 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
   onOpenBcrgCode,
   onUpdateSpacesCount,
   interiorSpacesData,
-  onUpdateInteriorSpacesData
+  onUpdateInteriorSpacesData,
+  flags,
+  onUpdateFlag,
+  fieldRoles,
+  onUpdateFieldRole,
+  onAutoInspectField
 }) => {
   const { t } = useLanguage();
+  const safeT = (key: string, fallback: string) => {
+    const val = t(key);
+    if (!val || val === key || val.includes('.')) return fallback;
+    return val;
+  };
   const [spacesData, setSpacesData] = useState<InteriorSpaceCard[]>(interiorSpacesData && interiorSpacesData.length > 0 ? interiorSpacesData : INTERIOR_SPACES_DATA);
-  const [selectedSpaceFilter, setSelectedSpaceFilter] = useState<'all' | 'Hal' | 'MK' | 'Livingroom' | 'WC' | 'Keuken' | 'Slaapkamer'>('all');
+  const [selectedFloorFilter, setSelectedFloorFilter] = useState<string>('all');
+  const [selectedSpaceFilter, setSelectedSpaceFilter] = useState<string>('all');
+  const [customFloors, setCustomFloors] = useState<string[]>([]);
+  const [deletedFloors, setDeletedFloors] = useState<string[]>([]);
+  const [isAddFloorModalOpen, setIsAddFloorModalOpen] = useState<boolean>(false);
+  const [newFloorNameInput, setNewFloorNameInput] = useState<string>('');
+  const [floorToDeleteConfirm, setFloorToDeleteConfirm] = useState<{ floorKey: string; count: number } | null>(null);
+
+  interface CustomRoomEntry {
+    roomName: string;
+    floorLevel: string;
+  }
+
+  const [customRooms, setCustomRooms] = useState<CustomRoomEntry[]>([]);
+  const [deletedRooms, setDeletedRooms] = useState<string[]>([]);
+  const [isAddRoomModalOpen, setIsAddRoomModalOpen] = useState<boolean>(false);
+  const [newRoomNameInput, setNewRoomNameInput] = useState<string>('');
+  const [targetFloorForNewRoom, setTargetFloorForNewRoom] = useState<string>('Ground Floor');
+  const [roomToDeleteConfirm, setRoomToDeleteConfirm] = useState<{ roomKey: string; count: number } | null>(null);
+
+  React.useEffect(() => {
+    if (isAddRoomModalOpen) {
+      setTargetFloorForNewRoom(selectedFloorFilter !== 'all' ? selectedFloorFilter : 'Ground Floor');
+    }
+  }, [isAddRoomModalOpen, selectedFloorFilter]);
+
+  const DEFAULT_FLOORS = ['Ground Floor', '1st Floor'];
+  const DEFAULT_ROOM_FLOOR_MAP: Record<string, string> = {
+    'Hal': 'Ground Floor',
+    'MK': 'Ground Floor',
+    'Livingroom': 'Ground Floor',
+    'WC': 'Ground Floor',
+    'Keuken': 'Ground Floor',
+    'Slaapkamer': '1st Floor'
+  };
+
+  const getDefaultFloor = (spaceType: string) => {
+    if (DEFAULT_ROOM_FLOOR_MAP[spaceType]) return DEFAULT_ROOM_FLOOR_MAP[spaceType];
+    if (spaceType === 'Slaapkamer' || spaceType === 'Bedroom') return '1st Floor';
+    if (spaceType === 'Zolder' || spaceType === 'Attic') return 'Attic';
+    return 'Ground Floor';
+  };
+
+  const uniqueFloorsFromData = Array.from(new Set(spacesData.map(c => c.floorLevel || getDefaultFloor(c.spaceType)))).filter(f => f && !DEFAULT_FLOORS.includes(f));
+  const availableFloors = Array.from(new Set([...DEFAULT_FLOORS, ...uniqueFloorsFromData, ...customFloors]))
+    .filter(Boolean)
+    .filter(f => !deletedFloors.includes(f));
+
+  const getFloorLabel = (floorKey: string) => {
+    if (!floorKey) return '';
+    switch (floorKey) {
+      case 'all': return safeT('invoersheetV2.interiorSpaces.allFloors', 'All Floors');
+      case 'Ground Floor':
+      case 'Begane Grond':
+        return safeT('invoersheetV2.interiorSpaces.groundFloor', 'Ground Floor');
+      case '1st Floor':
+      case '1e Verdieping':
+        return safeT('invoersheetV2.interiorSpaces.firstFloor', '1st Floor');
+      case '2nd Floor':
+      case '2e Verdieping':
+        return safeT('invoersheetV2.interiorSpaces.secondFloor', '2nd Floor');
+      case 'Attic':
+      case 'Zolder':
+        return safeT('invoersheetV2.interiorSpaces.attic', 'Attic');
+      case 'Basement':
+      case 'Kelder':
+        return safeT('invoersheetV2.interiorSpaces.basement', 'Basement');
+      default:
+        return floorKey;
+    }
+  };
+
+  const handleAddFloor = (floorName: string) => {
+    const trimmed = floorName.trim();
+    if (!trimmed) return;
+    setDeletedFloors(prev => prev.filter(f => f !== trimmed));
+    if (!customFloors.includes(trimmed) && !DEFAULT_FLOORS.includes(trimmed)) {
+      setCustomFloors(prev => [...prev, trimmed]);
+    }
+    setSelectedFloorFilter(trimmed);
+    setNewFloorNameInput('');
+    setIsAddFloorModalOpen(false);
+  };
+
+  const executeDeleteFloor = () => {
+    if (floorToDeleteConfirm) {
+      const { floorKey } = floorToDeleteConfirm;
+      setSpacesData(prev => prev.filter(c => (c.floorLevel || getDefaultFloor(c.spaceType)) !== floorKey));
+      setDeletedFloors(prev => [...prev, floorKey]);
+      setCustomFloors(prev => prev.filter(f => f !== floorKey));
+      if (selectedFloorFilter === floorKey) {
+        setSelectedFloorFilter('all');
+      }
+      setFloorToDeleteConfirm(null);
+    }
+  };
+
+  const availableRooms = React.useMemo(() => {
+    const cardsOnFloor = selectedFloorFilter === 'all'
+      ? spacesData
+      : spacesData.filter(c => (c.floorLevel || getDefaultFloor(c.spaceType)) === selectedFloorFilter);
+    const roomsWithCardsOnFloor = Array.from(new Set(cardsOnFloor.map(c => c.spaceType)));
+
+    if (selectedFloorFilter === 'all') {
+      const allDefault = Object.keys(DEFAULT_ROOM_FLOOR_MAP);
+      const allCustom = customRooms.map(r => r.roomName);
+      const allCardRooms = spacesData.map(c => c.spaceType);
+      return Array.from(new Set([...allDefault, ...allCardRooms, ...allCustom]))
+        .filter(r => !deletedRooms.includes(r));
+    } else {
+      const defaultOnFloor = Object.entries(DEFAULT_ROOM_FLOOR_MAP)
+        .filter(([_, floor]) => floor === selectedFloorFilter)
+        .map(([room]) => room);
+      
+      const customOnFloor = customRooms
+        .filter(r => r.floorLevel === selectedFloorFilter)
+        .map(r => r.roomName);
+
+      return Array.from(new Set([...defaultOnFloor, ...roomsWithCardsOnFloor, ...customOnFloor]))
+        .filter(r => !deletedRooms.includes(r));
+    }
+  }, [selectedFloorFilter, spacesData, customRooms, deletedRooms]);
+
+  React.useEffect(() => {
+    if (selectedSpaceFilter !== 'all' && !availableRooms.includes(selectedSpaceFilter)) {
+      setSelectedSpaceFilter('all');
+    }
+  }, [selectedFloorFilter, availableRooms, selectedSpaceFilter]);
+
+  const cardsOnSelectedFloor = React.useMemo(() => {
+    return selectedFloorFilter === 'all'
+      ? spacesData
+      : spacesData.filter(c => (c.floorLevel || getDefaultFloor(c.spaceType)) === selectedFloorFilter);
+  }, [selectedFloorFilter, spacesData]);
+
+  const filteredCards = React.useMemo(() => {
+    return selectedSpaceFilter === 'all'
+      ? cardsOnSelectedFloor
+      : cardsOnSelectedFloor.filter(c => c.spaceType === selectedSpaceFilter);
+  }, [selectedSpaceFilter, cardsOnSelectedFloor]);
+
+  const getRoomLabel = (roomKey: string) => {
+    if (!roomKey) return '';
+    if (roomKey === 'all') return `${safeT('invoersheetV2.interiorSpaces.allSpaces', 'All Spaces')} (${cardsOnSelectedFloor.length})`;
+
+    const match = roomKey.match(/^(.+?)(?:\s+(\d+))?$/);
+    const baseKey = match ? match[1] : roomKey;
+    const numSuffix = match && match[2] ? ` ${match[2]}` : '';
+
+    let translatedBase = baseKey;
+    switch (baseKey) {
+      case 'Hal': translatedBase = safeT('invoersheetV2.interiorSpaces.hall', 'Hall'); break;
+      case 'MK': translatedBase = safeT('invoersheetV2.interiorSpaces.meterCupboard', 'Meter Cupboard'); break;
+      case 'Livingroom': translatedBase = safeT('invoersheetV2.interiorSpaces.livingRoom', 'Living Room'); break;
+      case 'WC': translatedBase = safeT('invoersheetV2.interiorSpaces.toilet', 'Toilet'); break;
+      case 'Keuken': translatedBase = safeT('invoersheetV2.interiorSpaces.kitchen', 'Kitchen'); break;
+      case 'Slaapkamer': translatedBase = safeT('invoersheetV2.interiorSpaces.bedroom', 'Bedroom'); break;
+      case 'Badkamer': translatedBase = safeT('invoersheetV2.interiorSpaces.bathroom', 'Bathroom'); break;
+      case 'Zolder': translatedBase = safeT('invoersheetV2.interiorSpaces.attic', 'Attic'); break;
+      case 'Balkon': translatedBase = safeT('invoersheetV2.interiorSpaces.balcony', 'Balcony'); break;
+      case 'Studeerkamer': translatedBase = safeT('invoersheetV2.interiorSpaces.study', 'Study'); break;
+      case 'Garage': translatedBase = safeT('invoersheetV2.interiorSpaces.garage', 'Garage'); break;
+      case 'Berging': translatedBase = safeT('invoersheetV2.interiorSpaces.storage', 'Storage'); break;
+      case 'Overloop': translatedBase = safeT('invoersheetV2.interiorSpaces.landing', 'Landing'); break;
+      case 'Kantoor': translatedBase = safeT('invoersheetV2.interiorSpaces.office', 'Office'); break;
+      default: translatedBase = baseKey; break;
+    }
+
+    return `${translatedBase}${numSuffix}`;
+  };
+
+  const getNextRoomName = (basePreset: string) => {
+    const trimmed = basePreset.trim();
+    const baseName = trimmed.replace(/\s+\d+$/, '');
+
+    const existingRoomNames = Array.from(new Set([
+      ...Object.keys(DEFAULT_ROOM_FLOOR_MAP),
+      ...customRooms.map(r => r.roomName),
+      ...spacesData.map(c => c.spaceType)
+    ])).filter(r => !deletedRooms.includes(r));
+
+    if (!existingRoomNames.includes(baseName)) {
+      return baseName;
+    }
+
+    let maxNum = 1;
+    existingRoomNames.forEach(r => {
+      if (r === baseName) {
+        maxNum = Math.max(maxNum, 1);
+      } else {
+        const match = r.match(new RegExp(`^${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(\\d+)$`, 'i'));
+        if (match) {
+          maxNum = Math.max(maxNum, parseInt(match[1], 10));
+        }
+      }
+    });
+
+    return `${baseName} ${maxNum + 1}`;
+  };
+
+  const handleAddRoom = (roomName: string, chosenFloor?: string) => {
+    const trimmed = roomName.trim();
+    if (!trimmed) return;
+
+    const targetFloor = chosenFloor || targetFloorForNewRoom || (selectedFloorFilter !== 'all' ? selectedFloorFilter : 'Ground Floor');
+
+    const existingRoomNames = Array.from(new Set([
+      ...Object.keys(DEFAULT_ROOM_FLOOR_MAP),
+      ...customRooms.map(r => r.roomName),
+      ...spacesData.map(c => c.spaceType)
+    ])).filter(r => !deletedRooms.includes(r));
+
+    let finalRoomName = trimmed;
+
+    if (existingRoomNames.includes(trimmed)) {
+      const baseName = trimmed.replace(/\s+\d+$/, '');
+      let maxNum = 1;
+      existingRoomNames.forEach(r => {
+        if (r === baseName) {
+          maxNum = Math.max(maxNum, 1);
+        } else {
+          const match = r.match(new RegExp(`^${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(\\d+)$`, 'i'));
+          if (match) {
+            maxNum = Math.max(maxNum, parseInt(match[1], 10));
+          }
+        }
+      });
+      finalRoomName = `${baseName} ${maxNum + 1}`;
+    }
+
+    setDeletedRooms(prev => prev.filter(r => r !== finalRoomName));
+    setCustomRooms(prev => {
+      if (prev.some(r => r.roomName === finalRoomName && r.floorLevel === targetFloor)) return prev;
+      return [...prev, { roomName: finalRoomName, floorLevel: targetFloor }];
+    });
+
+    if (selectedFloorFilter !== 'all' && selectedFloorFilter !== targetFloor) {
+      setSelectedFloorFilter(targetFloor);
+    }
+    setSelectedSpaceFilter(finalRoomName);
+    setNewRoomNameInput('');
+    setIsAddRoomModalOpen(false);
+  };
+
+  const executeDeleteRoom = () => {
+    if (roomToDeleteConfirm) {
+      const { roomKey } = roomToDeleteConfirm;
+      setSpacesData(prev => prev.filter(c => c.spaceType !== roomKey));
+      setDeletedRooms(prev => [...prev, roomKey]);
+      setCustomRooms(prev => prev.filter(r => r.roomName !== roomKey));
+      if (selectedSpaceFilter === roomKey) {
+        setSelectedSpaceFilter('all');
+      }
+      setRoomToDeleteConfirm(null);
+    }
+  };
   const [activePhotoModal, setActivePhotoModal] = useState<{
     title: string;
     urls: string[];
@@ -215,6 +499,11 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
 
+  const floorScrollContainerRef = useRef<HTMLDivElement>(null);
+  const activeFloorTabRef = useRef<HTMLDivElement | HTMLButtonElement>(null);
+  const [showFloorLeftArrow, setShowFloorLeftArrow] = useState(false);
+  const [showFloorRightArrow, setShowFloorRightArrow] = useState(false);
+
   const checkScroll = () => {
     if (scrollContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
@@ -223,10 +512,23 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
     }
   };
 
+  const checkFloorScroll = () => {
+    if (floorScrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = floorScrollContainerRef.current;
+      setShowFloorLeftArrow(scrollLeft > 0);
+      setShowFloorRightArrow(Math.ceil(scrollLeft + clientWidth) < scrollWidth);
+    }
+  };
+
   useEffect(() => {
     checkScroll();
+    checkFloorScroll();
     window.addEventListener('resize', checkScroll);
-    return () => window.removeEventListener('resize', checkScroll);
+    window.addEventListener('resize', checkFloorScroll);
+    return () => {
+      window.removeEventListener('resize', checkScroll);
+      window.removeEventListener('resize', checkFloorScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -238,9 +540,24 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
     }
   }, [selectedSpaceFilter]);
 
+  useEffect(() => {
+    if (activeFloorTabRef.current && floorScrollContainerRef.current) {
+      const container = floorScrollContainerRef.current;
+      const tab = activeFloorTabRef.current;
+      const scrollLeft = tab.offsetLeft - container.offsetLeft - (container.clientWidth / 2) + (tab.clientWidth / 2);
+      container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+    }
+  }, [selectedFloorFilter]);
+
   const scrollByAmount = (amount: number) => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+    }
+  };
+
+  const scrollFloorByAmount = (amount: number) => {
+    if (floorScrollContainerRef.current) {
+      floorScrollContainerRef.current.scrollBy({ left: amount, behavior: 'smooth' });
     }
   };
 
@@ -254,9 +571,7 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spacesData]);
 
-  const filteredCards = selectedSpaceFilter === 'all'
-    ? spacesData
-    : spacesData.filter(c => c.spaceType === selectedSpaceFilter);
+
 
   const handleUpdateSpace = (cardId: string, updater: (card: InteriorSpaceCard) => InteriorSpaceCard) => {
     setSpacesData(prev => prev.map(c => c.id === cardId ? updater(c) : c));
@@ -273,7 +588,7 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
     }
   };
 
-  const addInstallationToCurrentRoom = (category: 'floor' | 'heating' | 'tapwater' | 'solar' | 'ventilation' | 'window' | 'cooling') => {
+  const addInstallationToCurrentRoom = (category: 'floor' | 'heating' | 'tapwater' | 'solar' | 'ventilation' | 'window' | 'door' | 'cooling') => {
     if (selectedSpaceFilter === 'all') return;
     
     setIsAdding(false);
@@ -362,6 +677,16 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
           { label: 'Zonwering', value: 'Geen zonwering' }
         ];
         break;
+      case 'door':
+        baseTitle = 'Buitendeur'; icon = 'DoorClosed';
+        defaultSpecs = [
+          { label: 'Name', value: 'Buitendeur 1' },
+          { label: 'Brand & Type', value: '-' },
+          { label: 'Isolatie aanwezig', value: 'Nee' },
+          { label: 'Dikte (mm)', value: '0 mm' },
+          { label: 'U-waarde', value: '1.4' }
+        ];
+        break;
       case 'cooling':
         baseTitle = 'Koeling'; icon = 'Snowflake';
         defaultSpecs = [
@@ -402,10 +727,21 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
     const newNumber = existingTitles.length > 0 ? highestNumber + 1 : 1;
     const finalSectionTitle = newNumber > 1 ? `${baseTitle} ${newNumber}` : baseTitle;
 
+    let targetFloor = selectedFloorFilter !== 'all' ? selectedFloorFilter : '';
+    if (!targetFloor) {
+      const customMatch = customRooms.find(r => r.roomName === selectedSpaceFilter);
+      if (customMatch) {
+        targetFloor = customMatch.floorLevel;
+      } else {
+        targetFloor = getDefaultFloor(selectedSpaceFilter);
+      }
+    }
+
     const newCard: InteriorSpaceCard = {
       id: newId,
       spaceName: `${selectedSpaceFilter}`,
       spaceType: selectedSpaceFilter as any,
+      floorLevel: targetFloor,
       sectionTitle: finalSectionTitle,
       category,
       icon,
@@ -421,7 +757,7 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
-    input.accept = 'image/*';
+    input.accept = 'image/*,application/pdf';
     input.onchange = async (e: any) => {
       const files = Array.from(e.target.files || []) as File[];
       if (files.length > 0) {
@@ -461,6 +797,8 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
         return <Wind className="w-4 h-4 text-teal-600" />;
       case 'window':
         return <AppWindow className="w-4 h-4 text-indigo-600" />;
+      case 'door':
+        return <DoorClosed className="w-4 h-4 text-rose-600" />;
       case 'cooling':
         return <Snowflake className="w-4 h-4 text-cyan-500" />;
       default:
@@ -470,6 +808,113 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Chapter Top Header Bar */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold font-display text-slate-900 tracking-tight flex items-center space-x-2.5">
+            <Droplets className="w-5 h-5 text-primary" />
+            <span>{t('invoersheetV2.interiorSpaces.title') === 'invoersheetV2.interiorSpaces.title' ? '4. Binnen (Ruimtes)' : t('invoersheetV2.interiorSpaces.title')}</span>
+          </h1>
+        </div>
+      </div>
+
+      {/* Floor Selector Bar */}
+      <div className="relative flex items-center bg-slate-100/80 p-1.5 rounded-xl border border-slate-200/80 w-full overflow-hidden">
+        {showFloorLeftArrow && (
+          <button 
+            type="button"
+            onClick={() => scrollFloorByAmount(-200)}
+            className="absolute left-0 z-10 h-full px-2 bg-gradient-to-r from-slate-100 via-slate-100 to-transparent text-slate-500 hover:text-slate-900 flex items-center justify-center rounded-l-xl"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
+
+        <div 
+          ref={floorScrollContainerRef}
+          onScroll={checkFloorScroll}
+          className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar scroll-smooth w-full px-4"
+        >
+          <button
+            ref={selectedFloorFilter === 'all' ? (activeFloorTabRef as any) : null}
+            type="button"
+            onClick={() => setSelectedFloorFilter('all')}
+            className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
+              selectedFloorFilter === 'all'
+                ? 'bg-primary text-white shadow-xs'
+                : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/60'
+            }`}
+          >
+            {getFloorLabel('all')} ({spacesData.length})
+          </button>
+
+          {availableFloors.map((floorKey) => {
+            const isSelected = selectedFloorFilter === floorKey;
+            const countOnFloor = spacesData.filter(c => (c.floorLevel || getDefaultFloor(c.spaceType)) === floorKey).length;
+
+            return (
+              <div
+                key={floorKey}
+                className={`group flex-shrink-0 flex items-center rounded-lg transition-all border ${
+                  isSelected
+                    ? 'bg-primary text-white border-primary shadow-xs'
+                    : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/60'
+                }`}
+              >
+                <button
+                  ref={isSelected ? (activeFloorTabRef as any) : null}
+                  type="button"
+                  onClick={() => setSelectedFloorFilter(floorKey)}
+                  className="px-3 py-1.5 text-xs font-medium focus:outline-none cursor-pointer flex items-center space-x-1.5"
+                >
+                  <span>{getFloorLabel(floorKey)}</span>
+                  {countOnFloor > 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                      isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
+                    }`}>
+                      {countOnFloor}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFloorToDeleteConfirm({ floorKey, count: countOnFloor });
+                  }}
+                  className={`pr-2 py-1.5 text-xs transition hover:scale-110 cursor-pointer ${
+                    isSelected ? 'text-white/80 hover:text-white' : 'text-slate-400 hover:text-red-500'
+                  }`}
+                  title={`Verwijder verdieping ${getFloorLabel(floorKey)}`}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={() => setIsAddFloorModalOpen(true)}
+            className="flex-shrink-0 px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center space-x-1 shadow-xs cursor-pointer ml-1"
+            title="Voeg een verdieping toe"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>{safeT('invoersheetV2.interiorSpaces.addFloor', 'Add Floor')}</span>
+          </button>
+        </div>
+
+        {showFloorRightArrow && (
+          <button 
+            type="button"
+            onClick={() => scrollFloorByAmount(200)}
+            className="absolute right-0 z-10 h-full px-2 bg-gradient-to-l from-slate-100 via-slate-100 to-transparent text-slate-500 hover:text-slate-900 flex items-center justify-center rounded-r-xl"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
       {/* Smart Filter Tabs */}
       <div className="relative flex items-center bg-slate-100/80 p-1.5 rounded-xl border border-slate-200/80 w-full overflow-hidden">
         {showLeftArrow && (
@@ -495,73 +940,58 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
                 : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/60'
             }`}
           >
-            {t('invoersheetV2.interiorSpaces.allSpaces')} ({spacesData.length})
+            {getRoomLabel('all')}
           </button>
+          {availableRooms.map((roomKey) => {
+            const isSelected = selectedSpaceFilter === roomKey;
+            const roomCardsCount = cardsOnSelectedFloor.filter(c => c.spaceType === roomKey).length;
+            return (
+              <div
+                key={roomKey}
+                className={`group flex-shrink-0 flex items-center rounded-lg transition-all border ${
+                  isSelected
+                    ? 'bg-primary text-white border-primary shadow-xs'
+                    : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-slate-200/60'
+                }`}
+              >
+                <button
+                  ref={isSelected ? activeTabRef : null}
+                  onClick={() => setSelectedSpaceFilter(roomKey)}
+                  className="px-3 py-1.5 text-xs font-medium focus:outline-none cursor-pointer flex items-center space-x-1.5"
+                >
+                  <span>{getRoomLabel(roomKey)}</span>
+                  {roomCardsCount > 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                      isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
+                    }`}>
+                      {roomCardsCount}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRoomToDeleteConfirm({ roomKey, count: roomCardsCount });
+                  }}
+                  className={`pr-2 py-1.5 text-xs transition hover:scale-110 cursor-pointer ${
+                    isSelected ? 'text-emerald-200 hover:text-white' : 'text-slate-400 hover:text-red-500'
+                  }`}
+                  title={`Verwijder ruimte ${getRoomLabel(roomKey)}`}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            );
+          })}
           <button
-            ref={selectedSpaceFilter === 'Hal' ? activeTabRef : null}
-            onClick={() => setSelectedSpaceFilter('Hal')}
-            className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-              selectedSpaceFilter === 'Hal'
-                ? 'bg-primary text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/60'
-            }`}
+            type="button"
+            onClick={() => setIsAddRoomModalOpen(true)}
+            className="flex-shrink-0 px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center space-x-1 shadow-xs cursor-pointer ml-1"
+            title="Voeg een nieuwe ruimte toe"
           >
-            {t('invoersheetV2.interiorSpaces.hall')}
-          </button>
-          <button
-            ref={selectedSpaceFilter === 'MK' ? activeTabRef : null}
-            onClick={() => setSelectedSpaceFilter('MK')}
-            className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-              selectedSpaceFilter === 'MK'
-                ? 'bg-primary text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/60'
-            }`}
-          >
-            {t('invoersheetV2.interiorSpaces.meterCupboard')}
-          </button>
-          <button
-            ref={selectedSpaceFilter === 'Livingroom' ? activeTabRef : null}
-            onClick={() => setSelectedSpaceFilter('Livingroom')}
-            className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-              selectedSpaceFilter === 'Livingroom'
-                ? 'bg-primary text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/60'
-            }`}
-          >
-            {t('invoersheetV2.interiorSpaces.livingRoom')}
-          </button>
-          <button
-            ref={selectedSpaceFilter === 'WC' ? activeTabRef : null}
-            onClick={() => setSelectedSpaceFilter('WC')}
-            className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-              selectedSpaceFilter === 'WC'
-                ? 'bg-primary text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/60'
-            }`}
-          >
-            {t('invoersheetV2.interiorSpaces.toilet')}
-          </button>
-          <button
-            ref={selectedSpaceFilter === 'Keuken' ? activeTabRef : null}
-            onClick={() => setSelectedSpaceFilter('Keuken')}
-            className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-              selectedSpaceFilter === 'Keuken'
-                ? 'bg-primary text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/60'
-            }`}
-          >
-            {t('invoersheetV2.interiorSpaces.kitchen')}
-          </button>
-          <button
-            ref={selectedSpaceFilter === 'Slaapkamer' ? activeTabRef : null}
-            onClick={() => setSelectedSpaceFilter('Slaapkamer')}
-            className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-              selectedSpaceFilter === 'Slaapkamer'
-                ? 'bg-primary text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/60'
-            }`}
-          >
-            {t('invoersheetV2.interiorSpaces.bedroom')}
+            <Plus className="w-3.5 h-3.5" />
+            <span>{safeT('invoersheetV2.interiorSpaces.addRoom', 'Add Room')}</span>
           </button>
         </div>
 
@@ -577,244 +1007,347 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
 
       {/* Interior Space Cards List */}
       <div className="space-y-6">
-        {filteredCards.map((card) => (
-          <div 
-            key={card.id} 
-            className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden transition hover:border-slate-300"
-          >
-            {/* Header bar matching the Visuals / Exterior chapter design */}
-            <div className="bg-primary text-white px-5 py-3 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center space-x-3">
+        {filteredCards.map((card) => {
+          const isSelfFull = (spec: (typeof card.specs)[0]) => {
+            if (spec.label === '---SECTION---') return true;
+            const lowerLabel = spec.label.toLowerCase();
+            const valStr = spec.value ? String(spec.value).trim() : '';
 
-                <h3 className="font-display font-semibold text-base tracking-wide flex items-center space-x-2">
-                  <span className="text-emerald-500">{card.spaceName === 'MK' ? t('invoersheetV2.interiorSpaces.meterCupboard') : card.spaceName === 'Hal' ? t('invoersheetV2.interiorSpaces.hall') : card.spaceName === 'Livingroom' ? t('invoersheetV2.interiorSpaces.livingRoom') : card.spaceName === 'WC' ? t('invoersheetV2.interiorSpaces.toilet') : card.spaceName === 'Keuken' ? t('invoersheetV2.interiorSpaces.kitchen') : card.spaceName === 'Slaapkamer' ? t('invoersheetV2.interiorSpaces.bedroom') : card.spaceName}</span>
-                  <span className="text-slate-300 font-normal">•</span>
-                  <span className="text-white">{t(`invoersheetV2.interiorSpaces.types.${card.category}`)} {card.sectionTitle.replace(/[^\d]/g, '')}</span>
-                </h3>
+            // Explicit full-width fields: Area / Oppervlakte (has 3 inputs B x H = Area m²) and BCRG
+            if (
+              lowerLabel === 'area' ||
+              lowerLabel === 'oppervlakte' ||
+              lowerLabel.includes('oppervlakte') ||
+              lowerLabel.includes('bcrg')
+            ) {
+              return true;
+            }
+
+            // Dynamic length check:
+            // If value contains newline OR value length > 22 characters, it requires a full row.
+            const isLongVal = valStr.includes('\n') || valStr.length > 22;
+
+            return isLongVal;
+          };
+
+          const isolatieSpec = card.specs.find(s => {
+            const lbl = s.label.toLowerCase();
+            return lbl === 'isolatie aanwezig' || lbl === 'insulation present';
+          });
+          const isInsulated = isolatieSpec ? (isolatieSpec.value.toLowerCase() === 'ja' || isolatieSpec.value.toLowerCase() === 'yes') : true;
+
+          const visibleSpecs = card.specs.filter(s => {
+            const lbl = s.label.toLowerCase();
+            if (lbl === 'dikte (mm)' || lbl === 'thickness (mm)') {
+              return isInsulated;
+            }
+            return true;
+          });
+
+          const spans: number[] = new Array(visibleSpecs.length).fill(1);
+          let col = 0;
+
+          for (let i = 0; i < visibleSpecs.length; i++) {
+            const s = visibleSpecs[i];
+            if (s.label === '---SECTION---') {
+              spans[i] = 2;
+              col = 0;
+              continue;
+            }
+
+            if (isSelfFull(s)) {
+              if (col === 1 && i > 0 && spans[i - 1] === 1) {
+                spans[i - 1] = 2;
+              }
+              spans[i] = 2;
+              col = 0;
+            } else {
+              if (col === 0) {
+                const nextSpec = visibleSpecs[i + 1];
+                const nextIsFull = !nextSpec || nextSpec.label === '---SECTION---' || isSelfFull(nextSpec);
+                if (nextIsFull) {
+                  spans[i] = 2;
+                  col = 0;
+                } else {
+                  spans[i] = 1;
+                  col = 1;
+                }
+              } else {
+                spans[i] = 1;
+                col = 0;
+              }
+            }
+          }
+
+          return (
+            <div 
+              key={card.id} 
+              className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden transition hover:border-slate-300"
+            >
+              {/* Header bar matching the Visuals / Exterior chapter design */}
+              <div className="bg-primary text-white px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center space-x-3">
+
+                  <h3 className="font-display font-semibold text-base tracking-wide flex items-center space-x-2">
+                    <span className="text-emerald-500">{card.spaceName === 'MK' ? t('invoersheetV2.interiorSpaces.meterCupboard') : card.spaceName === 'Hal' ? t('invoersheetV2.interiorSpaces.hall') : card.spaceName === 'Livingroom' ? t('invoersheetV2.interiorSpaces.livingRoom') : card.spaceName === 'WC' ? t('invoersheetV2.interiorSpaces.toilet') : card.spaceName === 'Keuken' ? t('invoersheetV2.interiorSpaces.kitchen') : card.spaceName === 'Slaapkamer' ? t('invoersheetV2.interiorSpaces.bedroom') : card.spaceName}</span>
+                    <span className="text-slate-300 font-normal">•</span>
+                    <span className="text-white">{t(`invoersheetV2.interiorSpaces.types.${card.category}`)} {card.sectionTitle.replace(/[^\d]/g, '')}</span>
+                  </h3>
+                </div>
+                
+                <button
+                  onClick={() => handleRemoveSpace(card.id)}
+                  className="text-white/60 hover:text-red-300 transition-colors p-1"
+                  title={t('invoersheetV2.interiorSpaces.delete')}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
-              
-              <button
-                onClick={() => handleRemoveSpace(card.id)}
-                className="text-white/60 hover:text-red-300 transition-colors p-1"
-                title={t('invoersheetV2.interiorSpaces.delete')}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
 
-            {/* Main Card Content: Specs on Left, Photos on Right */}
-            <div className="p-5 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              {/* Left Column: Technical Specifications Box */}
-              <div className="lg:col-span-7 xl:col-span-7">
-                <div className="rounded-2xl border-2 border-slate-300/80 bg-slate-50/40 p-5 shadow-2xs space-y-3.5">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                    <h4 className="font-bold text-base text-primary flex items-center space-x-2 tracking-tight">
-                      {getCategoryIcon(card.category)}
-                      <span>{t(`invoersheetV2.interiorSpaces.types.${card.category}`)} {card.sectionTitle.replace(/[^\d]/g, '')}</span>
-                    </h4>
+              {/* Main Card Content: Specs on Left, Photos on Right */}
+              <div className="p-5 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* Left Column: Technical Specifications Box */}
+                <div className="lg:col-span-7 xl:col-span-7">
+                  <div className="rounded-2xl border-2 border-slate-300/80 bg-slate-50/40 p-5 shadow-2xs space-y-3.5">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                      <h4 className="font-bold text-base text-primary flex items-center space-x-2 tracking-tight">
+                        {getCategoryIcon(card.category)}
+                        <span>{t(`invoersheetV2.interiorSpaces.types.${card.category}`)} {card.sectionTitle.replace(/[^\d]/g, '')}</span>
+                      </h4>
 
-                  </div>
+                    </div>
 
-                  <dl className="space-y-2.5 text-xs">
-                    {card.specs.map((spec, sIdx) => {
-                      const extractValueAndUnit = (val: string, label: string) => {
-                        const lbl = label.toLowerCase();
-                        if (['hellingshoek', 'aantal', 'wattpiekvermogen'].includes(lbl)) {
-                          const parsed = parseFloat(val);
-                          return { num: isNaN(parsed) ? val : parsed.toString(), unit: null, isNumber: true };
-                        }
-                        const match = val.match(/^(.*?)\s*(m2|m|mm|W|kW|°|Wp)$/i);
-                        if (match) {
-                          const numPart = match[1].trim();
-                          if (!isNaN(Number(numPart))) {
-                            return { num: numPart, unit: match[2], isNumber: true };
+                    <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs w-full">
+                      {visibleSpecs.map((spec, sIdx) => {
+                          const extractValueAndUnit = (val: string, label: string) => {
+                            const lbl = label.toLowerCase();
+                            if (['hellingshoek', 'aantal', 'wattpiekvermogen'].includes(lbl)) {
+                              const parsed = parseFloat(val);
+                              return { num: isNaN(parsed) ? val : parsed.toString(), unit: null, isNumber: true };
+                            }
+                            const match = val.match(/^(.*?)\s*(m2|m|mm|W|kW|°|Wp)$/i);
+                            if (match) {
+                              const numPart = match[1].trim();
+                              if (!isNaN(Number(numPart))) {
+                                return { num: numPart, unit: match[2], isNumber: true };
+                              }
+                            }
+                            return { num: val, unit: null, isNumber: false };
+                          };
+                          const { num, unit, isNumber } = extractValueAndUnit(spec.value, spec.label);
+                          const selectOptions = getSelectOptions(card.category, spec.label, facadesData, card.specs);
+
+                          if (spec.label === '---SECTION---') {
+                            return (
+                              <div key={sIdx} className="col-span-2 w-full pt-4 pb-1 first:pt-0 border-b border-slate-200/80 mb-1">
+                                <h5 className="font-bold text-sm text-slate-800 flex items-center space-x-2">
+                                  {spec.value === 'Ventilatie' ? <Wind className="w-4 h-4 text-teal-600" /> : <AppWindow className="w-4 h-4 text-indigo-600" />}
+                                  <span>{spec.value}</span>
+                                </h5>
+                              </div>
+                            );
                           }
-                        }
-                        return { num: val, unit: null, isNumber: false };
-                      };
-                      const { num, unit, isNumber } = extractValueAndUnit(spec.value, spec.label);
-                      const selectOptions = getSelectOptions(card.category, spec.label, facadesData, card.specs);
 
-                      if (spec.label === '---SECTION---') {
-                        return (
-                          <div key={sIdx} className="col-span-full pt-4 pb-2 first:pt-0 border-b border-slate-200/80 mb-2">
-                            <h5 className="font-bold text-sm text-slate-800 flex items-center space-x-2">
-                              {spec.value === 'Ventilatie' ? <Wind className="w-4 h-4 text-teal-600" /> : <AppWindow className="w-4 h-4 text-indigo-600" />}
-                              <span>{spec.value}</span>
-                            </h5>
-                          </div>
-                        );
-                      }
+                          const colSpanClass = spans[sIdx] === 2 ? 'col-span-2' : 'col-span-1';
+                          const specKey = `space_${card.id}_spec_${sIdx}`;
+                          const flagVal = flags?.[specKey];
+                          const activeRole = fieldRoles?.[specKey] || 'INS';
+                          const onFlag = onUpdateFlag ? (v: 'red' | 'yellow' | 'green' | null) => onUpdateFlag(specKey, v) : undefined;
 
-                      return (
-                        <div 
-                        key={sIdx}
-                        className="flex flex-col sm:flex-row sm:items-baseline justify-between py-1 border-b border-slate-100 last:border-0 gap-1"
-                      >
-                        <dt className="font-semibold text-slate-800 min-w-[160px] flex items-center space-x-1">
-                          <span>{spec.label}</span>
-                          <span>:</span>
-                        </dt>
-                        <dd className="sm:text-right font-medium text-slate-900 flex items-center sm:justify-end space-x-2">
-                          {spec.label.toLowerCase() === 'area' || spec.label.toLowerCase() === 'oppervlakte' ? (
-                            <div className="flex items-center space-x-1">
-                              <input
-                                type="number"
-                                value={spec.length || ''}
-                                onChange={(e) => handleUpdateSpace(card.id, c => ({
-                                  ...c,
-                                  specs: c.specs.map((s, i) => {
-                                    if (i !== sIdx) return s;
-                                    const l = parseFloat(e.target.value) || 0;
-                                    const w = parseFloat(s.width || '0') || 0;
-                                    const a = (l * w).toFixed(2);
-                                    return { ...s, length: e.target.value, value: `${a} m2` };
-                                  })
-                                }))}
-                                placeholder="L"
-                                className="w-14 text-xs font-mono font-semibold text-slate-900 bg-slate-50 px-1 py-0.5 rounded border border-slate-200 outline-none focus:border-primary text-center"
-                              />
-                              <span className="text-slate-400 font-mono text-xs">×</span>
-                              <input
-                                type="number"
-                                value={spec.width || ''}
-                                onChange={(e) => handleUpdateSpace(card.id, c => ({
-                                  ...c,
-                                  specs: c.specs.map((s, i) => {
-                                    if (i !== sIdx) return s;
-                                    const w = parseFloat(e.target.value) || 0;
-                                    const l = parseFloat(s.length || '0') || 0;
-                                    const a = (l * w).toFixed(2);
-                                    return { ...s, width: e.target.value, value: `${a} m2` };
-                                  })
-                                }))}
-                                placeholder="B"
-                                className="w-14 text-xs font-mono font-semibold text-slate-900 bg-slate-50 px-1 py-0.5 rounded border border-slate-200 outline-none focus:border-primary text-center"
-                              />
-                              <span className="text-slate-400 font-mono text-xs">=</span>
-                              <input
-                                type="number"
-                                step="any"
-                                value={num}
-                                onChange={(e) => handleUpdateSpace(card.id, c => ({
-                                  ...c,
-                                  specs: c.specs.map((s, i) => i === sIdx ? { ...s, value: e.target.value + (unit ? ' ' + unit : ''), length: '', width: '' } : s)
-                                }))}
-                                className={`w-20 text-right bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary outline-none ${spec.highlight ? 'font-bold text-primary' : 'text-slate-700'}`}
-                              />
-                              {unit && <span className="text-slate-500">{unit === 'm2' ? 'm²' : unit}</span>}
-                            </div>
-                          ) : (
-                            <>
-                              {selectOptions ? (
-                                <div className="w-full max-w-[200px]">
-                                  <AppSelect
-                                    value={spec.value}
-                                    variant="compact"
-                                    searchable={false}
-                                    onChange={(newValue) => handleUpdateSpace(card.id, c => {
-                                      let newSpecs = c.specs.map((s, i) => i === sIdx ? { ...s, value: newValue } : s);
-                                      
-                                      // Auto-reset dependent fields
-                                      if (spec.label.toLowerCase() === 'systeem') {
-                                        newSpecs = newSpecs.map(s => {
-                                          if (s.label.toLowerCase() === 'type opwekker') {
-                                            if (card.category === 'tapwater') {
-                                              const isExterne = newValue.includes('Externe warmtelevering via een afleverset');
-                                              if (isExterne) {
-                                                return { ...s, value: 'Externe warmtelevering via een afleverset' };
-                                              } else {
-                                                if (s.value === 'Externe warmtelevering via een afleverset' || (newValue === 'Individueel' && s.value === 'onbekend')) {
-                                                  return { ...s, value: 'Compleet toestel' };
-                                                }
-                                              }
-                                            } else if (card.category === 'heating') {
-                                              const isDerden = newValue.toLowerCase().includes('derden');
-                                              if (isDerden) {
-                                                return { ...s, value: 'Warmtelevering derden' };
-                                              } else {
-                                                if (s.value === 'Warmtelevering derden') {
-                                                  return { ...s, value: 'Gasgestookte ketel' };
-                                                }
-                                              }
-                                            }
-                                          }
-                                          return s;
-                                        });
-                                      }
-
-                                      if (spec.label.toLowerCase() === 'ventilatiesysteem') {
-                                        newSpecs = newSpecs.map(s => {
-                                          if (s.label.toLowerCase() === 'subsysteem') {
-                                            if (newValue.startsWith('A')) return { ...s, value: 'A1 Standaard (toevoer niet luchtdruk gestuurd)' };
-                                            if (newValue.startsWith('B')) return { ...s, value: 'B1 Standaard' };
-                                            if (newValue.startsWith('C')) return { ...s, value: 'C1 Standaard' };
-                                            if (newValue.startsWith('D')) return { ...s, value: 'D1 Standaard' };
-                                            if (newValue.startsWith('E')) return { ...s, value: 'E1 Systeemdeel D: decentrale WTW (Systeem D.5b); Systeemdeel met een' };
-                                          }
-                                          return s;
-                                        });
-                                      }
-                                      
-                                      return { ...c, specs: newSpecs };
-                                    })}
-                                    options={(() => {
-                                      const opts = selectOptions.map(opt => ({ value: opt, label: opt }));
-                                      if (!selectOptions.includes(spec.value)) {
-                                        opts.unshift({ value: spec.value, label: spec.value });
-                                      }
-                                      return opts;
-                                    })()}
-                                    className={`text-right ${spec.highlight ? 'text-primary' : 'text-slate-800'}`}
+                          return (
+                        <div key={sIdx} className={colSpanClass}>
+                          {renderV1Field(
+                            spec.label,
+                            undefined,
+                            'INS',
+                            flagVal || 'none',
+                            undefined,
+                            'text',
+                            undefined,
+                            <div className="flex items-center space-x-2 w-full">
+                              {spec.label.toLowerCase() === 'area' || spec.label.toLowerCase() === 'oppervlakte' ? (
+                                <div className="flex items-center justify-between w-full gap-1 px-1.5 py-1 text-xs">
+                                  <input
+                                    type="number"
+                                    value={spec.length === '0' || spec.length === '-' ? '' : spec.length || ''}
+                                    onChange={(e) => {
+                                      onAutoInspectField?.(specKey);
+                                      handleUpdateSpace(card.id, c => ({
+                                        ...c,
+                                        specs: c.specs.map((s, i) => {
+                                          if (i !== sIdx) return s;
+                                          const l = parseFloat(e.target.value) || 0;
+                                          const w = parseFloat(s.width || '0') || 0;
+                                          const hasBoth = l > 0 && w > 0;
+                                          const newVal = hasBoth ? `${(l * w).toFixed(2)} m2` : s.value;
+                                          return { ...s, length: e.target.value, value: newVal };
+                                        })
+                                      }));
+                                    }}
+                                    placeholder="L"
+                                    className="flex-1 min-w-[36px] max-w-[64px] text-xs font-sans font-semibold text-slate-700 bg-white px-1.5 py-1 rounded border border-slate-200 outline-none focus:border-primary text-center shadow-2xs"
                                   />
+                                  <span className="text-slate-400 font-mono text-xs font-bold shrink-0">×</span>
+                                  <input
+                                    type="number"
+                                    value={spec.width === '0' || spec.width === '-' ? '' : spec.width || ''}
+                                    onChange={(e) => {
+                                      onAutoInspectField?.(specKey);
+                                      handleUpdateSpace(card.id, c => ({
+                                        ...c,
+                                        specs: c.specs.map((s, i) => {
+                                          if (i !== sIdx) return s;
+                                          const w = parseFloat(e.target.value) || 0;
+                                          const l = parseFloat(s.length || '0') || 0;
+                                          const hasBoth = l > 0 && w > 0;
+                                          const newVal = hasBoth ? `${(l * w).toFixed(2)} m2` : s.value;
+                                          return { ...s, width: e.target.value, value: newVal };
+                                        })
+                                      }));
+                                    }}
+                                    placeholder="B"
+                                    className="flex-1 min-w-[36px] max-w-[64px] text-xs font-sans font-semibold text-slate-700 bg-white px-1.5 py-1 rounded border border-slate-200 outline-none focus:border-primary text-center shadow-2xs"
+                                  />
+                                  <span className="text-slate-400 font-mono text-xs font-bold shrink-0">=</span>
+                                  <input
+                                    type="number"
+                                    step="any"
+                                    value={num === '0' || num === '0.00' || num === '-' ? '' : num}
+                                    placeholder={num === '0' || num === '0.00' || num === '-' ? num : ''}
+                                    onChange={(e) => {
+                                      onAutoInspectField?.(specKey);
+                                      handleUpdateSpace(card.id, c => ({
+                                        ...c,
+                                        specs: c.specs.map((s, i) => i === sIdx ? { ...s, value: (e.target.value || '0') + (unit && e.target.value !== '-' ? ' ' + unit : ''), length: '', width: '' } : s)
+                                      }));
+                                    }}
+                                    className="flex-1 min-w-[48px] max-w-[80px] text-xs font-sans font-semibold text-slate-700 bg-white px-1.5 py-1 rounded border border-slate-200 outline-none focus:border-primary text-center shadow-2xs"
+                                  />
+                                  {unit && <span className="text-xs font-semibold text-slate-500 shrink-0 ml-0.5">{unit === 'm2' ? 'm²' : unit}</span>}
                                 </div>
                               ) : (
                                 <>
-                                  <input
-                                    type={isNumber ? "number" : "text"}
-                                    step={isNumber ? "any" : undefined}
-                                    value={num}
-                                    onChange={(e) => handleUpdateSpace(card.id, c => ({
-                                      ...c,
-                                      specs: c.specs.map((s, i) => i === sIdx ? { ...s, value: e.target.value + (unit ? ' ' + unit : '') } : s)
-                                    }))}
-                                    className={`bg-white border hover:border-primary focus:border-primary focus:ring-1 focus:ring-primary/20 rounded px-2 py-1 outline-none transition-all ${isNumber ? 'w-24 text-right' : 'w-full sm:w-[200px] sm:text-left'} ${spec.highlight ? 'font-bold text-primary border-primary/30' : 'text-slate-700 border-slate-200'}`}
-                                  />
-                                  {unit && <span className="text-slate-500">{unit === 'm2' ? 'm²' : unit}</span>}
+                                  {selectOptions ? (
+                                    <div className="w-full flex-1">
+                                      <AppSelect
+                                        value={spec.value}
+                                        variant="compact"
+                                        searchable={false}
+                                        onChange={(newValue) => {
+                                          onAutoInspectField?.(specKey);
+                                          handleUpdateSpace(card.id, c => {
+                                            let newSpecs = c.specs.map((s) => s.label === spec.label ? { ...s, value: newValue } : s);
+                                            
+                                            // Auto-reset dependent fields
+                                            if (spec.label.toLowerCase() === 'systeem') {
+                                              newSpecs = newSpecs.map(s => {
+                                                if (s.label.toLowerCase() === 'type opwekker') {
+                                                  if (card.category === 'tapwater') {
+                                                    const isExterne = newValue.includes('Externe warmtelevering via een afleverset');
+                                                    if (isExterne) {
+                                                      return { ...s, value: 'Externe warmtelevering via een afleverset' };
+                                                    } else {
+                                                      if (s.value === 'Externe warmtelevering via een afleverset' || (newValue === 'Individueel' && s.value === 'onbekend')) {
+                                                        return { ...s, value: 'Compleet toestel' };
+                                                      }
+                                                    }
+                                                  } else if (card.category === 'heating') {
+                                                    const isDerden = newValue.toLowerCase().includes('derden');
+                                                    if (isDerden) {
+                                                      return { ...s, value: 'Warmtelevering derden' };
+                                                    } else {
+                                                      if (s.value === 'Warmtelevering derden') {
+                                                        return { ...s, value: 'Gasgestookte ketel' };
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                                return s;
+                                              });
+                                            }
+      
+                                            if (spec.label.toLowerCase() === 'ventilatiesysteem') {
+                                              newSpecs = newSpecs.map(s => {
+                                                if (s.label.toLowerCase() === 'subsysteem') {
+                                                  if (newValue.startsWith('A')) return { ...s, value: 'A1 Standaard (toevoer niet luchtdruk gestuurd)' };
+                                                  if (newValue.startsWith('B')) return { ...s, value: 'B1 Standaard' };
+                                                  if (newValue.startsWith('C')) return { ...s, value: 'C1 Standaard' };
+                                                  if (newValue.startsWith('D')) return { ...s, value: 'D1 Standaard' };
+                                                  if (newValue.startsWith('E')) return { ...s, value: 'E1 Systeemdeel D: decentrale WTW (Systeem D.5b); Systeemdeel met een' };
+                                                }
+                                                return s;
+                                              });
+                                            }
+                                            
+                                            return { ...c, specs: newSpecs };
+                                          });
+                                        }}
+                                        options={(() => {
+                                          const opts = selectOptions.map(opt => ({ value: opt, label: opt }));
+                                          if (!selectOptions.includes(spec.value)) {
+                                            opts.unshift({ value: spec.value, label: spec.value });
+                                          }
+                                          return opts;
+                                        })()}
+                                        className={`w-full text-xs font-semibold leading-tight outline-none border-none bg-transparent ${spec.highlight ? 'text-slate-700' : 'text-slate-700'}`}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center space-x-1 w-full">
+                                      <input
+                                        type={isNumber ? "number" : "text"}
+                                        step={isNumber ? "any" : undefined}
+                                        value={num === '-' || num === '0' || num === '0.00' ? '' : num}
+                                        placeholder={num && num !== '-' && num !== '0' && num !== '0.00' ? num : (isNumber ? '0' : (spec.label.toLowerCase().includes('type') || spec.label.toLowerCase().includes('brand') || spec.label.toLowerCase().includes('merk') ? ((card.category === 'door' || (card.sectionTitle && (card.sectionTitle.toLowerCase().includes('deur') || card.sectionTitle.toLowerCase().includes('door')))) ? 'Bijv. K-Vision' : 'Bijv. HR++') : 'Vul in...'))}
+                                        onChange={(e) => {
+                                          onAutoInspectField?.(specKey);
+                                          handleUpdateSpace(card.id, c => ({
+                                            ...c,
+                                            specs: c.specs.map((s) => s.label === spec.label ? { ...s, value: (e.target.value || (isNumber ? '0' : '-')) + (unit && e.target.value !== '-' ? ' ' + unit : '') } : s)
+                                          }));
+                                        }}
+                                        className={`w-full text-xs font-semibold bg-transparent border-none focus:outline-none focus:ring-0 leading-tight outline-none font-sans ${spec.highlight ? 'text-slate-700' : 'text-slate-700'}`}
+                                      />
+                                      {unit && <span className="text-slate-500 font-bold whitespace-nowrap text-[11px]">{unit === 'm2' ? 'm²' : unit}</span>}
+                                    </div>
+                                  )}
                                 </>
                               )}
-                            </>
+                              {/* BCRG Button Logic */}
+                              {((spec.bcrg) || (spec.label.toLowerCase() === 'bcrg')) && (
+                                <button
+                                  onClick={() => {
+                                    const codeToCopy = (spec.bcrg || spec.value) !== '-' ? (spec.bcrg || spec.value) : '';
+                                    if (codeToCopy) {
+                                      handleCopyBcrg(codeToCopy!);
+                                    }
+                                    onOpenBcrgCode?.(codeToCopy!);
+                                  }}
+                                  className={`shrink-0 inline-flex items-center justify-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-mono transition shadow-xs ${
+                                    (spec.bcrg || spec.value) !== '-' && (spec.bcrg || spec.value)
+                                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+                                      : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
+                                  }`}
+                                  title={t('invoersheetV2.interiorSpaces.copyOrOpenBcrg')}
+                                >
+                                  <span>
+                                    {copiedBcrg === (spec.bcrg || spec.value) 
+                                      ? t('invoersheetV2.interiorSpaces.copied') 
+                                      : (spec.bcrg || spec.value) !== '-' && (spec.bcrg || spec.value)
+                                        ? 'View'
+                                        : 'Search'
+                                    }
+                                  </span>
+                                  <Search className="w-2.5 h-2.5 text-emerald-600" />
+                                </button>
+                              )}
+                            </div>,
+                            flagVal,
+                            onFlag,
+                            activeRole,
+                            () => onAutoInspectField?.(specKey)
                           )}
-                          {/* BCRG Button Logic */}
-                          {((spec.bcrg) || (spec.label.toLowerCase() === 'bcrg')) && (
-                            <button
-                              onClick={() => {
-                                const codeToCopy = (spec.bcrg || spec.value) !== '-' ? (spec.bcrg || spec.value) : '';
-                                if (codeToCopy) {
-                                  handleCopyBcrg(codeToCopy!);
-                                }
-                                onOpenBcrgCode?.(codeToCopy!);
-                              }}
-                              className={`inline-flex items-center space-x-1 px-2 py-1 rounded text-[10px] font-mono transition shadow-xs ${
-                                (spec.bcrg || spec.value) !== '-' && (spec.bcrg || spec.value)
-                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
-                                  : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
-                              }`}
-                              title={t('invoersheetV2.interiorSpaces.copyOrOpenBcrg')}
-                            >
-                              <span>
-                                {copiedBcrg === (spec.bcrg || spec.value) 
-                                  ? t('invoersheetV2.interiorSpaces.copied') 
-                                  : (spec.bcrg || spec.value) !== '-' && (spec.bcrg || spec.value)
-                                    ? t('invoersheetV2.interiorSpaces.viewBcrg')
-                                    : t('invoersheetV2.interiorSpaces.searchBcrg')
-                                }
-                              </span>
-                              <Search className="w-3 h-3 text-emerald-600" />
-                            </button>
-                          )}
-                        </dd>
-                      </div>
+                        </div>
                       );
                     })}
                   </dl>
@@ -846,12 +1379,16 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
                       }}
                       className="group relative cursor-pointer bg-slate-900 rounded-xl overflow-hidden shadow-2xs border border-slate-200 aspect-[4/3] flex flex-col justify-between w-full sm:w-[calc(50%-0.5rem)] lg:w-full xl:w-[calc(50%-0.5rem)] shrink-0"
                     >
-                      <img
-                        src={photo.url}
-                        alt={photo.caption}
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover transition duration-300 group-hover:scale-105 group-hover:opacity-90"
-                      />
+                      {isPdfUrl(photo.url) ? (
+                        <PdfThumbnail url={photo.url} altTitle={photo.caption || 'PDF Document'} />
+                      ) : (
+                        <img
+                          src={photo.url}
+                          alt={photo.caption}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover transition duration-300 group-hover:scale-105 group-hover:opacity-90"
+                        />
+                      )}
                       
                       {/* Hover Overlay with Zoom Icon */}
                       <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center pointer-events-none">
@@ -869,7 +1406,7 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
                             photos: c.photos.filter((p) => p.id !== photo.id)
                           }));
                         }}
-                        className="absolute top-1.5 right-1.5 p-1.5 bg-red-500/90 hover:bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition shadow-sm z-10"
+                        className="absolute top-1.5 right-1.5 p-1.5 bg-red-500/90 hover:bg-red-600 text-white rounded opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition shadow-sm z-10"
                         title={t('invoersheetV2.interiorSpaces.deletePhoto')}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -900,17 +1437,48 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
             </div>
 
           </div>
-        ))}
+        );
+      })}
+
+        {filteredCards.length === 0 && (
+          <div className="bg-white rounded-2xl border-2 border-dashed border-slate-200/90 p-8 text-center flex flex-col items-center justify-center space-y-3 shadow-2xs">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+              <Building className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-base font-bold text-slate-800">
+                {selectedSpaceFilter === 'all'
+                  ? `Nog geen ruimtes of installaties op ${getFloorLabel(selectedFloorFilter)}`
+                  : `Nog geen installaties in ${getRoomLabel(selectedSpaceFilter)} (${getFloorLabel(selectedFloorFilter)})`}
+              </h4>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                {selectedSpaceFilter === 'all'
+                  ? `Klik op '+ Ruimte' om een ruimte toe te voegen aan ${getFloorLabel(selectedFloorFilter)}.`
+                  : `Voeg een eerste installatie (kozijn, buitendeur, vloer, verwarming, ventilatie etc.) toe aan deze ruimte.`}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {selectedSpaceFilter !== 'all' && (
-        <div className="flex justify-center mt-6 mb-4 relative">
+        <div className="flex items-center justify-center gap-3 mt-6 mb-4 relative flex-wrap">
           <button
             onClick={() => setIsAdding(!isAdding)}
-            className="flex items-center space-x-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-sm rounded-xl transition border-2 border-slate-300 border-dashed"
+            className="flex items-center space-x-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-sm rounded-xl transition border-2 border-slate-300 border-dashed cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>{t('invoersheetV2.interiorSpaces.addNewInstallationIn')} {selectedSpaceFilter === 'MK' ? t('invoersheetV2.interiorSpaces.meterCupboard') : selectedSpaceFilter === 'Hal' ? t('invoersheetV2.interiorSpaces.hall') : selectedSpaceFilter === 'Livingroom' ? t('invoersheetV2.interiorSpaces.livingRoom') : selectedSpaceFilter === 'WC' ? t('invoersheetV2.interiorSpaces.toilet') : selectedSpaceFilter === 'Keuken' ? t('invoersheetV2.interiorSpaces.kitchen') : selectedSpaceFilter === 'Slaapkamer' ? t('invoersheetV2.interiorSpaces.bedroom') : selectedSpaceFilter}</span>
+            <Plus className="w-4 h-4 text-emerald-600" />
+            <span>{t('invoersheetV2.interiorSpaces.addNewInstallationIn')} {getRoomLabel(selectedSpaceFilter)}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setRoomToDeleteConfirm({ roomKey: selectedSpaceFilter, count: filteredCards.length })}
+            className="flex items-center space-x-1.5 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 font-semibold text-xs rounded-xl transition border border-red-200 cursor-pointer"
+            title={`Verwijder ruimte ${getRoomLabel(selectedSpaceFilter)}`}
+          >
+            <Trash2 className="w-4 h-4 text-red-600" />
+            <span>Ruimte Verwijderen</span>
           </button>
           
           {isAdding && (
@@ -928,6 +1496,7 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
                 { type: 'ventilation', label: t('invoersheetV2.interiorSpaces.types.ventilation'), icon: Wind, color: 'text-teal-600' },
                 { type: 'solar', label: t('invoersheetV2.interiorSpaces.types.solar'), icon: Sun, color: 'text-amber-500' },
                 { type: 'window', label: t('invoersheetV2.interiorSpaces.types.window'), icon: AppWindow, color: 'text-indigo-600' },
+                { type: 'door', label: t('invoersheetV2.interiorSpaces.types.door') || 'Buitendeur', icon: DoorClosed, color: 'text-rose-600' },
                 { type: 'cooling', label: t('invoersheetV2.interiorSpaces.types.cooling') || 'Koeling', icon: Snowflake, color: 'text-cyan-500' }
               ].map(opt => (
                 <button
@@ -945,35 +1514,336 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
           )}
         </div>
       )}
-      {deleteConfirmation && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-200">
+      {deleteConfirmation && (() => {
+        const targetCard = spacesData.find(c => c.id === deleteConfirmation);
+        let cardDisplayName = '';
+        if (targetCard) {
+          const catTrans = t(`invoersheetV2.interiorSpaces.types.${targetCard.category}`);
+          const baseName = (catTrans && !catTrans.includes('.')) ? catTrans : targetCard.sectionTitle;
+          const numMatch = targetCard.sectionTitle.match(/\d+/);
+          const numSuffix = numMatch ? ` ${numMatch[0]}` : '';
+          cardDisplayName = `${baseName}${numSuffix}`;
+        }
+
+        const modalTitle = cardDisplayName
+          ? safeT('invoersheetV2.interiorSpaces.deleteInstallationNamedTitle', 'Delete "{name}"').replace('{name}', cardDisplayName)
+          : safeT('invoersheetV2.interiorSpaces.deleteInstallationSpace', 'Delete Installation');
+
+        const modalConfirm = cardDisplayName
+          ? safeT('invoersheetV2.interiorSpaces.deleteInstallationConfirmation', 'Are you sure you want to permanently delete "{name}"? This cannot be undone.').replace('{name}', cardDisplayName)
+          : safeT('invoersheetV2.interiorSpaces.deleteConfirmation', 'Are you sure you want to permanently delete this installation? This cannot be undone.');
+
+        return (
+          <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-150">
+              <div className="p-5 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">
+                  {modalTitle}
+                </h3>
+                <p className="text-sm text-slate-600 mb-2 leading-relaxed">
+                  {modalConfirm}
+                </p>
+              </div>
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmation(null)}
+                  className="px-4 py-2 text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl text-xs font-semibold transition cursor-pointer"
+                >
+                  {t('invoersheetV2.interiorSpaces.cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={executeDelete}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center space-x-1.5 cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>{t('invoersheetV2.interiorSpaces.delete')}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {roomToDeleteConfirm && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-150">
             <div className="p-5 flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
+              <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 mb-2">
-                {t('invoersheetV2.interiorSpaces.deleteInstallationSpace')}
+                Ruimte "{getRoomLabel(roomToDeleteConfirm.roomKey)}" Verwijderen?
               </h3>
               <p className="text-sm text-slate-600 mb-2 leading-relaxed">
-                {t('invoersheetV2.interiorSpaces.deleteConfirmation')}
+                {roomToDeleteConfirm.count > 0
+                  ? `Weet je zeker dat je de ruimte '${getRoomLabel(roomToDeleteConfirm.roomKey)}' en alle ${roomToDeleteConfirm.count} installatie(s) daarin definitief wilt verwijderen?`
+                  : `Weet je zeker dat je de ruimte '${getRoomLabel(roomToDeleteConfirm.roomKey)}' wilt verwijderen?`}
               </p>
             </div>
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3">
               <button
                 type="button"
-                onClick={() => setDeleteConfirmation(null)}
-                className="px-4 py-2 text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg text-sm font-semibold transition"
+                onClick={() => setRoomToDeleteConfirm(null)}
+                className="px-4 py-2 text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl text-xs font-semibold transition cursor-pointer"
               >
-                {t('invoersheetV2.interiorSpaces.cancel')}
+                Annuleren
               </button>
               <button
                 type="button"
-                onClick={executeDelete}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold shadow-xs transition flex items-center space-x-2"
+                onClick={executeDeleteRoom}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center space-x-1.5 cursor-pointer"
               >
                 <Trash2 className="w-4 h-4" />
-                <span>{t('invoersheetV2.interiorSpaces.delete')}</span>
+                <span>Ruimte Verwijderen</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {floorToDeleteConfirm && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-150">
+            <div className="p-5 flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">
+                Verdieping "{getFloorLabel(floorToDeleteConfirm.floorKey)}" Verwijderen?
+              </h3>
+              <p className="text-sm text-slate-600 mb-2 leading-relaxed">
+                {floorToDeleteConfirm.count > 0
+                  ? `Weet je zeker dat je verdieping '${getFloorLabel(floorToDeleteConfirm.floorKey)}' en alle ${floorToDeleteConfirm.count} installatie(s) daarin definitief wilt verwijderen?`
+                  : `Weet je zeker dat je verdieping '${getFloorLabel(floorToDeleteConfirm.floorKey)}' wilt verwijderen?`}
+              </p>
+            </div>
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setFloorToDeleteConfirm(null)}
+                className="px-4 py-2 text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl text-xs font-semibold transition cursor-pointer"
+              >
+                Annuleren
+              </button>
+              <button
+                type="button"
+                onClick={executeDeleteFloor}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center space-x-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Verdieping Verwijderen</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isAddRoomModalOpen && (
+        <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto pt-14 sm:pt-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-300 overflow-hidden flex flex-col my-auto animate-in fade-in zoom-in duration-150">
+            {/* Modal Header matching 3.Exterior */}
+            <div className="bg-primary text-white px-5 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between shrink-0">
+              <div className="min-w-0 pr-2">
+                <h3 className="font-display font-semibold text-sm sm:text-base tracking-wide truncate">
+                  {safeT('invoersheetV2.interiorSpaces.addNewRoomTitle', 'Add New Room')}
+                </h3>
+                <p className="text-[11px] sm:text-xs text-slate-300 font-mono truncate">
+                  {safeT('invoersheetV2.interiorSpaces.addNewRoomSubtitle', 'Choose a category or enter a custom name')}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => { setIsAddRoomModalOpen(false); setNewRoomNameInput(''); }}
+                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition shrink-0 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 sm:p-6 space-y-4 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  {safeT('invoersheetV2.interiorSpaces.selectFloor', 'SELECT FLOOR:')}
+                </label>
+                <AppSelect
+                  value={targetFloorForNewRoom}
+                  onChange={(val) => setTargetFloorForNewRoom(val)}
+                  options={availableFloors.map(floorKey => ({
+                    value: floorKey,
+                    label: getFloorLabel(floorKey)
+                  }))}
+                  variant="white"
+                  searchable={false}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  {safeT('invoersheetV2.interiorSpaces.quickSelect', 'QUICK SELECTION (POPULAR)')}
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Badkamer',
+                    'Slaapkamer',
+                    'Zolder',
+                    'Balkon',
+                    'Studeerkamer',
+                    'Garage',
+                    'Berging',
+                    'Overloop',
+                    'Kantoor'
+                  ].map(basePreset => {
+                    const nextLabel = getNextRoomName(basePreset);
+                    return (
+                      <button
+                        key={basePreset}
+                        type="button"
+                        onClick={() => handleAddRoom(nextLabel)}
+                        className="px-2.5 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 text-slate-700 rounded-lg border border-slate-200 transition text-left cursor-pointer"
+                      >
+                        + {getRoomLabel(nextLabel)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  {safeT('invoersheetV2.interiorSpaces.orTypeCustomName', 'OR TYPE A CUSTOM NAME:')}
+                </label>
+                <input
+                  type="text"
+                  value={newRoomNameInput}
+                  onChange={(e) => setNewRoomNameInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleAddRoom(newRoomNameInput);
+                  }}
+                  placeholder={safeT('invoersheetV2.interiorSpaces.roomNamePlaceholder', 'Bijv. Badkamer 2, Technische ruimte...')}
+                  className="w-full px-3 py-2 text-xs font-semibold bg-white border border-slate-200 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary text-slate-800 transition"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer matching 3.Exterior */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end space-x-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => { setIsAddRoomModalOpen(false); setNewRoomNameInput(''); }}
+                className="px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-semibold transition cursor-pointer"
+              >
+                {safeT('invoersheetV2.interiorSpaces.cancel', 'Cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleAddRoom(newRoomNameInput)}
+                disabled={!newRoomNameInput.trim()}
+                className="px-4 py-2 bg-primary hover:bg-[#00524c] disabled:opacity-50 text-white rounded-lg text-xs font-bold shadow-xs transition flex items-center space-x-1.5 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{safeT('invoersheetV2.interiorSpaces.addRoomButton', 'Add Room')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isAddFloorModalOpen && (
+        <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto pt-14 sm:pt-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-300 overflow-hidden flex flex-col my-auto animate-in fade-in zoom-in duration-150">
+            {/* Modal Header matching 3.Exterior */}
+            <div className="bg-primary text-white px-5 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between shrink-0">
+              <div className="min-w-0 pr-2">
+                <h3 className="font-display font-semibold text-sm sm:text-base tracking-wide truncate">
+                  {safeT('invoersheetV2.interiorSpaces.addNewFloorTitle', 'Nieuwe Verdieping Toevoegen')}
+                </h3>
+                <p className="text-[11px] sm:text-xs text-slate-300 font-mono truncate">
+                  {safeT('invoersheetV2.interiorSpaces.addNewFloorSubtitle', 'Kies een verdieping of voer een eigen naam in')}
+                </p>
+              </div>
+
+              <button 
+                type="button"
+                onClick={() => { setIsAddFloorModalOpen(false); setNewFloorNameInput(''); }}
+                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition shrink-0 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 sm:p-6 space-y-4 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  SNELLE KEUZE (VERDIEPINGEN)
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Ground Floor',
+                    '1st Floor',
+                    '2nd Floor',
+                    '3rd Floor',
+                    'Attic',
+                    'Basement',
+                    'Roof Terrace'
+                  ]
+                    .filter(preset => !availableFloors.includes(preset))
+                    .map(preset => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => handleAddFloor(preset)}
+                      className="px-2.5 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 text-slate-700 rounded-lg border border-slate-200 transition text-left cursor-pointer"
+                    >
+                      + {getFloorLabel(preset)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  OF TYP EEN EIGEN NAAM:
+                </label>
+                <input
+                  type="text"
+                  value={newFloorNameInput}
+                  onChange={(e) => setNewFloorNameInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleAddFloor(newFloorNameInput);
+                  }}
+                  placeholder="Bijv. Tussenverdieping, Souterrain..."
+                  className="w-full px-3 py-2 text-xs font-semibold bg-white border border-slate-200 rounded-lg outline-none focus:border-primary focus:ring-1 focus:ring-primary text-slate-800 transition"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer matching 3.Exterior */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end space-x-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => { setIsAddFloorModalOpen(false); setNewFloorNameInput(''); }}
+                className="px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-semibold transition cursor-pointer"
+              >
+                {safeT('invoersheetV2.interiorSpaces.cancel', 'Annuleren')}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleAddFloor(newFloorNameInput)}
+                disabled={!newFloorNameInput.trim()}
+                className="px-4 py-2 bg-primary hover:bg-[#00524c] disabled:opacity-50 text-white rounded-lg text-xs font-bold shadow-xs transition flex items-center space-x-1.5 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Verdieping Toevoegen</span>
               </button>
             </div>
           </div>
@@ -984,7 +1854,7 @@ export const InteriorSpacesSection: React.FC<InteriorSpacesSectionProps> = ({
         <MediaViewerModal
           onClose={() => setActivePhotoModal(null)}
           titlePrefix={activePhotoModal.title}
-          files={activePhotoModal.urls.map((url) => ({ url, isPdf: false }))}
+          files={activePhotoModal.urls.map((url) => ({ url, isPdf: isPdfUrl(url) }))}
           initialIndex={activePhotoModal.currentIndex}
           footerText={activePhotoModal.description}
         />

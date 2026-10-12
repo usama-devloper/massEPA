@@ -7,10 +7,11 @@ export interface SpacePhoto {
 
 export interface InteriorSpaceCard {
   id: string;
-  spaceName: string; // e.g. ":Hal", ":MK", ":Livingroom", ":WC", ":Keuken", ":Slaapkamer"
-  spaceType: 'Hal' | 'MK' | 'Livingroom' | 'WC' | 'Keuken' | 'Slaapkamer';
+  spaceName: string;
+  spaceType: string;
+  floorLevel?: string;
   sectionTitle: string; // e.g. "Vloer", "Verwarming", "Tapwater", "Zonne-Energie", "Ventilatie", "Kozijn", "Koeling"
-  category: 'floor' | 'heating' | 'tapwater' | 'solar' | 'ventilation' | 'window' | 'cooling';
+  category: 'floor' | 'heating' | 'tapwater' | 'solar' | 'ventilation' | 'window' | 'door' | 'cooling';
   icon: string;
   badgeCode: string; // e.g. "(VLO)", "(VERW)", "(TAP)", "(PV)", "(VENT)", "(WC)", "(KEUK)", "(SLAAP)"
   specs: {

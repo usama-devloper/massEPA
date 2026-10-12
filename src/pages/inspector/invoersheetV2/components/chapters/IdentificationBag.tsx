@@ -15,19 +15,28 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useLanguage } from '../../../../../context/LanguageContext';
+import { renderV1Field } from '../common/LegacyField';
 
 interface IdentificationBagProps {
   bag: BagIdentification;
   onUpdateBag: (updated: Partial<BagIdentification>) => void;
   dossier?: ProjectDossier;
   onNavigateToChapter?: (chapter: any) => void;
+  flags?: Record<string, 'red' | 'yellow' | 'green' | null>;
+  onUpdateFlag?: (fieldKey: string, flag: 'red' | 'yellow' | 'green' | null) => void;
+  fieldRoles?: Record<string, string>;
+  onAutoInspectField?: (fieldKey: string) => void;
 }
 
 export const IdentificationBag: React.FC<IdentificationBagProps> = ({
   bag,
   onUpdateBag,
   dossier,
-  onNavigateToChapter
+  onNavigateToChapter,
+  flags,
+  onUpdateFlag,
+  fieldRoles,
+  onAutoInspectField
 }) => {
   const [isBagVerified, setIsBagVerified] = useState<boolean>(true);
   const [isSearchingBag, setIsSearchingBag] = useState<boolean>(false);
@@ -124,93 +133,147 @@ export const IdentificationBag: React.FC<IdentificationBagProps> = ({
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1 font-mono">
-                {t('invoersheetV2.identificationBag.bagPandId') || 'BAG PandID (16 cijfers)'}
-              </label>
-              <input
-                type="text"
-                value={bag.pandId}
-                onChange={(e) => onUpdateBag({ pandId: e.target.value })}
-                className="w-full text-xs font-mono px-3 py-2 bg-slate-50 border border-slate-300 rounded focus:bg-white focus:border-primary focus:ring-1 focus:ring-[#2563eb] outline-none"
-              />
-            </div>
+          {(() => {
+            const bagSpans: Record<string, number> = {
+              pandId: 1,
+              vboId: 1,
+              address: 1,
+              houseNumber: 1,
+              postalCode: 1,
+              city: 1,
+              municipality: 2
+            };
 
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1 font-mono">
-                {t('invoersheetV2.identificationBag.bagVboId') || 'BAG Verblijfsobject (VBO-ID)'}
-              </label>
-              <input
-                type="text"
-                value={bag.vboId}
-                onChange={(e) => onUpdateBag({ vboId: e.target.value })}
-                className="w-full text-xs font-mono px-3 py-2 bg-slate-50 border border-slate-300 rounded focus:bg-white focus:border-primary focus:ring-1 focus:ring-[#2563eb] outline-none"
-              />
-            </div>
+            return (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs items-start">
+                <div className={`w-full ${bagSpans['pandId'] === 2 ? 'col-span-2' : 'col-span-1'}`}>
+                  {renderV1Field(
+                    t('invoersheetV2.identificationBag.bagPandId') || 'BAG PandID (16 cijfers)',
+                    bag.pandId,
+                    'BAG',
+                    flags?.['bag.pandId'] || 'none',
+                    (v) => onUpdateBag({ pandId: v }),
+                    'text',
+                    undefined,
+                    undefined,
+                    flags?.['bag.pandId'],
+                    onUpdateFlag ? (val) => onUpdateFlag('bag.pandId', val) : undefined,
+                    fieldRoles?.['bag.pandId'],
+                    () => onAutoInspectField?.('bag.pandId'),
+                    '16-cijferig PandID'
+                  )}
+                </div>
 
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                {t('invoersheetV2.identificationBag.streetName') || 'Straatnaam'}
-              </label>
-              <input
-                type="text"
-                value={bag.address}
-                onChange={(e) => onUpdateBag({ address: e.target.value })}
-                className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded focus:border-primary outline-none"
-              />
-            </div>
+                <div className={`w-full ${bagSpans['vboId'] === 2 ? 'col-span-2' : 'col-span-1'}`}>
+                  {renderV1Field(
+                    t('invoersheetV2.identificationBag.bagVboId') || 'BAG Verblijfsobject (VBO-ID)',
+                    bag.vboId,
+                    'BAG',
+                    flags?.['bag.vboId'] || 'none',
+                    (v) => onUpdateBag({ vboId: v }),
+                    'text',
+                    undefined,
+                    undefined,
+                    flags?.['bag.vboId'],
+                    onUpdateFlag ? (val) => onUpdateFlag('bag.vboId', val) : undefined,
+                    fieldRoles?.['bag.vboId'],
+                    () => onAutoInspectField?.('bag.vboId'),
+                    '16-cijferig VBO-ID'
+                  )}
+                </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
-                  {t('invoersheetV2.identificationBag.houseNumber') || 'Huisnummer'}
-                </label>
-                <input
-                  type="text"
-                  value={bag.houseNumber}
-                  onChange={(e) => onUpdateBag({ houseNumber: e.target.value })}
-                  className="w-full text-xs font-mono px-3 py-2 bg-white border border-slate-300 rounded focus:border-primary outline-none"
-                />
+                <div className={`w-full ${bagSpans['address'] === 2 ? 'col-span-2' : 'col-span-1'}`}>
+                  {renderV1Field(
+                    t('invoersheetV2.identificationBag.streetName') || 'Straatnaam',
+                    bag.address,
+                    'BAG',
+                    flags?.['bag.address'] || 'none',
+                    (v) => onUpdateBag({ address: v }),
+                    'text',
+                    undefined,
+                    undefined,
+                    flags?.['bag.address'],
+                    onUpdateFlag ? (val) => onUpdateFlag('bag.address', val) : undefined,
+                    fieldRoles?.['bag.address'],
+                    () => onAutoInspectField?.('bag.address'),
+                    'Straatnaam'
+                  )}
+                </div>
+
+                <div className={`w-full ${bagSpans['houseNumber'] === 2 ? 'col-span-2' : 'col-span-1'}`}>
+                  {renderV1Field(
+                    t('invoersheetV2.identificationBag.houseNumber') || 'Huisnummer',
+                    bag.houseNumber,
+                    'BAG',
+                    flags?.['bag.houseNumber'] || 'none',
+                    (v) => onUpdateBag({ houseNumber: v }),
+                    'text',
+                    undefined,
+                    undefined,
+                    flags?.['bag.houseNumber'],
+                    onUpdateFlag ? (val) => onUpdateFlag('bag.houseNumber', val) : undefined,
+                    fieldRoles?.['bag.houseNumber'],
+                    () => onAutoInspectField?.('bag.houseNumber'),
+                    'Huisnummer + toev.'
+                  )}
+                </div>
+
+                <div className={`w-full ${bagSpans['postalCode'] === 2 ? 'col-span-2' : 'col-span-1'}`}>
+                  {renderV1Field(
+                    t('invoersheetV2.identificationBag.postalCode') || 'Postcode',
+                    bag.postalCode,
+                    'BAG',
+                    flags?.['bag.postalCode'] || 'none',
+                    (v) => onUpdateBag({ postalCode: v }),
+                    'text',
+                    undefined,
+                    undefined,
+                    flags?.['bag.postalCode'],
+                    onUpdateFlag ? (val) => onUpdateFlag('bag.postalCode', val) : undefined,
+                    fieldRoles?.['bag.postalCode'],
+                    () => onAutoInspectField?.('bag.postalCode'),
+                    '1234 AB'
+                  )}
+                </div>
+
+                <div className={`w-full ${bagSpans['city'] === 2 ? 'col-span-2' : 'col-span-1'}`}>
+                  {renderV1Field(
+                    t('invoersheetV2.identificationBag.city') || 'Woonplaats',
+                    bag.city,
+                    'BAG',
+                    flags?.['bag.city'] || 'none',
+                    (v) => onUpdateBag({ city: v }),
+                    'text',
+                    undefined,
+                    undefined,
+                    flags?.['bag.city'],
+                    onUpdateFlag ? (val) => onUpdateFlag('bag.city', val) : undefined,
+                    fieldRoles?.['bag.city'],
+                    () => onAutoInspectField?.('bag.city'),
+                    'Woonplaats'
+                  )}
+                </div>
+
+                <div className={`w-full ${bagSpans['municipality'] === 2 ? 'col-span-2' : 'col-span-1'}`}>
+                  {renderV1Field(
+                    t('invoersheetV2.identificationBag.municipality') || 'Gemeente',
+                    bag.municipality,
+                    'BAG',
+                    flags?.['bag.municipality'] || 'none',
+                    (v) => onUpdateBag({ municipality: v }),
+                    'text',
+                    undefined,
+                    undefined,
+                    flags?.['bag.municipality'],
+                    onUpdateFlag ? (val) => onUpdateFlag('bag.municipality', val) : undefined,
+                    fieldRoles?.['bag.municipality'],
+                    () => onAutoInspectField?.('bag.municipality'),
+                    'Gemeentenaam'
+                  )}
+                </div>
               </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
-                  {t('invoersheetV2.identificationBag.postalCode') || 'Postcode'}
-                </label>
-                <input
-                  type="text"
-                  value={bag.postalCode}
-                  onChange={(e) => onUpdateBag({ postalCode: e.target.value })}
-                  className="w-full text-xs font-mono px-3 py-2 bg-white border border-slate-300 rounded focus:border-primary outline-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                {t('invoersheetV2.identificationBag.city') || 'Woonplaats'}
-              </label>
-              <input
-                type="text"
-                value={bag.city}
-                onChange={(e) => onUpdateBag({ city: e.target.value })}
-                className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded focus:border-primary outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                {t('invoersheetV2.identificationBag.municipality') || 'Gemeente'}
-              </label>
-              <input
-                type="text"
-                value={bag.municipality}
-                onChange={(e) => onUpdateBag({ municipality: e.target.value })}
-                className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded focus:border-primary outline-none"
-              />
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Building Typology selector */}
           <div className="pt-3 border-t border-slate-200">
@@ -364,16 +427,17 @@ export const IdentificationBag: React.FC<IdentificationBagProps> = ({
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">
                   {t('invoersheetV2.identificationBag.constructionYear') || 'Bouwjaar'}
                 </label>
                 <input
                   type="number"
-                  value={bag.constructionYear}
+                  value={bag.constructionYear || ''}
+                  placeholder="Bijv. 1995"
                   onChange={(e) => onUpdateBag({ constructionYear: parseInt(e.target.value) || 1990 })}
-                  className="w-full text-xs font-mono px-3 py-2 bg-white border border-slate-300 rounded focus:border-primary outline-none"
+                  className="w-full text-xs font-mono px-2 py-2 bg-white border border-slate-300 rounded focus:border-primary outline-none"
                 />
               </div>
 
@@ -383,9 +447,23 @@ export const IdentificationBag: React.FC<IdentificationBagProps> = ({
                 </label>
                 <input
                   type="number"
-                  value={bag.volumeM3}
+                  value={bag.volumeM3 || ''}
+                  placeholder="Bijv. 350"
                   onChange={(e) => onUpdateBag({ volumeM3: parseFloat(e.target.value) || 300 })}
-                  className="w-full text-xs font-mono px-3 py-2 bg-white border border-slate-300 rounded focus:border-primary outline-none"
+                  className="w-full text-xs font-mono px-2 py-2 bg-white border border-slate-300 rounded focus:border-primary outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Aantal bouwlagen
+                </label>
+                <input
+                  type="number"
+                  value={bag.floorsCount || ''}
+                  placeholder="Bijv. 3"
+                  onChange={(e) => onUpdateBag({ floorsCount: parseInt(e.target.value) || 1 })}
+                  className="w-full text-xs font-mono px-2 py-2 bg-white border border-slate-300 rounded focus:border-primary outline-none"
                 />
               </div>
             </div>
@@ -396,7 +474,8 @@ export const IdentificationBag: React.FC<IdentificationBagProps> = ({
               </label>
               <input
                 type="text"
-                value={bag.usageFunction}
+                value={bag.usageFunction || ''}
+                placeholder="Bijv. Woonfunctie (Woning)"
                 onChange={(e) => onUpdateBag({ usageFunction: e.target.value })}
                 className="w-full text-xs px-3 py-2 bg-white border border-slate-300 rounded focus:border-primary outline-none"
               />

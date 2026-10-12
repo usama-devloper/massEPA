@@ -32,6 +32,11 @@ interface ThermalEnvelopeProps {
   onNavigateToChapter?: (chapter: any) => void;
   projectAddress?: string;
   projectNumber?: string;
+  flags?: Record<string, 'red' | 'yellow' | 'green' | null>;
+  onUpdateFlag?: (fieldKey: string, flag: 'red' | 'yellow' | 'green' | null) => void;
+  fieldRoles?: Record<string, string>;
+  onUpdateFieldRole?: (fieldKey: string, role: string) => void;
+  onAutoInspectField?: (fieldKey: string) => void;
 }
 
 export const ThermalEnvelope: React.FC<ThermalEnvelopeProps> = ({
@@ -44,7 +49,12 @@ export const ThermalEnvelope: React.FC<ThermalEnvelopeProps> = ({
   onSelectElement,
   onNavigateToChapter,
   projectAddress,
-  projectNumber
+  projectNumber,
+  flags,
+  onUpdateFlag,
+  fieldRoles,
+  onUpdateFieldRole,
+  onAutoInspectField
 }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'audit_report' | 'nta_table'>('audit_report');
@@ -98,6 +108,7 @@ export const ThermalEnvelope: React.FC<ThermalEnvelopeProps> = ({
   const handleUpdateItem = (id: string, updates: Partial<EnvelopeElement>) => {
     const updated = envelope.map((el) => (el.id === id ? { ...el, ...updates } : el));
     onUpdateEnvelope(updated);
+    onAutoInspectField?.(`envelope.${id}`);
   };
 
   const handleDeleteItem = (id: string) => {
@@ -161,11 +172,15 @@ export const ThermalEnvelope: React.FC<ThermalEnvelopeProps> = ({
           onUpdateFacadesData={onUpdateFacadesData}
           onOpenBcrgForElement={onOpenBcrgForElement}
           onNavigateToChapter={onNavigateToChapter}
-          onSwitchToNtaTable={() => setActiveTab('nta_table')}
           onAddEnvelopeElement={(newElement) => onUpdateEnvelope([...envelope.filter(e => e.id !== newElement.id), newElement])}
           onDeleteEnvelopeElement={(id) => onUpdateEnvelope(envelope.filter(e => e.id !== id))}
           projectAddress={projectAddress}
           projectNumber={projectNumber}
+          flags={flags}
+          onUpdateFlag={onUpdateFlag}
+          fieldRoles={fieldRoles}
+          onUpdateFieldRole={onUpdateFieldRole}
+          onAutoInspectField={onAutoInspectField}
         />
       ) : (
         <>
@@ -201,25 +216,25 @@ export const ThermalEnvelope: React.FC<ThermalEnvelopeProps> = ({
       {/* Quick stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs">
-          <span className="text-[11px] font-mono text-slate-500 uppercase block mb-1">{t('thermalEnvelope.totalArea')}</span>
+          <span className="text-[9px] font-black text-slate-500/90 tracking-wider block uppercase font-sans mb-1">{t('thermalEnvelope.totalArea')}</span>
           <span className="font-mono text-lg font-bold text-slate-900">{Math.round(totalArea * 10) / 10} m²</span>
           <span className="text-[10px] text-slate-400 block mt-0.5">{envelope.length} {t('thermalEnvelope.constructions')}</span>
         </div>
 
         <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs">
-          <span className="text-[11px] font-mono text-slate-500 uppercase block mb-1">{t('thermalEnvelope.averageRc')}</span>
+          <span className="text-[9px] font-black text-slate-500/90 tracking-wider block uppercase font-sans mb-1">{t('thermalEnvelope.averageRc')}</span>
           <span className="font-mono text-lg font-bold text-emerald-700">{avgRc} m²K/W</span>
           <span className="text-[10px] text-slate-400 block mt-0.5">{t('thermalEnvelope.opaquePartsInfo')}</span>
         </div>
 
         <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs">
-          <span className="text-[11px] font-mono text-slate-500 uppercase block mb-1">{t('thermalEnvelope.averageUValue')}</span>
+          <span className="text-[9px] font-black text-slate-500/90 tracking-wider block uppercase font-sans mb-1">{t('thermalEnvelope.averageUValue')}</span>
           <span className="font-mono text-lg font-bold text-sky-700">{avgU} W/m²K</span>
           <span className="text-[10px] text-slate-400 block mt-0.5">{t('thermalEnvelope.transparentPartsInfo')}</span>
         </div>
 
         <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs">
-          <span className="text-[11px] font-mono text-slate-500 uppercase block mb-1">{t('thermalEnvelope.qualityDeclarations')}</span>
+          <span className="text-[9px] font-black text-slate-500/90 tracking-wider block uppercase font-sans mb-1">{t('thermalEnvelope.qualityDeclarations')}</span>
           <span className="font-mono text-lg font-bold text-slate-900">
             {envelope.filter((e) => e.qualityStatement).length} / {envelope.length}
           </span>

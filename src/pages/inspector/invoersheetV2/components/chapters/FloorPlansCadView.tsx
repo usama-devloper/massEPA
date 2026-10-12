@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { fileToPersistedUrl } from '../../../../../utils/persistedFileUrl';
 import { idbGet, idbPut } from '../../../../../storage/idbKv';
-import { CheckCircle2, FileCheck, Maximize2, Trash2, Plus } from 'lucide-react';
+import { CheckCircle2, FileCheck, Maximize2, Trash2, Plus, FileText } from 'lucide-react';
 import { MediaViewerModal } from '../../../../../components/common/MediaViewerModal';
 import { useLanguage } from '../../../../../context/LanguageContext';
+import { PdfThumbnail } from '../../../../../components/common/PdfThumbnail';
 
 export const FloorPlansCadView: React.FC = () => {
   const { t } = useLanguage();
@@ -67,28 +68,23 @@ export const FloorPlansCadView: React.FC = () => {
         <div className="flex items-center space-x-2">
 
           <span className="font-display font-semibold text-xs tracking-wide">
-            {t('invoersheetV2.floorPlansCadView.title') || 'CAD Plattegronden (GBO_1 & GBO_2)'}
+            {t('invoersheetV2.floorPlansCadView.title') || 'CAD Plattegronden'}
           </span>
         </div>
       </div>
 
-      <div className="p-6 bg-slate-50/50 w-full h-full">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs w-full min-h-[360px] max-h-[500px] overflow-y-auto">
-          <div className={`grid gap-4 ${
-            cadFiles.length === 0 ? 'grid-cols-1 h-[320px]' : 
-            cadFiles.length === 1 ? 'grid-cols-2 h-[320px]' : 
-            cadFiles.length === 2 ? 'grid-cols-3 h-[240px]' : 
-            'grid-cols-2 lg:grid-cols-3 auto-rows-[200px]'
-          }`}>
+      <div className="p-5 flex-1 bg-white w-full overflow-y-auto min-h-[360px] max-h-[500px]">
+        <div className={`grid gap-4 ${
+          cadFiles.length === 0 ? 'grid-cols-1 h-[320px]' : 
+          cadFiles.length === 1 ? 'grid-cols-2 h-[320px]' : 
+          cadFiles.length === 2 ? 'grid-cols-3 h-[240px]' : 
+          'grid-cols-2 lg:grid-cols-3 auto-rows-[200px]'
+        }`}>
             {cadFiles.map((file, idx) => (
               <div key={idx} className="w-full h-full rounded-lg overflow-hidden border border-slate-200 bg-white relative group flex items-center justify-center shadow-xs">
                 <div onClick={() => setActiveModalIndex(idx)} className="w-full h-full cursor-pointer relative">
                   {file.isPdf ? (
-                    <iframe 
-                      src={`${file.url}#toolbar=0&navpanes=0&scrollbar=0`}
-                      className="w-full h-full border-0 pointer-events-none"
-                      title={`CAD PDF ${idx}`}
-                    />
+                    <PdfThumbnail url={file.url} altTitle={`CAD Plattegrond ${idx + 1}`} />
                   ) : (
                     <img 
                       src={file.url} 
@@ -106,7 +102,7 @@ export const FloorPlansCadView: React.FC = () => {
                 
                 <button
                   onClick={(e) => removeCadFile(e, idx)}
-                  className="absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-md shadow-xs opacity-0 group-hover:opacity-100 transition z-10"
+                  className="absolute top-2 right-2 p-1.5 bg-white/90 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-md shadow-xs opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition z-10"
                   title={t('invoersheetV2.floorPlansCadView.remove') || 'Verwijder'}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -133,7 +129,6 @@ export const FloorPlansCadView: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
 
       {/* Shared MediaViewerModal for CAD Plans */}
       {activeModalIndex !== null && (
@@ -142,7 +137,7 @@ export const FloorPlansCadView: React.FC = () => {
           initialIndex={activeModalIndex}
           onClose={() => setActiveModalIndex(null)}
           titlePrefix={t('invoersheetV2.floorPlansCadView.uploadedPlan') || 'Geüploade Plattegrond'}
-          footerText={t('invoersheetV2.floorPlansCadView.title') || `CAD Plattegronden (GBO_1 & GBO_2)`}
+          footerText={t('invoersheetV2.floorPlansCadView.title') || 'CAD Plattegronden'}
         />
       )}
     </div>
