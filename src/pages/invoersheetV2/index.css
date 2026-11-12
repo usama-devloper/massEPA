@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  --font-hanken: "Hanken Grotesk", sans-serif;
+  --font-inter: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --color-surface: #f8f9ff;
+  --color-surface-dim: #cbdbf5;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface-container: #e5eeff;
+  --color-surface-container-high: #dce9ff;
+  --color-surface-container-highest: #d3e4fe;
+  --color-on-surface: #0b1c30;
+  --color-on-surface-variant: #44474d;
+  
+  --color-navy: #0f2038;
+  --color-navy-dark: #000818;
+  --color-emerald-deep: #006a63;
+  --color-emerald-mint: #9bf2e8;
+  --color-cobalt: #2563eb;
+  --color-border-grid: #e2e8f0;
+}
+
+body {
+  font-family: var(--font-inter), sans-serif;
+  color: #0b1c30;
+  background-color: #f8f9ff;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-hanken), sans-serif;
+}
+
+code, pre, .font-mono, .data-mono {
+  font-family: var(--font-mono), monospace;
+}
+
+/* Custom crisp scrollbar for split pane */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #eff4ff;
+}
+::-webkit-scrollbar-thumb {
+  background: #c5c6ce;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #75777e;
+}
+

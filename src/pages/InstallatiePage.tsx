@@ -13,6 +13,7 @@ import { BackToTop } from '../components/common/BackToTop';
 import { StepContinueFooter } from '../components/common/StepContinueFooter';
 import { Toast } from '../components/common/Toast';
 import { Step, UserRole } from '../types';
+import { debouncedSyncInstallatie, syncInstallatieToAPI } from '../storage/bewonerAutoSync';
 import { useToast } from '../hooks/useToast';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -599,6 +600,43 @@ export const InstallatiePage = ({
 
   // Save data to storage whenever anything changes
   useEffect(() => {
+    const installData = {
+      selectedSections,
+      ventilationType,
+      ventilationCo2,
+      ventilationOpwekker,
+      otherVentilationOpwekker,
+      ventilatieSensors: ventilatieSensorsFlat,
+      ventilatieSensorsByFloor: ventSensorsByFloor,
+      otherVentilatieText,
+      heatingSystemType,
+      heatingLocation,
+      otherHeatingLocation,
+      emissionSystemType,
+      controlType,
+      heatingSameAsWater,
+      tapWaterGenerator,
+      tapWaterDevice,
+      tapWaterLocation,
+      tapWaterCustomLocation,
+      solarPanels,
+      solarPanelCount,
+      solarTiltAngle,
+      solarIntegration,
+      solarBrandAndType,
+      activeCooling,
+      coolingRooms: coolingRoomsFlat,
+      coolingRoomsByFloor: coolRoomsByFloor,
+      otherCoolingRoom,
+      coolingGeneratorType,
+      coolingEmissionSystem,
+      coolingBrandAndType,
+      coolingYearBuilt,
+    };
+    saveInstallatieToStorage(installData);
+    debouncedSyncInstallatie(installData);
+    return;
+    // legacy save call:
     saveInstallatieToStorage({
       selectedSections,
       ventilationType,

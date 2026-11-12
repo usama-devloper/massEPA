@@ -1,0 +1,33 @@
+{
+	"type" : "FeatureCollection",
+	"name" : "complex",
+	"features" : [
+		{
+			"type" : "Feature",
+			"geometry" : null,
+			"properties" : {
+				"Organisatie" : "Goedestede",
+				"Land" : "Nederland",
+				"Provincie" : "Flevoland",
+				"Gemeente" : "Almere",
+				"Complex" : "1100 Middenhof",
+				"Marker_color" : "green",
+				"Display_level" : "bouwblok",
+				"Show_3Dmodel" : "yes",
+				"SHP_long" : "5.2157898083466945",
+				"SHP_lat" : "52.339182877484895",
+				"ORG" : "GS",
+				"GLB_name" : "",
+				"GLB_lat" : "",
+				"GLB_long" : "",
+				"GLB_scale" : "",
+				"GLB_displ_x" : "",
+				"GLB_displ_y" : "",
+				"GLB_displ_z" : "",
+				"Photogallery_img_file" : "Foto's/1100_Luchtfoto-1.jpg",
+				"Photogallery_img_caption" : "Luchtfoto",
+				"Photogallery_displayname" : "Foto's"
+			}
+		}
+	]
+}

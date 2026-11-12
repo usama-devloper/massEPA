@@ -15,6 +15,7 @@ import { useToast } from '../hooks/useToast';
 import { useLanguage } from '../context/LanguageContext';
 import { translateAlgemeenOption } from '../i18n/translateOptions';
 import { loadAlgemeenFromStorage, isApartmentBuildingType, saveAlgemeenToStorage } from '../storage/algemeenData';
+import { debouncedSyncAlgemeen, syncAlgemeenToAPI } from '../storage/bewonerAutoSync';
 import { AppSelect } from '../components/common/AppSelect';
 
 const FLOOR_COUNT_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => ({
@@ -251,7 +252,7 @@ export function Algemeen({
   }, [buildingType, whichFloor]);
 
   useEffect(() => {
-    saveAlgemeenToStorage({
+    const dataToSave = {
       numberOfFloors,
       buildingType,
       position,
@@ -269,7 +270,9 @@ export function Algemeen({
       wijk,
       gemeente,
       gebouwhoogte,
-    });
+    };
+    saveAlgemeenToStorage(dataToSave);
+    debouncedSyncAlgemeen(dataToSave);
   }, [
     numberOfFloors,
     buildingType,
@@ -703,7 +706,30 @@ export function Algemeen({
 
       <StepContinueFooter
         visible={isComplete}
-        onClick={() => setCurrentStepHandler(Step.UPLOAD)}
+        onClick={async () => {
+          const currentData = {
+            numberOfFloors,
+            buildingType,
+            position,
+            location,
+            hasFloorPlans,
+            city,
+            hasKelder,
+            hasKruipruimte,
+            whichFloor,
+            renovationStatus,
+            renovationYear,
+            bouwjaar,
+            floorArea,
+            buurt,
+            wijk,
+            gemeente,
+            gebouwhoogte,
+          };
+          saveAlgemeenToStorage(currentData);
+          await syncAlgemeenToAPI(currentData);
+          setCurrentStepHandler(Step.UPLOAD);
+        }}
         label={t('algemeen.continueHouseDesign')}
       />
 
